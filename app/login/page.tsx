@@ -36,7 +36,7 @@ export default function LoginPage() {
 
       // Harte Navigation statt router.push: garantiert, dass der Server das
       // frische Auth-Cookie sieht und direkt das Ziel rendert (kein Bounce/Race).
-      // Ziel: ?next=… (nur interne Pfade), sonst /start.
+      // Ziel: ?next=… (nur interne Pfade), sonst /.
       const next = new URLSearchParams(window.location.search).get("next");
       window.location.assign(loginRedirectTarget(next));
       return;

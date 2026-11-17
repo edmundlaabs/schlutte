@@ -16,7 +16,7 @@ const eslintConfig = defineConfig([
   ]),
   // Aus der Vite-App übernommener Gerda-Code: React-Compiler-Regeln nicht erzwingen.
   {
-    files: ["app/gerda/_gerda/**/*.{ts,tsx}"],
+    files: ["app/(app)/gerda/_gerda/**/*.{ts,tsx}"],
     rules: {
       "react-hooks/set-state-in-effect": "off",
       "react-hooks/purity": "off",

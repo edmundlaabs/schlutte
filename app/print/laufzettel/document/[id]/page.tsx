@@ -15,7 +15,7 @@ export default async function LaufzettelDocPrintPage({
 
   return (
     <>
-      <PrintToolbar backUrl={`/kommissionen/${commission.no}`} />
+      <PrintToolbar backUrl={`/werkstatt/kommissionen/${commission.no}`} />
       <LaufzettelSheet
         commission={commission}
         stations={stations}

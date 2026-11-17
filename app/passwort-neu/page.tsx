@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { completePasswordResetAction, type PasswordResetState } from "./actions";
@@ -115,9 +116,9 @@ export default function PasswortNeuPage() {
               Das Passwort wurde geändert. Es gilt für die Schlutte und alle für dich
               freigeschalteten Apps.
             </div>
-            <a href="/start" className="grb-btn grb-btn-primary" style={{ justifyContent: "center" }}>
+            <Link href="/" className="grb-btn grb-btn-primary" style={{ justifyContent: "center" }}>
               Weiter zum Intranet
-            </a>
+            </Link>
           </>
         )}
 

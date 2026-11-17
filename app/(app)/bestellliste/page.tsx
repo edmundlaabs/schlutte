@@ -26,7 +26,7 @@ export default async function BestelllistePage() {
     >
       <div>
         <Link
-          href="/start"
+          href="/"
           style={{
             fontFamily: "var(--font-mono)",
             fontSize: 11,

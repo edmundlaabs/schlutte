@@ -25,7 +25,7 @@ export default function PersonalHomePage() {
     >
       <div>
         <Link
-          href="/start"
+          href="/"
           style={{
             fontFamily: "var(--font-mono)",
             fontSize: 11,

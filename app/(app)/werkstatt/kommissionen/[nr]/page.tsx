@@ -1,0 +1,648 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Icon } from "@/components/ui/Icon";
+import { Status } from "@/components/ui/Status";
+import { getCommissionByNumber } from "@/lib/data/commissions";
+import { getDocumentsByCommissionNumber } from "@/lib/data/documents";
+import type { LaufzettelFormData } from "@/lib/types";
+import { DeleteDocumentButton } from "./DeleteDocumentButton";
+import { DeleteCommissionButton } from "./DeleteCommissionButton";
+
+function SectionHeader({
+  eyebrow,
+  title,
+  index,
+  action,
+}: {
+  eyebrow: string;
+  title: string;
+  index?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "space-between",
+        marginBottom: 14,
+        gap: 16,
+      }}
+    >
+      <div>
+        <span className="grb-eyebrow">{eyebrow}</span>
+        <div
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 22,
+            fontWeight: 400,
+            color: "var(--fg)",
+            letterSpacing: "-0.005em",
+            marginTop: 4,
+          }}
+        >
+          {title}
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        {action}
+        {index && <span className="grb-index">{index}</span>}
+      </div>
+    </div>
+  );
+}
+
+export default async function CommissionDetailPage({
+  params,
+}: {
+  params: Promise<{ nr: string }>;
+}) {
+  const { nr } = await params;
+  const commission = await getCommissionByNumber(nr);
+  if (!commission) notFound();
+
+  const documents = await getDocumentsByCommissionNumber(nr);
+
+  const laufzettelDocs = documents.filter((d) => d.kind === "laufzettel");
+  const paletteDocs = documents.filter((d) => d.kind === "palette");
+  const oberflaecheDocs = documents.filter((d) => d.kind === "oberflaeche");
+  // Action-bar "Palette drucken" points to the newest palette set if available
+  const firstPaletteId = paletteDocs.length > 0 ? paletteDocs[0].id : null;
+
+  return (
+    <div
+      style={{
+        padding: "32px 56px 80px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 40,
+        maxWidth: 1440,
+        margin: "0 auto",
+        width: "100%",
+      }}
+    >
+      {/* ---------- Hero ---------- */}
+      <header
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 28,
+          paddingBottom: 18,
+          borderBottom: "1px solid var(--fg)",
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <span className="grb-eyebrow">Kommission</span>
+          <div
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 300,
+              fontSize: 88,
+              color: "var(--fg)",
+              letterSpacing: "-0.025em",
+              lineHeight: 0.95,
+              marginTop: 4,
+            }}
+          >
+            {commission.no}
+          </div>
+        </div>
+
+        <span style={{ width: 1, height: 72, background: "var(--border-strong)" }} />
+
+        <div style={{ minWidth: 280 }}>
+          <h1
+            className="grb-h-h2"
+            style={{ fontSize: 32, margin: 0, letterSpacing: "-0.005em" }}
+          >
+            {commission.client}
+          </h1>
+          {commission.project && (
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 16,
+                color: "var(--fg-muted)",
+                fontStyle: "italic",
+                marginTop: 4,
+              }}
+            >
+              {commission.project}
+            </div>
+          )}
+          <div
+            style={{
+              display: "flex",
+              gap: 18,
+              marginTop: 10,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--fg-subtle)",
+                letterSpacing: "0.12em",
+              }}
+            >
+              OWNER · {commission.owner}
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--fg-subtle)",
+                letterSpacing: "0.12em",
+              }}
+            >
+              AKTUALISIERT · {commission.updated.toUpperCase()}
+            </span>
+            <Status value={commission.status} />
+          </div>
+        </div>
+
+        {/* ---------- Action bar ---------- */}
+        <div
+          style={{
+            marginLeft: "auto",
+            display: "flex",
+            gap: 10,
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Link
+            className="grb-btn grb-btn-primary"
+            href={`/werkstatt/kommissionen/${commission.no}/dokumente/neu`}
+          >
+            <Icon name="plus" size={14} /> Neues Dokument
+          </Link>
+          <Link
+            className="grb-btn grb-btn-ghost"
+            href={`/werkstatt/kommissionen/${commission.no}/dokumente/laufzettel/neu`}
+          >
+            <Icon name="pallet-boards" size={14} /> Palettenlabel intern
+          </Link>
+          {firstPaletteId ? (
+            <Link
+              className="grb-btn grb-btn-ghost"
+              href={`/print/palette/document/${firstPaletteId}/range/1/999`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icon name="print" size={14} /> Palettenversand-Label drucken
+            </Link>
+          ) : null}
+          <Link
+            className="grb-btn grb-btn-ghost"
+            href={`/personal/oberflaeche/${commission.no}/neu`}
+          >
+            <Icon name="doc-stripe" size={14} /> Auftragsoberfläche
+          </Link>
+          <Link
+            className="grb-btn grb-btn-quiet"
+            href={`/werkstatt/kommissionen/${commission.no}/bearbeiten`}
+          >
+            <Icon name="edit" size={14} /> Bearbeiten
+          </Link>
+          <DeleteCommissionButton
+            commissionNo={commission.no}
+            client={commission.client}
+            documentCount={laufzettelDocs.length + paletteDocs.length + oberflaecheDocs.length}
+          />
+        </div>
+      </header>
+
+      {/* ---------- Laufzettel ---------- */}
+      <section>
+        <SectionHeader
+          eyebrow="Dokumente · Palettenlabel intern"
+          title="Palettenlabel intern zu dieser Kommission"
+          index={laufzettelDocs.length > 0 ? `${laufzettelDocs.length} Stück` : undefined}
+          action={
+            <Link
+              href={`/werkstatt/kommissionen/${commission.no}/dokumente/laufzettel/neu`}
+              className="grb-btn-link"
+              style={{ fontSize: 11 }}
+            >
+              Neues Palettenlabel intern <Icon name="arrow" size={12} />
+            </Link>
+          }
+        />
+
+        {laufzettelDocs.length === 0 ? (
+          <div
+            style={{
+              border: "1px dashed var(--border-strong)",
+              padding: "24px 28px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 16,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 14,
+                  color: "var(--fg)",
+                  fontWeight: 500,
+                }}
+              >
+                Noch kein Palettenlabel intern angelegt.
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 13,
+                  color: "var(--fg-muted)",
+                  marginTop: 4,
+                }}
+              >
+                Stationen, Material und Notizen — bereit für die Werkstatt.
+              </div>
+            </div>
+            <Link
+              href={`/werkstatt/kommissionen/${commission.no}/dokumente/laufzettel/neu`}
+              className="grb-btn grb-btn-ghost"
+            >
+              <Icon name="pallet-boards" size={14} /> Palettenlabel intern erstellen
+            </Link>
+          </div>
+        ) : (
+          <table className="grb-table">
+            <thead>
+              <tr>
+                <th style={{ width: 30 }} />
+                <th>Bezeichnung</th>
+                <th>Erstellt</th>
+                <th>Von</th>
+                <th style={{ textAlign: "right" }}>Aktion</th>
+              </tr>
+            </thead>
+            <tbody>
+              {laufzettelDocs.map((d) => {
+                // Ein Laufzettel kann seine eigene Projektbezeichnung überschreiben (formData.project) —
+                // die hat Vorrang vor der Bezeichnung der Kommission (analog zum Druck-Sheet).
+                const laufzettelFormData = d.formData as LaufzettelFormData | undefined;
+                const laufzettelProject = laufzettelFormData?.project?.trim() || commission.project;
+                return (
+                <tr key={d.id}>
+                  <td>
+                    <Icon
+                      name="pallet-boards"
+                      size={16}
+                      stroke={1.25}
+                      style={{ color: "var(--fg-muted)" }}
+                    />
+                  </td>
+                  <td style={{ fontWeight: 500 }}>
+                    {d.label}
+                    {laufzettelProject && (
+                      <div
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 12,
+                          fontWeight: 400,
+                          fontStyle: "italic",
+                          color: "var(--fg-muted)",
+                          marginTop: 2,
+                        }}
+                      >
+                        {laufzettelProject}
+                      </div>
+                    )}
+                  </td>
+                  <td className="mono">{d.stamp}</td>
+                  <td className="mono" style={{ color: "var(--accent)" }}>
+                    {d.by}
+                  </td>
+                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                    <Link
+                      href={`/werkstatt/kommissionen/${commission.no}/dokumente/laufzettel/${d.id}/bearbeiten`}
+                      style={{ padding: "4px 8px", color: "var(--fg-muted)" }}
+                      title="Bearbeiten"
+                    >
+                      <Icon name="edit" size={14} />
+                    </Link>
+                    <Link
+                      href={`/print/laufzettel/document/${d.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ padding: "4px 8px", color: "var(--fg)" }}
+                      title="Drucken"
+                    >
+                      <Icon name="print" size={14} />
+                    </Link>
+                    <DeleteDocumentButton
+                      commissionNo={commission.no}
+                      documentId={d.id}
+                      label="Palettenlabel intern"
+                    />
+                  </td>
+                </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      {/* ---------- Paletten ---------- */}
+      <section>
+        <SectionHeader
+          eyebrow="Dokumente · Palettenversand-Label"
+          title="Palettenversand-Labels zu dieser Kommission"
+          index={paletteDocs.length > 0 ? `${paletteDocs.length} Sets` : undefined}
+          action={
+            <Link
+              href={`/werkstatt/kommissionen/${commission.no}/dokumente/palette/neu`}
+              className="grb-btn-link"
+              style={{ fontSize: 11 }}
+            >
+              Neues Palettenversand-Label <Icon name="arrow" size={12} />
+            </Link>
+          }
+        />
+
+        {paletteDocs.length === 0 ? (
+          <div
+            style={{
+              border: "1px dashed var(--border-strong)",
+              padding: "24px 28px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 16,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 14,
+                  color: "var(--fg)",
+                  fontWeight: 500,
+                }}
+              >
+                Noch kein Palettenversand-Label angelegt.
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: 13,
+                  color: "var(--fg-muted)",
+                  marginTop: 4,
+                }}
+              >
+                Packstückanzahl, Maße und Empfänger — bereit für den Versand.
+              </div>
+            </div>
+            <Link
+              href={`/werkstatt/kommissionen/${commission.no}/dokumente/palette/neu`}
+              className="grb-btn grb-btn-ghost"
+            >
+              <Icon name="plus" size={14} /> Palettenversand-Label anlegen
+            </Link>
+          </div>
+        ) : (
+          <table className="grb-table">
+            <thead>
+              <tr>
+                <th style={{ width: 30 }} />
+                <th>Bezeichnung</th>
+                <th>Packstücke</th>
+                <th>Erstellt</th>
+                <th>Von</th>
+                <th style={{ textAlign: "right" }}>Aktion</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paletteDocs.map((d) => (
+                <tr key={d.id}>
+                  <td>
+                    <Icon
+                      name="truck"
+                      size={16}
+                      stroke={1.25}
+                      style={{ color: "var(--fg-muted)" }}
+                    />
+                  </td>
+                  <td style={{ fontWeight: 500 }}>
+                    {d.label}
+                    {commission.project && (
+                      <div
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: 12,
+                          fontWeight: 400,
+                          fontStyle: "italic",
+                          color: "var(--fg-muted)",
+                          marginTop: 2,
+                        }}
+                      >
+                        {commission.project}
+                      </div>
+                    )}
+                  </td>
+                  <td className="mono" style={{ color: "var(--fg-muted)" }}>—</td>
+                  <td className="mono">{d.stamp}</td>
+                  <td className="mono" style={{ color: "var(--accent)" }}>
+                    {d.by}
+                  </td>
+                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                    <Link
+                      href={`/werkstatt/kommissionen/${commission.no}/dokumente/palette/${d.id}/bearbeiten`}
+                      style={{ padding: "4px 8px", color: "var(--fg-muted)" }}
+                      title="Bearbeiten"
+                    >
+                      <Icon name="edit" size={14} />
+                    </Link>
+                    <Link
+                      href={`/print/palette/document/${d.id}/1`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ padding: "4px 8px", color: "var(--fg)" }}
+                      title="Erstes Palettenversand-Label drucken"
+                    >
+                      <Icon name="print" size={14} />
+                    </Link>
+                    <Link
+                      href={`/print/palette/document/${d.id}/range/1/999`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ padding: "4px 8px", color: "var(--accent)" }}
+                      title="Alle Paletten drucken"
+                    >
+                      <Icon name="print" size={14} />
+                      <span style={{ fontSize: 11, marginLeft: 4 }}>Alle</span>
+                    </Link>
+                    <DeleteDocumentButton
+                      commissionNo={commission.no}
+                      documentId={d.id}
+                      label="Palettenversand-Label"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      {/* ---------- Auftragsoberfläche ---------- */}
+      <section>
+        <SectionHeader
+          eyebrow="Dokumente · Auftragsoberfläche (Muster)"
+          title="Auftragsoberflächen zu dieser Kommission"
+          index={oberflaecheDocs.length > 0 ? `${oberflaecheDocs.length} Stück` : undefined}
+          action={
+            <Link
+              href={`/personal/oberflaeche/${commission.no}/neu`}
+              className="grb-btn-link"
+              style={{ fontSize: 11 }}
+            >
+              Neue Auftragsoberfläche <Icon name="arrow" size={12} />
+            </Link>
+          }
+        />
+
+        {oberflaecheDocs.length === 0 ? (
+          <div
+            style={{
+              border: "1px dashed var(--border-strong)",
+              padding: "24px 28px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 16,
+            }}
+          >
+            <div>
+              <div style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "var(--fg)", fontWeight: 500 }}>
+                Noch keine Auftragsoberfläche angelegt.
+              </div>
+              <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--fg-muted)", marginTop: 4 }}>
+                Geölt, gebeizt, lackiert — A5-Label, zwei pro A4-Blatt.
+              </div>
+            </div>
+            <Link href={`/personal/oberflaeche/${commission.no}/neu`} className="grb-btn grb-btn-ghost">
+              <Icon name="plus" size={14} /> Auftragsoberfläche anlegen
+            </Link>
+          </div>
+        ) : (
+          <table className="grb-table">
+            <thead>
+              <tr>
+                <th style={{ width: 30 }} />
+                <th>Bezeichnung</th>
+                <th>Erstellt</th>
+                <th>Von</th>
+                <th style={{ textAlign: "right" }}>Aktion</th>
+              </tr>
+            </thead>
+            <tbody>
+              {oberflaecheDocs.map((d) => (
+                <tr key={d.id}>
+                  <td>
+                    <Icon name="doc-stripe" size={16} stroke={1.25} style={{ color: "var(--fg-muted)" }} />
+                  </td>
+                  <td style={{ fontWeight: 500 }}>{d.label}</td>
+                  <td className="mono">{d.stamp}</td>
+                  <td className="mono" style={{ color: "var(--accent)" }}>{d.by}</td>
+                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                    <Link
+                      href={`/personal/oberflaeche/${commission.no}/${d.id}/bearbeiten`}
+                      style={{ padding: "4px 8px", color: "var(--fg-muted)" }}
+                      title="Bearbeiten"
+                    >
+                      <Icon name="edit" size={14} />
+                    </Link>
+                    <Link
+                      href={`/print-personal/oberflaeche/document/${d.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ padding: "4px 8px", color: "var(--fg)" }}
+                      title="Drucken"
+                    >
+                      <Icon name="print" size={14} />
+                    </Link>
+                    <DeleteDocumentButton
+                      commissionNo={commission.no}
+                      documentId={d.id}
+                      label="Auftragsoberfläche"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      {/* ---------- Archiv ---------- */}
+      <section>
+        <SectionHeader
+          eyebrow="Archiv"
+          title="Frühere Druckstände"
+          index="Vorbereitet"
+        />
+        <div
+          style={{
+            border: "1px solid var(--border)",
+            padding: "20px 24px",
+            background: "var(--bg-alt)",
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+          }}
+        >
+          <Icon
+            name="archive"
+            size={20}
+            stroke={1.25}
+            style={{ color: "var(--fg-muted)" }}
+          />
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 14,
+                color: "var(--fg)",
+                fontWeight: 500,
+              }}
+            >
+              PDF-Archivierung folgt
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 13,
+                color: "var(--fg-muted)",
+                marginTop: 2,
+              }}
+            >
+              Gedruckte Stände werden später als unveränderliche PDFs in Supabase
+              Storage abgelegt. Bis dahin bleibt der Druck der MVP-Pfad.
+            </div>
+          </div>
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.18em",
+              color: "var(--fg-subtle)",
+              textTransform: "uppercase",
+            }}
+          >
+            Folgt
+          </span>
+        </div>
+      </section>
+    </div>
+  );
+}

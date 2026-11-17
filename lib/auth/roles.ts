@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getEmployeeRoleForUser } from "@/lib/data/employees";
 import type { Employee } from "@/lib/types";
 import { isFinanceRole, type AppRole } from "@/lib/auth/app-role";
+import { provisionEmployee } from "@/lib/auth/provision";
 
 // Reine Helfer (auch clientseitig nutzbar) zusätzlich von hier erreichbar.
 export {
@@ -39,7 +40,16 @@ export const getCurrentUserContext = cache(async (): Promise<UserContext | null>
     } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const { employee, role } = await getEmployeeRoleForUser(user.id, user.email);
+    let { employee, role } = await getEmployeeRoleForUser(user.id, user.email);
+    if (!employee && user.email) {
+      // Erste Anmeldung: Mitarbeiter-Eintrag anlegen (Self-Provisioning), dann neu lesen.
+      try {
+        await provisionEmployee(supabase, user);
+        ({ employee, role } = await getEmployeeRoleForUser(user.id, user.email));
+      } catch (e) {
+        console.error("Mitarbeiter-Eintrag konnte nicht angelegt werden:", e);
+      }
+    }
     return {
       userId: user.id,
       email: user.email ?? null,

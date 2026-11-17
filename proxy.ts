@@ -65,14 +65,14 @@ export async function proxy(request: NextRequest) {
     loginUrl.pathname = "/login";
     loginUrl.search = "";
     // Rücksprung nach dem Login (z. B. Home-Bildschirm-App /auslagen).
-    // "/" bleibt ohne next → wie bisher nach /start.
+    // "/" bleibt ohne next → Startseite.
     const next = path === "/" ? null : safeNextPath(`${path}${request.nextUrl.search}`);
     if (next) loginUrl.searchParams.set("next", next);
     return redirectTo(loginUrl);
   }
 
   if (user && isLoginRoute) {
-    // Redirect authenticated user away from login page (next bzw. /start)
+    // Redirect authenticated user away from login page (next bzw. /)
     const target = loginRedirectTarget(request.nextUrl.searchParams.get("next"));
     return redirectTo(new URL(target, request.url));
   }

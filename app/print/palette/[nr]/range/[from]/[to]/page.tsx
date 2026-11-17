@@ -18,7 +18,7 @@ export default async function PaletteRangePrintPage({
 
   return (
     <>
-      <PrintToolbar backUrl={`/kommissionen/${nr}`} />
+      <PrintToolbar backUrl={`/werkstatt/kommissionen/${nr}`} />
       {pages.map((p) => (
         <PaletteSheet
           key={p.palette.idx}
