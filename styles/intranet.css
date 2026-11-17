@@ -108,9 +108,10 @@ a.sch-app:hover .sch-app-arrow { color: var(--accent); transform: translateX(4px
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sp-6);
-  align-items: start;
+  align-items: stretch;
 }
 .sch-block { padding: var(--sp-6); border: 1px solid var(--border); background: var(--bg-raised); }
+.sch-block { min-width: 0; }
 .sch-block-head { display: flex; align-items: end; justify-content: space-between; gap: var(--sp-5); }
 .sch-block-head h2 { margin: 8px 0 0; font-family: var(--font-display); font-size: 26px; font-weight: 400; }
 .sch-block-head a { color: var(--accent); font-size: 13px; text-decoration: none; white-space: nowrap; }

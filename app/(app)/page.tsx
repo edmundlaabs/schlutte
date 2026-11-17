@@ -123,6 +123,7 @@ export default async function StartPage({
             </div>
             <div className="sch-info">
               <ListTile
+                bare
                 heading="Events"
                 items={events}
                 isAdmin={isAdmin}
@@ -145,6 +146,7 @@ export default async function StartPage({
             </div>
             <div className="sch-info">
               <ListTile
+                bare
                 heading="Geburtstage"
                 items={birthdays}
                 isAdmin={isAdmin}
