@@ -26,10 +26,10 @@ export default async function EditOberflaechePage({
     <div style={{ padding: "40px 56px 80px", display: "flex", flexDirection: "column", gap: 32, maxWidth: 1240, margin: "0 auto", width: "100%" }}>
       <div>
         <Link
-          href={`/kommissionen/${commission.no}`}
+          href="/personal"
           style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.18em", color: "var(--fg-muted)", textTransform: "uppercase", textDecoration: "none" }}
         >
-          ← Kommission {commission.no}
+          ← Büro/Personal
         </Link>
         <span className="grb-eyebrow" style={{ display: "block", marginTop: 18 }}>
           Dokument bearbeiten

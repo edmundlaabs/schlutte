@@ -14,7 +14,7 @@ export default async function OberflaecheDocPrintPage({
 
   return (
     <>
-      <PrintToolbar backUrl={`/kommissionen/${data.commissionNo}/dokumente/oberflaeche/${id}/bearbeiten`} />
+      <PrintToolbar backUrl={`/personal/oberflaeche/${data.commissionNo}/${id}/bearbeiten`} />
       <OberflaecheSheets data={data.formData} />
     </>
   );

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getCommissions } from "@/lib/data/commissions";
 import { CommissionSelect } from "@/components/commission/CommissionSelect";
-import { Icon } from "@/components/ui/Icon";
 
 export default async function CreateOberflaecheSelectPage() {
   const commissions = await getCommissions();
@@ -21,7 +20,7 @@ export default async function CreateOberflaecheSelectPage() {
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
           <Link
-            href="/"
+            href="/personal"
             style={{
               fontFamily: "var(--font-mono)",
               fontSize: 11,
@@ -31,7 +30,7 @@ export default async function CreateOberflaecheSelectPage() {
               textDecoration: "none",
             }}
           >
-            ← Dashboard
+            ← Büro/Personal
           </Link>
           <span className="grb-eyebrow" style={{ display: "block", marginTop: 18 }}>
             Auftragsoberfläche erstellen
@@ -43,12 +42,9 @@ export default async function CreateOberflaecheSelectPage() {
             Für welche Kommission soll die Auftragsoberfläche angelegt werden?
           </p>
         </div>
-        <Link href="/kommissionen/neu" className="grb-btn grb-btn-quiet">
-          <Icon name="plus" size={14} /> Neue Kommission
-        </Link>
       </div>
 
-      <CommissionSelect commissions={commissions} documentType="oberflaeche" />
+      <CommissionSelect commissions={commissions} documentType="oberflaeche" formBase="/personal/oberflaeche" />
     </div>
   );
 }

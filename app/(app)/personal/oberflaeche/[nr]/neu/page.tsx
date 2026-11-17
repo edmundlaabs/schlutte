@@ -21,10 +21,10 @@ export default async function NewOberflaechePage({
     <div style={{ padding: "40px 56px 80px", display: "flex", flexDirection: "column", gap: 32, maxWidth: 1240, margin: "0 auto", width: "100%" }}>
       <div>
         <Link
-          href={`/kommissionen/${commission.no}/dokumente/neu`}
+          href="/personal/oberflaeche"
           style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.18em", color: "var(--fg-muted)", textTransform: "uppercase", textDecoration: "none" }}
         >
-          ← Dokumenttyp wählen
+          ← Kommission wählen
         </Link>
         <span className="grb-eyebrow" style={{ display: "block", marginTop: 18 }}>
           Auftragsoberfläche (Muster)

@@ -20,6 +20,7 @@ export async function saveOberflaecheAction(
       finalDocId = await createOberflaecheDocument(commissionNo, formData);
     }
     revalidatePath(`/kommissionen/${commissionNo}`);
+    revalidatePath("/personal");
     revalidatePath("/");
     return { success: true, documentId: finalDocId };
   } catch (e) {

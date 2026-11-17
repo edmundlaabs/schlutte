@@ -3,7 +3,6 @@ import { Icon } from "@/components/ui/Icon";
 const TEMPLATES = [
   { id: "laufzettel-v1", name: "Palettenlabel intern · Standard", kind: "Palettenlabel intern", status: "Aktiv", updated: "2026-05-12" },
   { id: "palette-v1", name: "Palettenversand-Label · Klassisch", kind: "Palettenversand-Label", status: "Aktiv", updated: "2026-05-12" },
-  { id: "oberflaeche-v1", name: "Auftragsoberfläche (Muster)", kind: "Auftragsoberfläche", status: "Aktiv", updated: "2026-11-17" },
 ];
 
 export default function VorlagenPage() {

@@ -103,7 +103,7 @@ export function OberflaecheForm({
       return;
     }
     setIsSaved(true);
-    router.push(`/print/oberflaeche/document/${result.documentId}`);
+    router.push(`/print-personal/oberflaeche/document/${result.documentId}`);
     router.refresh();
   };
 
@@ -197,7 +197,7 @@ export function OberflaecheForm({
             <Icon name="print" size={14} />
             {isSaved ? "Weiterleitung..." : isSaving ? "Wird gespeichert..." : "Speichern & drucken"}
           </button>
-          <Link href={`/kommissionen/${commission.no}`} className="grb-btn grb-btn-quiet">
+          <Link href="/personal/oberflaeche" className="grb-btn grb-btn-quiet">
             Abbrechen
           </Link>
         </div>

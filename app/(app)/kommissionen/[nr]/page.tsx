@@ -198,7 +198,7 @@ export default async function CommissionDetailPage({
           ) : null}
           <Link
             className="grb-btn grb-btn-ghost"
-            href={`/kommissionen/${commission.no}/dokumente/oberflaeche/neu`}
+            href={`/personal/oberflaeche/${commission.no}/neu`}
           >
             <Icon name="doc-stripe" size={14} /> Auftragsoberfläche
           </Link>
@@ -502,7 +502,7 @@ export default async function CommissionDetailPage({
           index={oberflaecheDocs.length > 0 ? `${oberflaecheDocs.length} Stück` : undefined}
           action={
             <Link
-              href={`/kommissionen/${commission.no}/dokumente/oberflaeche/neu`}
+              href={`/personal/oberflaeche/${commission.no}/neu`}
               className="grb-btn-link"
               style={{ fontSize: 11 }}
             >
@@ -530,7 +530,7 @@ export default async function CommissionDetailPage({
                 Geölt, gebeizt, lackiert — A5-Label, zwei pro A4-Blatt.
               </div>
             </div>
-            <Link href={`/kommissionen/${commission.no}/dokumente/oberflaeche/neu`} className="grb-btn grb-btn-ghost">
+            <Link href={`/personal/oberflaeche/${commission.no}/neu`} className="grb-btn grb-btn-ghost">
               <Icon name="plus" size={14} /> Auftragsoberfläche anlegen
             </Link>
           </div>
@@ -556,14 +556,14 @@ export default async function CommissionDetailPage({
                   <td className="mono" style={{ color: "var(--accent)" }}>{d.by}</td>
                   <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                     <Link
-                      href={`/kommissionen/${commission.no}/dokumente/oberflaeche/${d.id}/bearbeiten`}
+                      href={`/personal/oberflaeche/${commission.no}/${d.id}/bearbeiten`}
                       style={{ padding: "4px 8px", color: "var(--fg-muted)" }}
                       title="Bearbeiten"
                     >
                       <Icon name="edit" size={14} />
                     </Link>
                     <Link
-                      href={`/print/oberflaeche/document/${d.id}`}
+                      href={`/print-personal/oberflaeche/document/${d.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ padding: "4px 8px", color: "var(--fg)" }}

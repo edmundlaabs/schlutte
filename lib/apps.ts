@@ -33,7 +33,7 @@ export type AppDefinition = {
 export const APPS: readonly AppDefinition[] = [
   { key: "gerda", title: "Gerda", enforcement: "datenbank", live: true },
   { key: "werkstatt", title: "Druckvorlagen Werkstatt", enforcement: "intern", live: true },
-  { key: "personal", title: "Druckvorlagen Personal", enforcement: "intern", live: false },
+  { key: "personal", title: "Druckvorlagen Büro/Personal", enforcement: "intern", live: true },
   { key: "warenbestand", title: "Warenbestand WERK 2", enforcement: "kachel", live: true },
   { key: "bestellliste", title: "Bestellliste", enforcement: "intern", live: true },
   { key: "urlaub", title: "Urlaubsantrag", enforcement: "intern", live: false },
