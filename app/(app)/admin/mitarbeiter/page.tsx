@@ -20,6 +20,7 @@ export default async function MitarbeiterPage() {
 
   return (
     <div
+      className="m-page"
       style={{
         padding: "40px 56px 80px",
         maxWidth: 1100,
@@ -29,6 +30,7 @@ export default async function MitarbeiterPage() {
     >
       {/* Header */}
       <div
+        className="m-hero"
         style={{
           display: "flex",
           alignItems: "flex-end",
@@ -59,7 +61,10 @@ export default async function MitarbeiterPage() {
             erscheinen nicht mehr in Auswahlfeldern.
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="m-btnrow" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <a href="/print/app-aushang" target="_blank" rel="noreferrer" className="grb-btn">
+            Aushang „Schlutte aufs Handy“
+          </a>
           <Link href="/admin/zugaenge" className="grb-btn">
             Zugänge (App-Matrix)
           </Link>

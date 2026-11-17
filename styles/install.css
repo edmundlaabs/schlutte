@@ -122,3 +122,20 @@
   cursor: pointer;
 }
 @media print { .install-hint, .install-backdrop { display: none !important; } }
+
+/* Seite /app (ohne Shell) */
+.install-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(24px, env(safe-area-inset-top, 0px)) 16px max(24px, env(safe-area-inset-bottom, 0px));
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+}
+.install-page-card { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 14px; }
+.install-page-logo { height: 28px; width: auto; align-self: flex-start; margin-bottom: 18px; }
+:root[data-theme="dark"] .install-page-logo { filter: invert(1) brightness(1.6); }
+.install-page h1 { margin: 0 0 6px; font-family: var(--font-display); font-size: 34px; font-weight: 300; line-height: 1.1; }
+.install-page .install-kicker { margin-bottom: 0; }
