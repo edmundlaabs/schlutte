@@ -33,7 +33,7 @@ export async function getCommissions(): Promise<Commission[]> {
     const counts = await getDocumentCountsByCommission();
 
     return data.map((item) => {
-      const c = counts.get(item.id) ?? { laufzettel: 0, palette: 0 };
+      const c = counts.get(item.id) ?? { laufzettel: 0, palette: 0, oberflaeche: 0 };
       return {
         no: item.commission_number,
         client: item.customer_name,
@@ -41,9 +41,10 @@ export async function getCommissions(): Promise<Commission[]> {
         status: "in-progress",
         updated: formatDate(item.updated_at || item.created_at),
         owner: item.created_by_initials || "EDL",
-        docs: c.laufzettel + c.palette,
+        docs: c.laufzettel + c.palette + c.oberflaeche,
         laufzettelCount: c.laufzettel,
         paletteCount: c.palette,
+        oberflaecheCount: c.oberflaeche,
         note: item.notes || "",
       };
     });
@@ -113,7 +114,7 @@ export async function searchCommissions(query: string): Promise<Commission[]> {
     const counts = await getDocumentCountsByCommission();
 
     return data.map((item) => {
-      const c = counts.get(item.id) ?? { laufzettel: 0, palette: 0 };
+      const c = counts.get(item.id) ?? { laufzettel: 0, palette: 0, oberflaeche: 0 };
       return {
         no: item.commission_number,
         client: item.customer_name,
@@ -121,9 +122,10 @@ export async function searchCommissions(query: string): Promise<Commission[]> {
         status: "in-progress",
         updated: formatDate(item.updated_at || item.created_at),
         owner: item.created_by_initials || "EDL",
-        docs: c.laufzettel + c.palette,
+        docs: c.laufzettel + c.palette + c.oberflaeche,
         laufzettelCount: c.laufzettel,
         paletteCount: c.palette,
+        oberflaecheCount: c.oberflaeche,
         note: item.notes || "",
       };
     });

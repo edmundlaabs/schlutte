@@ -10,7 +10,7 @@ export function CommissionSelect({
   documentType,
 }: {
   commissions: Commission[];
-  documentType: "laufzettel" | "palette";
+  documentType: "laufzettel" | "palette" | "oberflaeche";
 }) {
   const [query, setQuery] = useState("");
 

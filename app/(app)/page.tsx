@@ -153,11 +153,12 @@ export default async function DashboardPage({
         <section>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
             <span className="grb-eyebrow">Dokument für bestehende Kommission erstellen</span>
-            <span className="grb-index">01 / 02</span>
+            <span className="grb-index">01 / 03</span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
             <DashTile idx="01" title="Palettenlabel intern" hint="Gewerke-Stationen, Stückliste, Maße." icon="pallet-boards" href="/dokument-erstellen/laufzettel" />
             <DashTile idx="02" title="Palettenversand-Label" hint="Versand · Beschriftung 1 von n. Mehrfachdruck." icon="truck" href="/dokument-erstellen/palette" />
+            <DashTile idx="03" title="Auftragsoberfläche (Muster)" hint="Geölt · Gebeizt · Lackiert. A5, 2 Labels je A4-Blatt." icon="doc-stripe" href="/dokument-erstellen/oberflaeche" />
           </div>
         </section>
 
@@ -202,7 +203,7 @@ export default async function DashboardPage({
                     </div>
                     <Status value={k.status} />
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
-                      {k.laufzettelCount ?? 0} Laufz. · {k.paletteCount ?? 0} Pal.
+                      {k.laufzettelCount ?? 0} Laufz. · {k.paletteCount ?? 0} Pal. · {k.oberflaecheCount ?? 0} Ob.
                     </span>
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)", letterSpacing: "0.06em" }}>
                       {k.updated}
@@ -248,7 +249,7 @@ export default async function DashboardPage({
                     </div>
                     <Status value={k.status} />
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
-                      {k.laufzettelCount ?? 0} Laufz. · {k.paletteCount ?? 0} Pal.
+                      {k.laufzettelCount ?? 0} Laufz. · {k.paletteCount ?? 0} Pal. · {k.oberflaecheCount ?? 0} Ob.
                     </span>
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)", letterSpacing: "0.06em" }}>
                       {k.updated}

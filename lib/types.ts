@@ -28,6 +28,8 @@ export type Commission = {
   laufzettelCount?: number;
   /** Anzahl Paletten-Dokumente dieser Kommission. */
   paletteCount?: number;
+  /** Anzahl Auftragsoberfläche-Dokumente dieser Kommission. */
+  oberflaecheCount?: number;
   note?: string;
 };
 
@@ -145,7 +147,36 @@ export type Material = {
   dim: string;
 };
 
-export type DocumentKind = "laufzettel" | "palette";
+/** Auftragsoberfläche (Muster): ein Dokument, `labelCount` identische A5-Kopien. */
+export type OberflaecheFormData = {
+  customer: string;
+  commissionNo: string;
+  position: string;
+  woodType: string;
+  oiled: boolean;
+  stained: boolean;
+  lacquered: boolean;
+  /** Je genau 3 Einträge (1.–3. Ölung). */
+  oilSteps: string[];
+  /** Je genau 3 Einträge (Farbton 1–3). */
+  stainSteps: string[];
+  /** Je genau 3 Einträge (1.–3. Lackschicht). */
+  lacquerSteps: string[];
+  /** Freitext, mehrzeilig, max. 3 Zeilen. */
+  preparation: string;
+  /** Optional, wird sonst handschriftlich ergänzt. */
+  date?: string;
+  /** Anzahl identischer Labels (Integer, min. 1). */
+  labelCount: number;
+  employeeInitials: string;
+};
+
+export type OberflaechePrintData = {
+  formData: OberflaecheFormData;
+  commissionNo: string;
+};
+
+export type DocumentKind = "laufzettel" | "palette" | "oberflaeche";
 
 export type CommissionDocument = {
   id: string;
@@ -155,7 +186,7 @@ export type CommissionDocument = {
   client: string;
   stamp: string;
   by: string;
-  formData?: LaufzettelFormData | PaletteFormData;
+  formData?: LaufzettelFormData | PaletteFormData | OberflaecheFormData;
 };
 
 export type LaufzettelPrintData = {
@@ -177,9 +208,9 @@ export type PalettePrintPage = {
 export type Document = {
   id: string;
   commission_id: string;
-  document_type: "laufzettel" | "palette";
+  document_type: "laufzettel" | "palette" | "oberflaeche";
   title: string;
-  form_data: LaufzettelFormData | PaletteFormData;
+  form_data: LaufzettelFormData | PaletteFormData | OberflaecheFormData;
   created_by_initials: string;
   created_at: string;
   updated_at: string;

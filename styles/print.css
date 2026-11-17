@@ -105,3 +105,67 @@
     print-color-adjust: exact;
   }
 }
+
+
+/* =========================================================================
+   Imposition — Auftragsoberfläche (Muster)
+   A4 quer (297 × 210 mm), je Blatt zwei A5-Labels (148 × 210 mm) nebeneinander,
+   100 % Größe, keine Skalierung. Nur für diese Vorlage; .print-sheet bleibt unberührt.
+   ========================================================================= */
+.imposition-sheet {
+  width: 297mm;
+  height: 210mm;
+  display: grid;
+  grid-template-columns: 148.5mm 148.5mm;
+  background: #ffffff;
+  color: #000;
+  color-scheme: light;
+  box-shadow: 0 30px 80px -30px rgba(14, 14, 13, 0.45);
+  flex-shrink: 0;
+  position: relative;
+}
+/* Schnittmarken: 1 cm lang, 1 pt breit, oben und unten auf der Mittellinie (148,5 mm). */
+.imposition-mark {
+  position: absolute;
+  left: calc(148.5mm - 0.5pt);
+  width: 1pt;
+  height: 1cm;
+  background: #000;
+  pointer-events: none;
+}
+.imposition-mark--top { top: 0; }
+.imposition-mark--bottom { bottom: 0; }
+.imposition-slot {
+  width: 148.5mm;
+  height: 210mm;
+  overflow: hidden;
+}
+@media screen {
+  /* Nur Bildschirm: Label-Rahmen und Mittellinie sichtbar machen — nicht im Druck. */
+  .imposition-slot .oberflaeche-label {
+    outline: 1px dashed rgba(0, 0, 0, 0.18);
+    outline-offset: -1px;
+  }
+}
+@media print {
+  .imposition-sheet {
+    width: 297mm;
+    height: 210mm;
+    max-height: 210mm;
+    overflow: hidden;
+    box-shadow: none !important;
+    page-break-after: always;
+    break-after: page;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .imposition-sheet:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+  .imposition-sheet,
+  .imposition-sheet * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
