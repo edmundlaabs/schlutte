@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
+@import "tailwindcss/utilities.css";
 
 /* =========================================================================
    GRABNER DESIGN — Foundation tokens (Architectural Luxury)
@@ -214,7 +214,7 @@
   background: var(--gd-stone-500);
 }
 
-@layer utilities {
+@media all {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -224,14 +224,18 @@
   }
 }
 
-/* Ersatz für Tailwinds Preflight, nur innerhalb von Gerda (die Schlutte hat eigene Basisstyles). */
-.gerda-root { background: var(--gd-paper); }
-.gerda-root *, .gerda-root *::before, .gerda-root *::after { box-sizing: border-box; border: 0 solid; }
-.gerda-root button, .gerda-root input, .gerda-root select, .gerda-root textarea { font: inherit; color: inherit; letter-spacing: inherit; margin: 0; }
-.gerda-root button { background: transparent; cursor: pointer; }
-.gerda-root h1, .gerda-root h2, .gerda-root h3, .gerda-root h4, .gerda-root p, .gerda-root ul, .gerda-root ol { margin: 0; font-size: inherit; font-weight: inherit; }
-.gerda-root ul, .gerda-root ol { list-style: none; padding: 0; }
-.gerda-root img, .gerda-root svg { display: block; vertical-align: middle; }
-.gerda-root img { max-width: 100%; height: auto; }
-.gerda-root table { border-collapse: collapse; }
-.gerda-root a { color: inherit; text-decoration: inherit; }
+/* Ersatz für Tailwinds Preflight, nur innerhalb von Gerda.
+   Bewusst mit :where() (Spezifität 0 bzw. nur das Element), damit Tailwind-Klassen gewinnen und die
+   globalen Element-Regeln der Schlutte (h1–h4, p in tokens.css) in Gerda nicht durchschlagen. */
+.gerda-root { background: var(--gd-paper); color: var(--gd-ink); font-family: var(--font-sans); line-height: 1.5; }
+:where(.gerda-root) *, :where(.gerda-root) *::before, :where(.gerda-root) *::after { box-sizing: border-box; margin: 0; padding: 0; border: 0 solid; }
+:where(.gerda-root) button, :where(.gerda-root) input, :where(.gerda-root) select, :where(.gerda-root) textarea { font: inherit; color: inherit; letter-spacing: inherit; background: transparent; border-radius: 0; }
+:where(.gerda-root) button { cursor: pointer; }
+:where(.gerda-root) h1, :where(.gerda-root) h2, :where(.gerda-root) h3, :where(.gerda-root) h4, :where(.gerda-root) p, :where(.gerda-root) blockquote {
+  font: inherit; letter-spacing: inherit; color: inherit; margin: 0; max-width: none; text-transform: none;
+}
+:where(.gerda-root) ul, :where(.gerda-root) ol { list-style: none; }
+:where(.gerda-root) img, :where(.gerda-root) svg { display: block; vertical-align: middle; }
+:where(.gerda-root) img { max-width: 100%; height: auto; }
+:where(.gerda-root) table { border-collapse: collapse; text-indent: 0; border-color: inherit; }
+:where(.gerda-root) a { color: inherit; text-decoration: inherit; }
