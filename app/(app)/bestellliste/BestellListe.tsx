@@ -152,7 +152,7 @@ export function BestellListe({
   const inputStyle = { width: "100%" } as const;
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1.55fr 1fr", gap: 40, alignItems: "start" }}>
+    <div className="m-grid-1" style={{ display: "grid", gridTemplateColumns: "1.55fr 1fr", gap: 40, alignItems: "start" }}>
       {/* LEFT: form + open orders + place button */}
       <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
         {/* ---- Form ---- */}
@@ -182,7 +182,7 @@ export function BestellListe({
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="m-grid-1" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <Field label="Lieferant *">
               <select className="grb-input" style={inputStyle} value={f.supplier} onChange={(e) => set("supplier", e.target.value)} required>
                 <option value="">— wählen —</option>
@@ -214,7 +214,7 @@ export function BestellListe({
             <input className="grb-input" value={f.article} onChange={(e) => set("article", e.target.value)} placeholder="z. B. Spanplattenschrauben 4×40" />
           </Field>
 
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16 }}>
+          <div className="m-grid-1" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16 }}>
             <Field label="Artikelnummer">
               <input className="grb-input" value={f.articleNumber} onChange={(e) => set("articleNumber", e.target.value)} placeholder="z. B. 0153 40" />
             </Field>
@@ -223,7 +223,7 @@ export function BestellListe({
             </Field>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16 }}>
+          <div className="m-grid-1" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16 }}>
             <Field label="Bemerkung">
               <input className="grb-input" value={f.note} onChange={(e) => set("note", e.target.value)} placeholder="Optional" />
             </Field>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
+import "@/styles/mobile.css";
 import { AppShell } from "@/components/shell/AppShell";
 import { appAccessOf } from "@/lib/auth/app-access";
 import { hasAdminRights } from "@/lib/auth/app-role";

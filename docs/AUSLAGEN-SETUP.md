@@ -34,9 +34,14 @@ Ohne API-Schlüssel lassen sich Belege manuell erfassen. PDF-Abrechnungen könne
 
 Originalbelege aufbewahren und bei Bedarf im Original vorlegen. Bei Beträgen über 250 € auf eine vollständige Rechnung mit Firmenanschrift achten. Die App macht keine Aussage darüber, ob ein digitalisierter Beleg die papiergebundene Aufbewahrung im konkreten Fall ersetzen darf.
 
-## iPhone ohne App Store
+## Schlutte aufs Handy (iPhone und Android)
 
-Die Schlutte-Webadresse in **Safari** unter `/auslagen` öffnen. Über **Teilen → Zum Home-Bildschirm** wird „Belege“ installiert und startet direkt in diesem Bereich. Beim ersten Start kann eine erneute Anmeldung nötig sein.
+Auslagen ist Teil der Schlutte und keine eigene App mehr; es gibt nur noch ein Manifest (`public/schlutte.webmanifest`). Die Einrichtung erklärt die öffentliche Seite **`/app`** (QR-Code, Aushang unter `/print/app-aushang`, Link im Admin-Bereich) und das Sheet im Avatar-Menü („Als App“).
+
+- **iPhone (Safari):** Teilen → **Zum Home-Bildschirm** → **Hinzufügen**. Andere Browser (Chrome, In-App-Browser) installieren unzuverlässig: Link kopieren und in Safari öffnen.
+- **Android (Chrome/Edge):** **App installieren** bzw. ⋮ → **App installieren** / **Zum Startbildschirm hinzufügen**.
+- Die App startet auf der Startseite (`/`); Schnellzugriffe (Android, lange tippen): „Beleg erfassen“ und „Bestellliste“. Beim ersten Start ist eine Anmeldung nötig.
+- Die Adresse im QR-Code kommt aus `NEXT_PUBLIC_APP_URL` (sonst die aktuelle Adresse).
 
 ## Prüfung vor Freigabe
 

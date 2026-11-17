@@ -48,9 +48,10 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isLoginRoute = path === "/login";
-  // Passwort-Recovery muss ohne Anmeldung erreichbar sein (Link aus der E-Mail).
+  // Passwort-Recovery muss ohne Anmeldung erreichbar sein (Link aus der E-Mail),
+  // ebenso die Einrichtungsseite /app (Ziel des QR-Codes).
   const isPublicRoute =
-    isLoginRoute || path === "/passwort-vergessen" || path === "/passwort-neu";
+    isLoginRoute || path === "/passwort-vergessen" || path === "/passwort-neu" || path === "/app";
 
   // Redirects übernehmen die ggf. soeben erneuerten Session-Cookies.
   const redirectTo = (url: URL) => {

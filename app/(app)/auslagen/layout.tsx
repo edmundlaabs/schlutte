@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   manifest: "/schlutte.webmanifest",
   appleWebApp: { capable: true, title: "Schlutte", statusBarStyle: "default" },
   icons: {
-    apple: [{ url: "/icons/belege-180.png", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/icons/schlutte-180.png", sizes: "180x180", type: "image/png" }],
   },
   // Next rendert für capable nur "mobile-web-app-capable"; ältere iOS-Versionen lesen das Apple-Tag.
   other: { "apple-mobile-web-app-capable": "yes" },

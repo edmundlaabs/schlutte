@@ -195,3 +195,16 @@ Die Tabellen wurden verifiziert und die Data-Schicht auf das reale Schema angepa
 - **Redirects:** alte URLs leiten per 301 in `next.config.ts` (`redirects()`) um: `/start`, `/kommissionen/*`, `/archiv/*`, `/dokument-erstellen/*`, `/mitarbeiter/*`, `/mitarbeiter/zugaenge`, `/vorlagen`.
 - **Zugriff:** `requireAppAccess(key)` in jedem App-Layout (neu auch Werkstatt und Warenbestand); RLS unverändert. `/` verlangt nur Anmeldung, keine App-Freischaltung.
 - **Gerda:** läuft im Rahmen; Gerdas eigene Ansichts-Tabs (Personen) bleiben als zweite Leiste unter der Shell, Logo und „Zurück zum Intranet“ entfallen. Gerda-CSS ist auf `.gerda-root` begrenzt.
+
+
+## Schlutte als Handy-App (Version 0.4.0)
+
+- **Eine App, ein Manifest:** `public/schlutte.webmanifest` mit `start_url: "/"`, `id` bleibt `"/start"` (sonst gilt es auf Android als neue App). `auslagen.webmanifest` und die Beleg-Icons sind entfernt; Auslagen ist Teil der Schlutte.
+- **Icons:** eigenes g-Zeichen aus dem Schlutte-Logo auf dunklem Grund (`public/icons/schlutte-{180,192,512,maskable-512}.png`), Quelle als SVG in `docs/icon-entwurf/`.
+- **Einrichtung gerätespezifisch** (`lib/install.ts`, `components/install/*`): iOS Safari, iOS anderer Browser (Hinweis „In Safari öffnen“), Android (`beforeinstallprompt`, sonst ⋮-Anleitung), Desktop (QR-Code). Das Sheet liegt einmal in der `AppShell` und wird per Ereignis geöffnet, weil das Avatar-Menü bei Klick außerhalb schließt. Am Desktop ist es eine zentrierte Karte statt eines Popovers im Menü.
+- **Öffentlich:** `/app` (in `proxy.ts` freigegeben, ohne Shell); der QR-Code zeigt auf `<APP_URL>/app`. App-URL aus `NEXT_PUBLIC_APP_URL`, Fallback aktuelle Origin.
+- **Hinweis-Streifen:** nur Handy, nicht installiert, nicht auf `/login` und `/print*`; nach „×“ 30 Tage Ruhe (`localStorage`).
+- **Kein Service Worker, kein Offline-Modus:** iOS braucht keinen für den Home-Bildschirm; Daten müssen aktuell sein.
+- **Mobil-Layout:** `styles/mobile.css` (unter 768 px) überschreibt Inline-Maße gezielt per `!important`; Hilfsklassen `m-page`, `m-hero`, `m-grid-1`, `m-krow`. Gerda-Anpassungen nur in `gerda.css` unter `.gerda-root`.
+- **Gerda-HTTP-500:** `localStorage` im `useState`-Initialisierer von `TaskBoard` lief beim Server-Rendering; jetzt erst nach dem Mount.
+

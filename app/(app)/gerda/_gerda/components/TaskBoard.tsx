@@ -76,18 +76,32 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({ person }) => {
   
   // Local State
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<SortType>(() => {
-    const saved = localStorage.getItem('taskboard_sort');
-    return (saved as SortType) || 'manual';
-  });
+  // localStorage gibt es beim Server-Rendering nicht → erst nach dem Mount lesen (sonst HTTP 500).
+  const [sortBy, setSortBy] = useState<SortType>('manual');
+  const [sortLoaded, setSortLoaded] = useState(false);
   const [showDone, setShowDone] = useState(false);
   const [groupByCustomer, setGroupByCustomer] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('liste');
 
   useEffect(() => {
-    localStorage.setItem('taskboard_sort', sortBy);
-  }, [sortBy]);
+    try {
+      const saved = localStorage.getItem('taskboard_sort');
+      if (saved) setSortBy(saved as SortType);
+    } catch {
+      /* Speicher gesperrt (z. B. privater Modus) → Standard */
+    }
+    setSortLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!sortLoaded) return;
+    try {
+      localStorage.setItem('taskboard_sort', sortBy);
+    } catch {
+      /* ignorieren */
+    }
+  }, [sortBy, sortLoaded]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -758,7 +772,7 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({ person }) => {
               </span>
             </div>
             <h2
-              className="font-light text-[#0E0E0D] tracking-tight flex items-start gap-2 mb-3 leading-[1.05]"
+              className="font-light text-[#0E0E0D] tracking-tight flex flex-wrap items-start gap-2 mb-3 leading-[1.05]"
               style={{ fontSize: 'clamp(2.5rem, 5vw, 5rem)' }}
             >
               {isOverview ? (

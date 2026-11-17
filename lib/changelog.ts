@@ -12,6 +12,17 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.4.0",
+    date: "17.11.2026",
+    changes: [
+      "Schlutte aufs Handy: „Als App“ im Avatar-Menü zeigt je nach Gerät (iPhone Safari, iPhone mit anderem Browser, Android, Computer) die passende Anleitung; auf dem Handy erinnert ein Hinweis einmalig daran",
+      "Neue Einrichtungsseite /app ohne Anmeldung und druckbarer Aushang mit QR-Code (Admin → Mitarbeiter)",
+      "Eigenes Schlutte-Icon statt Beleg-Icon; die installierte App startet auf der Startseite",
+      "Mobil: Werkstatt, Kommissionen, Bestellliste und Gerda laufen nicht mehr über den Bildschirmrand; Eingabefelder zoomen auf dem iPhone nicht mehr",
+      "Gerda: Server-Fehler beim Laden der Seite behoben",
+    ],
+  },
+  {
     version: "0.3.0",
     date: "17.11.2026",
     changes: [
