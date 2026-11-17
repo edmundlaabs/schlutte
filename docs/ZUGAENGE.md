@@ -14,7 +14,7 @@ Stand: 17.11.2026. Die Schlutte ist die zentrale Plattform: ein Login, eine Date
   | App | Art | Wirkung |
   |---|---|---|
   | Druckvorlagen Werkstatt, Bestellliste, Auslagen & Belege | intern | Kachel weg + Seiten serverseitig gesperrt (`requireAppAccess`) |
-  | Gerda | Datenbank | Kachel weg + Row Level Security auf den `gerda_*`-Tabellen (`public.has_app_access('gerda')`) |
+  | Gerda | intern + Datenbank | Modul unter `/gerda` (Layout-Guard `requireAppAccess('gerda')`), zusätzlich RLS auf den `gerda_*`-Tabellen (`public.has_app_access('gerda')`) |
   | PandaCAD | intern | Kachel weg + `/pandacad` serverseitig gesperrt; Downloads über Signed URLs, Storage-RLS mit `has_app_access('pandacad')` |
   | Projekte (nic) | intern, noch nicht live | Kachel erst sichtbar, wenn `live: true` in `lib/apps.ts` |
   | Warenbestand WERK 2 | nur Kachel | Kachel weg — die App selbst prüft (noch) nichts, die URL bleibt direkt erreichbar |
@@ -80,3 +80,10 @@ Stand: 17.11.2026. Die Schlutte ist die zentrale Plattform: ein Login, eine Date
 - „Inaktiv“ sperrt den Login per Ban (Service-Role-Key nötig); laufende Sitzungen enden erst mit dem Token.
 - Gerda und Schlutte liegen auf verschiedenen Domains: gleiches Passwort, aber getrennte
   Anmeldung, bis Gerda ein Modul der Schlutte ist.
+
+## Gerda als Modul (/gerda)
+
+Gerda läuft jetzt in der Schlutte unter `/gerda` (Code: `app/gerda/`, aus der Vite-App `antigravity-list`
+übernommen; gleiche Sitzung, kein zweites Login). Styles: Tailwind v4 nur für diese Route
+(`app/gerda/gerda.css`, ohne Preflight). Die alte Domain `ppl-two.vercel.app` bleibt unverändert bestehen;
+Weiterleitung auf `/gerda` und Abschalten folgen nach dem Test.

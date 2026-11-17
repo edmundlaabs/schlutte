@@ -85,9 +85,8 @@ const TILES: Tile[] = [
     title: "Gerda",
     hint: "Auswertungen und Gesamt-Reports auf einen Blick — Kennzahlen erfassen, analysieren und exportieren.",
     meta: "Auswertung · Report",
-    href: "https://ppl-two.vercel.app/",
+    href: "/gerda",
     live: true,
-    external: true,
   },
   {
     no: "02",
