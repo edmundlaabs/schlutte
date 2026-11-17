@@ -103,10 +103,10 @@ a.sch-app:hover .sch-app-arrow { color: var(--accent); transform: translateX(4px
   padding: 2px 8px;
 }
 
-/* ---------- Zwei Blöcke: Zu erledigen · Termine und Geburtstage ---------- */
+/* ---------- Drei Blöcke in einer Reihe: Zu erledigen · Events · Geburtstage ---------- */
 .sch-blocks {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sp-6);
   align-items: start;
 }
