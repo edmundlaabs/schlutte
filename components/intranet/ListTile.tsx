@@ -8,6 +8,7 @@ type Result = { error?: string; success?: boolean };
 
 export function ListTile({
   heading,
+  bare = false,
   items,
   isAdmin,
   textLabel,
@@ -18,6 +19,8 @@ export function ListTile({
   onDelete,
 }: {
   heading: string;
+  /** Ohne eigenen Rahmen und Titel (steckt schon in einer Kachel mit Kopf). */
+  bare?: boolean;
   items: UpcomingItem[];
   isAdmin: boolean;
   textLabel: string;
@@ -110,17 +113,17 @@ export function ListTile({
   return (
     <section
       style={{
-        border: "1px solid var(--border-strong)",
-        background: "var(--bg-alt)",
-        padding: "18px 20px",
+        border: bare ? "none" : "1px solid var(--border-strong)",
+        background: bare ? "transparent" : "var(--bg-alt)",
+        padding: bare ? 0 : "18px 20px",
         display: "flex",
         flexDirection: "column",
         gap: 14,
       }}
     >
       {/* Kopf */}
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
-        <h3
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: bare ? "flex-end" : "space-between", gap: 12 }}>
+        {!bare && <h3
           style={{
             fontFamily: "var(--font-display)",
             fontSize: 20,
@@ -130,7 +133,7 @@ export function ListTile({
           }}
         >
           {heading}
-        </h3>
+        </h3>}
         {isAdmin && editing !== "new" && (
           <button
             onClick={openNew}
@@ -210,29 +213,28 @@ export function ListTile({
             <li
               key={it.id}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "9px 0",
+                display: "grid",
+                gridTemplateColumns: "84px minmax(0, 1fr) auto",
+                alignItems: "start",
+                columnGap: 12,
+                padding: "10px 0",
                 borderTop: "1px solid var(--border)",
                 fontFamily: "var(--font-sans)",
                 fontSize: 14,
                 color: "var(--fg)",
               }}
             >
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--fg)", whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--fg)", whiteSpace: "nowrap", paddingTop: 1 }}>
                 {it.dateLabel}
               </span>
-              <span style={{ color: "var(--fg-subtle)" }}>•</span>
-              <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {it.text}
+              <span style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+                <span style={{ overflowWrap: "anywhere", lineHeight: 1.35 }}>{it.text}</span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--fg-muted)" }}>
+                  {it.daysLabel}
+                </span>
               </span>
-              <span style={{ color: "var(--fg-subtle)" }}>•</span>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--fg-muted)", whiteSpace: "nowrap" }}>
-                {it.daysLabel}
-              </span>
-              {isAdmin && (
-                <span style={{ display: "inline-flex", gap: 2, marginLeft: 6 }}>
+              {isAdmin ? (
+                <span style={{ display: "inline-flex", gap: 2 }}>
                   <button
                     onClick={() => openEdit(it)}
                     disabled={isPending}
@@ -250,7 +252,7 @@ export function ListTile({
                     ✕
                   </button>
                 </span>
-              )}
+              ) : <span />}
             </li>
           ))}
         </ul>
