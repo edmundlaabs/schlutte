@@ -140,17 +140,6 @@ const TILES: Tile[] = [
   },
   {
     no: "07",
-    icon: "list",
-    app: "hoellental",
-    title: "Höllental",
-    hint: "Artikelstammnummern für die Höllental-Lifeline Serie vergeben und verwalten.",
-    meta: "Artikelstamm · Lifeline",
-    href: "https://ast-navy.vercel.app/list",
-    live: true,
-    external: true,
-  },
-  {
-    no: "08",
     icon: "receipt",
     app: "auslagen",
     title: "Auslagen & Belege",
@@ -168,7 +157,7 @@ function TileInner({ tile, unreadCount = 0 }: { tile: Tile; unreadCount?: number
       <div className="sch-tile-top">
         <span className="sch-tile-icon">
           <SIcon name={tile.icon} size={34} stroke={1.3} />
-          {tile.no === "08" && unreadCount > 0 && <span className="sch-notification-dot" aria-label={`${unreadCount} ungelesene Anträge`} />}
+          {tile.no === "07" && unreadCount > 0 && <span className="sch-notification-dot" aria-label={`${unreadCount} ungelesene Anträge`} />}
         </span>
         <span className="sch-tile-no">{tile.no}</span>
       </div>

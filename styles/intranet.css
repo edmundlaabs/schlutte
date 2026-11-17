@@ -114,14 +114,14 @@
   flex: 1 1 auto;
   display: flex;
   justify-content: center;
-  padding: var(--sp-10) var(--sp-9) var(--sp-9);
+  padding: var(--sp-7) var(--sp-9) var(--sp-8);
 }
 .sch-inner {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1320px;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-10);
+  gap: var(--sp-7);
 }
 
 /* ---------- Hero ---------- */
@@ -140,7 +140,7 @@
 .sch-greeting {
   font-family: var(--font-display);
   font-weight: 200;
-  font-size: clamp(3rem, 7vw, 6rem);
+  font-size: clamp(2.25rem, 4.5vw, 3.75rem);
   line-height: 1;
   letter-spacing: -0.03em;
   color: var(--fg);
@@ -152,18 +152,18 @@
 }
 .sch-lede {
   font-family: var(--font-sans);
-  font-size: 19px;
+  font-size: 16px;
   font-weight: 300;
   color: var(--fg-muted);
-  margin: 6px 0 0;
+  margin: 4px 0 0;
 }
 
 /* ---------- Info-Sektion (Events / Geburtstage) ---------- */
 .sch-info {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--sp-5);
-  margin-bottom: var(--sp-8);
+  gap: var(--sp-4);
+  margin-bottom: 0;
 }
 
 .sch-claims {
@@ -179,23 +179,24 @@
 .sch-claim-row:hover { color: var(--accent); }
 .sch-claim-name { font-weight: 600; }
 .sch-notification-dot { display: inline-block; flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; background: #d22b2b; box-shadow: 0 0 0 3px var(--bg-raised); }
-.sch-tile-icon .sch-notification-dot { position: absolute; top: 19px; left: 55px; }
+.sch-tile-icon { position: relative; }
+.sch-tile-icon .sch-notification-dot { position: absolute; top: -3px; right: -5px; }
 .sch-notification-dot.is-inline { position: static; vertical-align: middle; margin-left: 5px; }
 
 /* ---------- Tile grid ---------- */
 .sch-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--sp-5);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-4);
 }
 
 .sch-tile {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
-  min-height: 280px;
-  padding: var(--sp-7);
+  gap: var(--sp-4);
+  min-height: 200px;
+  padding: var(--sp-5);
   background: var(--bg-raised);
   border: 1px solid var(--border);
   text-decoration: none;
@@ -261,13 +262,13 @@
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 .sch-tile-title {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: 30px;
-  line-height: 1.08;
+  font-size: 22px;
+  line-height: 1.12;
   letter-spacing: -0.015em;
   color: var(--fg);
   margin: 0;
@@ -275,8 +276,8 @@
 }
 .sch-tile-hint {
   font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.45;
   color: var(--fg-muted);
   margin: 0;
   max-width: 42ch;
@@ -287,7 +288,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: var(--sp-4);
+  padding-top: var(--sp-3);
   border-top: 1px solid var(--hairline);
 }
 .sch-tile-meta {
@@ -346,11 +347,16 @@
 }
 
 /* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .sch-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 900px) {
   .sch-topbar { padding: 0 var(--sp-6); height: 68px; }
   .sch-search { display: none; }
   .sch-main { padding: var(--sp-8) var(--sp-6) var(--sp-7); }
   .sch-grid { grid-template-columns: 1fr; }
+  .sch-tile { min-height: 0; }
   .sch-info { grid-template-columns: 1fr; }
   .sch-user-text { display: none; }
   .sch-claims-head { align-items: start; flex-direction: column; }
