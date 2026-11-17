@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
 import type { Employee } from "@/lib/types";
 import { APP_ROLES, roleLabel } from "@/lib/auth/app-role";
+import { ALL_APP_KEYS, APPS } from "@/lib/apps";
 import { createEmployeeAction, updateEmployeeAction } from "./actions";
 
 type State = { error?: string } | null;
@@ -15,6 +16,8 @@ export function EmployeeForm({
   employee?: Employee;
 }) {
   const isEditing = !!employee?.id;
+  // Bearbeiten: vergebene Apps (Spalte fehlt noch → alle). Neu: keine Vorauswahl.
+  const grantedApps = isEditing ? employee?.app_access ?? ALL_APP_KEYS : [];
 
   // Bind the id for update action
   const boundAction = isEditing
@@ -196,6 +199,41 @@ export function EmployeeForm({
           Kreditkarten-Abgleich und Einstellungen unter „Auslagen &amp; Belege“.
         </span>
       </div>
+
+      {/* App-Berechtigungen */}
+      <fieldset style={{ border: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+        <legend
+          style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-muted)", padding: 0, marginBottom: 10 }}
+        >
+          App-Berechtigungen
+        </legend>
+        <input type="hidden" name="apps_present" value="1" />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "10px 24px", maxWidth: 640 }}>
+          {APPS.map((app) => (
+            <label
+              key={app.key}
+              style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontFamily: "var(--font-sans)", fontSize: 14 }}
+            >
+              <input
+                type="checkbox"
+                name="apps"
+                value={app.key}
+                defaultChecked={grantedApps.includes(app.key)}
+              />
+              <span>
+                {app.title}
+                {!app.live && <span style={{ color: "var(--fg-subtle)" }}> (folgt)</span>}
+                {app.enforcement === "kachel" && <span style={{ color: "var(--fg-subtle)" }}> *</span>}
+              </span>
+            </label>
+          ))}
+        </div>
+        <span style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--fg-subtle)", maxWidth: 640 }}>
+          Legt fest, welche Apps der Mitarbeiter im Intranet sieht und öffnen darf. CEO und Admin
+          haben immer Zugriff auf alle Apps. Gerda prüft die Freischaltung direkt in der Datenbank.
+          * Externe App ohne Anbindung — hier wird nur die Kachel ausgeblendet.
+        </span>
+      </fieldset>
 
       {/* Aktiv */}
       <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>

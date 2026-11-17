@@ -145,6 +145,18 @@ export default function LoginPage() {
             {isSubmitting ? "Wird angemeldet..." : "Anmelden"}
           </button>
         </form>
+
+        <a
+          href="/passwort-vergessen"
+          style={{
+            textAlign: "center",
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            color: "var(--fg-muted)",
+          }}
+        >
+          Passwort vergessen?
+        </a>
       </div>
     </div>
   );

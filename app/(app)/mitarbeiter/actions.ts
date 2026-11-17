@@ -16,7 +16,17 @@ import {
 } from "@/lib/data/auth-admin";
 import { requireAdmin } from "@/lib/auth/admin-guard";
 import { parseAppRole } from "@/lib/auth/app-role";
+import { parseAppKeys } from "@/lib/apps";
 import type { CreateEmployeeInput, UpdateEmployeeInput } from "@/lib/types";
+
+/**
+ * Formular → App-Freischaltungen. Das Formular sendet apps_present, damit
+ * "nichts angehakt" (= keine Apps) von "Feld nicht im Formular" unterscheidbar ist.
+ */
+function appAccessFromForm(formData: FormData) {
+  if (formData.get("apps_present") !== "1") return undefined;
+  return parseAppKeys(formData.getAll("apps"));
+}
 
 export async function createEmployeeAction(
   _prev: { error?: string } | null,
@@ -30,6 +40,7 @@ export async function createEmployeeAction(
     role: parseAppRole(formData.get("role")),
     // Nicht angehakte Checkboxen fehlen im FormData → inaktiv.
     is_active: formData.get("is_active") === "true",
+    app_access: appAccessFromForm(formData),
   };
   const password = ((formData.get("password") as string) ?? "").trim();
 
@@ -71,6 +82,7 @@ export async function updateEmployeeAction(
     email: (formData.get("email") as string) || undefined,
     role: parseAppRole(formData.get("role")),
     is_active: formData.get("is_active") === "true",
+    app_access: appAccessFromForm(formData),
   };
 
   try {
@@ -85,8 +97,9 @@ export async function updateEmployeeAction(
 }
 
 /**
- * Passwort setzen bzw. zurücksetzen. Existiert noch kein Login zur E-Mail des
- * Mitarbeiters, wird es angelegt. Wird vom Bearbeiten-Formular aufgerufen.
+ * Passwort setzen bzw. zurücksetzen. Der Schlutte-Login gilt für alle Apps, die
+ * am selben Supabase-Projekt hängen (auch Gerda). Existiert noch kein Login zur
+ * E-Mail des Mitarbeiters, wird er angelegt.
  */
 export async function setPasswordAction(
   employeeId: string,

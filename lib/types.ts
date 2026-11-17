@@ -1,4 +1,5 @@
 import type { AppRole } from "@/lib/auth/app-role";
+import type { AppKey } from "@/lib/apps";
 
 export type CommissionStatus = "in-progress" | "ready" | "shipped" | "archived";
 
@@ -52,6 +53,12 @@ export type Employee = {
   app_role?: AppRole;
   is_admin?: boolean;
   is_active?: boolean;
+  /**
+   * Vergebene App-Freischaltungen (employees.app_access). undefined = Spalte
+   * fehlt noch (Migration 20261116_app_access.sql) → gilt als "alle Apps".
+   * Effektiver Zugriff: resolveAppAccess() in lib/apps.ts.
+   */
+  app_access?: AppKey[];
   created_at?: string;
   updated_at?: string;
 };
@@ -64,6 +71,8 @@ export type CreateEmployeeInput = {
   role?: AppRole;
   is_admin?: boolean;
   is_active?: boolean;
+  /** Freigeschaltete Apps; undefined = nicht ändern. */
+  app_access?: AppKey[];
 };
 
 export type UpdateEmployeeInput = Partial<CreateEmployeeInput>;

@@ -5,6 +5,7 @@ import { getCommissions, searchCommissions } from "@/lib/data/commissions";
 import { getRecentDocuments } from "@/lib/data/documents";
 import { createClient } from "@/lib/supabase/server";
 import { getGreeting } from "@/lib/utils";
+import { requireAppAccess } from "@/lib/auth/app-access";
 import type { Commission, CommissionDocument } from "@/lib/types";
 
 function DashTile({
@@ -48,6 +49,7 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
+  await requireAppAccess("werkstatt");
   const { q } = await searchParams;
   const searchQuery = q?.trim() || "";
 
