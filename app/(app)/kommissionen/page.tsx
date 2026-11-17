@@ -62,7 +62,7 @@ export default async function KommissionenPage() {
             </div>
             <Status value={k.status} />
             <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)", whiteSpace: "nowrap" }}>
-              {k.laufzettelCount ?? 0} Laufz. · {k.paletteCount ?? 0} Pal.
+              {k.laufzettelCount ?? 0} Laufz. · {k.paletteCount ?? 0} Pal. · {k.oberflaecheCount ?? 0} Ob.
             </span>
             <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)" }}>{k.updated}</span>
             <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)", textAlign: "right" }}>{k.owner}</span>

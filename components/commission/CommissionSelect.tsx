@@ -8,9 +8,12 @@ import type { Commission } from "@/lib/types";
 export function CommissionSelect({
   commissions,
   documentType,
+  formBase,
 }: {
   commissions: Commission[];
-  documentType: "laufzettel" | "palette";
+  documentType: "laufzettel" | "palette" | "oberflaeche";
+  /** Abweichender Formular-Pfad (ohne Kommissionsnummer), z. B. "/personal/oberflaeche" → …/{nr}/neu. */
+  formBase?: string;
 }) {
   const [query, setQuery] = useState("");
 
@@ -25,6 +28,7 @@ export function CommissionSelect({
   });
 
   const getFormUrl = (no: string) => {
+    if (formBase) return `${formBase}/${no}/neu`;
     return `/kommissionen/${no}/dokumente/${documentType}/neu`;
   };
 

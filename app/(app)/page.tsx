@@ -5,6 +5,7 @@ import { getCommissions, searchCommissions } from "@/lib/data/commissions";
 import { getRecentDocuments } from "@/lib/data/documents";
 import { createClient } from "@/lib/supabase/server";
 import { getGreeting } from "@/lib/utils";
+import { requireAppAccess } from "@/lib/auth/app-access";
 import type { Commission, CommissionDocument } from "@/lib/types";
 
 function DashTile({
@@ -48,6 +49,7 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
+  await requireAppAccess("werkstatt");
   const { q } = await searchParams;
   const searchQuery = q?.trim() || "";
 
@@ -202,7 +204,7 @@ export default async function DashboardPage({
                     </div>
                     <Status value={k.status} />
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
-                      {k.laufzettelCount ?? 0} Laufz. · {k.paletteCount ?? 0} Pal.
+                      {k.laufzettelCount ?? 0} Laufz. · {k.paletteCount ?? 0} Pal. · {k.oberflaecheCount ?? 0} Ob.
                     </span>
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)", letterSpacing: "0.06em" }}>
                       {k.updated}
@@ -248,7 +250,7 @@ export default async function DashboardPage({
                     </div>
                     <Status value={k.status} />
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
-                      {k.laufzettelCount ?? 0} Laufz. · {k.paletteCount ?? 0} Pal.
+                      {k.laufzettelCount ?? 0} Laufz. · {k.paletteCount ?? 0} Pal. · {k.oberflaecheCount ?? 0} Ob.
                     </span>
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-subtle)", letterSpacing: "0.06em" }}>
                       {k.updated}

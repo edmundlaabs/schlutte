@@ -65,6 +65,7 @@ export default async function CommissionDetailPage({
 
   const laufzettelDocs = documents.filter((d) => d.kind === "laufzettel");
   const paletteDocs = documents.filter((d) => d.kind === "palette");
+  const oberflaecheDocs = documents.filter((d) => d.kind === "oberflaeche");
   // Action-bar "Palette drucken" points to the newest palette set if available
   const firstPaletteId = paletteDocs.length > 0 ? paletteDocs[0].id : null;
 
@@ -196,6 +197,12 @@ export default async function CommissionDetailPage({
             </Link>
           ) : null}
           <Link
+            className="grb-btn grb-btn-ghost"
+            href={`/personal/oberflaeche/${commission.no}/neu`}
+          >
+            <Icon name="doc-stripe" size={14} /> Auftragsoberfläche
+          </Link>
+          <Link
             className="grb-btn grb-btn-quiet"
             href={`/kommissionen/${commission.no}/bearbeiten`}
           >
@@ -204,7 +211,7 @@ export default async function CommissionDetailPage({
           <DeleteCommissionButton
             commissionNo={commission.no}
             client={commission.client}
-            documentCount={laufzettelDocs.length + paletteDocs.length}
+            documentCount={laufzettelDocs.length + paletteDocs.length + oberflaecheDocs.length}
           />
         </div>
       </header>
@@ -478,6 +485,96 @@ export default async function CommissionDetailPage({
                       commissionNo={commission.no}
                       documentId={d.id}
                       label="Palettenversand-Label"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      {/* ---------- Auftragsoberfläche ---------- */}
+      <section>
+        <SectionHeader
+          eyebrow="Dokumente · Auftragsoberfläche (Muster)"
+          title="Auftragsoberflächen zu dieser Kommission"
+          index={oberflaecheDocs.length > 0 ? `${oberflaecheDocs.length} Stück` : undefined}
+          action={
+            <Link
+              href={`/personal/oberflaeche/${commission.no}/neu`}
+              className="grb-btn-link"
+              style={{ fontSize: 11 }}
+            >
+              Neue Auftragsoberfläche <Icon name="arrow" size={12} />
+            </Link>
+          }
+        />
+
+        {oberflaecheDocs.length === 0 ? (
+          <div
+            style={{
+              border: "1px dashed var(--border-strong)",
+              padding: "24px 28px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 16,
+            }}
+          >
+            <div>
+              <div style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "var(--fg)", fontWeight: 500 }}>
+                Noch keine Auftragsoberfläche angelegt.
+              </div>
+              <div style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--fg-muted)", marginTop: 4 }}>
+                Geölt, gebeizt, lackiert — A5-Label, zwei pro A4-Blatt.
+              </div>
+            </div>
+            <Link href={`/personal/oberflaeche/${commission.no}/neu`} className="grb-btn grb-btn-ghost">
+              <Icon name="plus" size={14} /> Auftragsoberfläche anlegen
+            </Link>
+          </div>
+        ) : (
+          <table className="grb-table">
+            <thead>
+              <tr>
+                <th style={{ width: 30 }} />
+                <th>Bezeichnung</th>
+                <th>Erstellt</th>
+                <th>Von</th>
+                <th style={{ textAlign: "right" }}>Aktion</th>
+              </tr>
+            </thead>
+            <tbody>
+              {oberflaecheDocs.map((d) => (
+                <tr key={d.id}>
+                  <td>
+                    <Icon name="doc-stripe" size={16} stroke={1.25} style={{ color: "var(--fg-muted)" }} />
+                  </td>
+                  <td style={{ fontWeight: 500 }}>{d.label}</td>
+                  <td className="mono">{d.stamp}</td>
+                  <td className="mono" style={{ color: "var(--accent)" }}>{d.by}</td>
+                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                    <Link
+                      href={`/personal/oberflaeche/${commission.no}/${d.id}/bearbeiten`}
+                      style={{ padding: "4px 8px", color: "var(--fg-muted)" }}
+                      title="Bearbeiten"
+                    >
+                      <Icon name="edit" size={14} />
+                    </Link>
+                    <Link
+                      href={`/print-personal/oberflaeche/document/${d.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ padding: "4px 8px", color: "var(--fg)" }}
+                      title="Drucken"
+                    >
+                      <Icon name="print" size={14} />
+                    </Link>
+                    <DeleteDocumentButton
+                      commissionNo={commission.no}
+                      documentId={d.id}
+                      label="Auftragsoberfläche"
                     />
                   </td>
                 </tr>

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import "@/styles/auslagen.css";
 import { getCurrentUserContext, roleLabel } from "@/lib/auth/roles";
 import { InstallAppButton } from "@/components/shell/InstallAppButton";
+import { appAccessOf } from "@/lib/auth/app-access";
 import { AuslagenNav } from "./AuslagenNav";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,7 @@ export default async function AuslagenLayout({ children }: { children: ReactNode
   // Rolle serverseitig ermitteln (steuert nur die Navigation; Seiten prüfen selbst).
   const ctx = await getCurrentUserContext();
   if (!ctx) redirect("/login?next=/auslagen");
+  if (!appAccessOf(ctx).includes("auslagen")) redirect("/start?kein-zugriff=auslagen");
 
   const initials =
     ctx.employee?.initials || (ctx.email ? ctx.email.slice(0, 3).toUpperCase() : "USR");

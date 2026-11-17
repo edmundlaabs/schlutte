@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { UpcomingItem } from "@/lib/types";
+import type { AppKey } from "@/lib/apps";
 import type { InboxClaim } from "@/lib/data/auslagen-inbox";
 import { formatEUR } from "@/lib/auslagen/format";
 import { formatDate } from "@/lib/utils";
@@ -65,6 +66,8 @@ function SIcon({
 
 type Tile = {
   no: string;
+  /** App-Key für die Berechtigungsprüfung (lib/apps.ts). */
+  app: AppKey;
   icon: IconName;
   title: string;
   hint: string;
@@ -78,6 +81,7 @@ const TILES: Tile[] = [
   {
     no: "01",
     icon: "report",
+    app: "gerda",
     title: "Gerda",
     hint: "Auswertungen und Gesamt-Reports auf einen Blick — Kennzahlen erfassen, analysieren und exportieren.",
     meta: "Auswertung · Report",
@@ -88,6 +92,7 @@ const TILES: Tile[] = [
   {
     no: "02",
     icon: "workshop",
+    app: "werkstatt",
     title: "Druckvorlagen Werkstatt",
     hint: "Palettenlabel intern & Palettenversand-Label. Kommissionen verwalten, Dokumente erstellen, drucken und archivieren.",
     meta: "Palettenlabel · Versand-Label",
@@ -97,13 +102,17 @@ const TILES: Tile[] = [
   {
     no: "03",
     icon: "staff",
-    title: "Druckvorlagen Personal",
-    hint: "Vorlagen für Büro & Verwaltung — Bescheinigungen, Aushänge, interne Schreiben.",
-    meta: "Personal · Büro",
+    app: "personal",
+    title: "Druckvorlagen Büro/Personal",
+    hint: "Vorlagen für Büro & Verwaltung — Auftragsoberfläche (Muster), weitere Vorlagen folgen.",
+    meta: "Büro · Personal",
+    href: "/personal",
+    live: true,
   },
   {
     no: "04",
     icon: "inventory",
+    app: "warenbestand",
     title: "Warenbestand WERK 2",
     hint: "Mobiles Kommissionslager — Bestände erfassen, Ein- und Auslagerungen buchen, Kommissionen im Blick behalten.",
     meta: "Lager · Kommission",
@@ -114,6 +123,7 @@ const TILES: Tile[] = [
   {
     no: "05",
     icon: "order",
+    app: "bestellliste",
     title: "Bestellliste",
     hint: "Material, Beschläge und Verbrauch erfassen. Sammelbestellung für die Werkstatt vorbereiten.",
     meta: "Material · Einkauf",
@@ -123,6 +133,7 @@ const TILES: Tile[] = [
   {
     no: "06",
     icon: "vacation",
+    app: "urlaub",
     title: "Urlaubsantrag",
     hint: "Urlaub und Abwesenheit beantragen. Übersicht über Resttage und das Team.",
     meta: "Personal · Abwesenheit",
@@ -130,6 +141,7 @@ const TILES: Tile[] = [
   {
     no: "07",
     icon: "list",
+    app: "hoellental",
     title: "Höllental",
     hint: "Artikelstammnummern für die Höllental-Lifeline Serie vergeben und verwalten.",
     meta: "Artikelstamm · Lifeline",
@@ -140,6 +152,7 @@ const TILES: Tile[] = [
   {
     no: "08",
     icon: "receipt",
+    app: "auslagen",
     title: "Auslagen & Belege",
     hint: "Quittungen und Rechnungen fotografieren, Antrag auf Auslagenerstattung erstellen, Kreditkarten abgleichen.",
     meta: "Belege · Auslagen",
@@ -185,6 +198,8 @@ export function IntranetHub({
   userInitials,
   userRole,
   isAdmin,
+  allowedApps,
+  deniedApp,
   inbox,
   events,
   birthdays,
@@ -196,6 +211,10 @@ export function IntranetHub({
   userInitials: string;
   userRole: string;
   isAdmin: boolean;
+  /** Für den Nutzer freigeschaltete Apps — nur diese Kacheln werden gezeigt. */
+  allowedApps: AppKey[];
+  /** Titel der App, deren Aufruf mangels Freischaltung abgewiesen wurde. */
+  deniedApp?: string | null;
   inbox: InboxClaim[];
   events: UpcomingItem[];
   birthdays: UpcomingItem[];
@@ -203,6 +222,7 @@ export function IntranetHub({
   const router = useRouter();
   const [dark, setDark] = useState(false);
   const unreadCount = inbox.filter((claim) => claim.unread).length;
+  const visibleTiles = TILES.filter((tile) => allowedApps.includes(tile.app));
 
   const toggleTheme = () => {
     const next = !dark;
@@ -271,6 +291,12 @@ export function IntranetHub({
               )}
             </h1>
             <p className="sch-lede">Willkommen im Schlutte-Intranet. Wähle einen Bereich.</p>
+            {deniedApp && (
+              <p role="alert" className="sch-lede" style={{ color: "var(--gd-danger)" }}>
+                Kein Zugriff auf „{deniedApp}“ — die App ist für dich nicht freigeschaltet. Bitte
+                an einen Administrator wenden.
+              </p>
+            )}
           </section>
 
           <section className="sch-info" aria-label="Events und Geburtstage">
@@ -304,7 +330,12 @@ export function IntranetHub({
           </section>}
 
           <section className="sch-grid" aria-label="Bereiche">
-            {TILES.map((tile) =>
+            {visibleTiles.length === 0 && (
+              <p className="sch-lede">
+                Für dich ist noch keine App freigeschaltet. Bitte an einen Administrator wenden.
+              </p>
+            )}
+            {visibleTiles.map((tile) =>
               tile.live && tile.href ? (
                 tile.external ? (
                   <a

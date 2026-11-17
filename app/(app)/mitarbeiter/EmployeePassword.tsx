@@ -39,7 +39,9 @@ export function EmployeePassword({
           {email ? (
             <>
               Setzt bzw. ersetzt das Passwort für <strong>{email}</strong>. Existiert noch
-              kein Login zu dieser E-Mail, wird er dabei angelegt.
+              kein Login zu dieser E-Mail, wird er dabei angelegt.{" "}
+              Der Login gilt für die Schlutte und alle freigeschalteten Apps (auch Gerda). Mitarbeiter können ihr Passwort auch selbst über „Passwort vergessen“ auf der
+              Login-Seite zurücksetzen.
             </>
           ) : (
             <>Für den Zugang zuerst oben eine E-Mail-Adresse hinterlegen und speichern.</>

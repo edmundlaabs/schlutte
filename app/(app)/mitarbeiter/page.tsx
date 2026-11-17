@@ -3,6 +3,8 @@ import { getEmployees } from "@/lib/data/employees";
 import { getLoginEmails } from "@/lib/data/auth-admin";
 import { Icon } from "@/components/ui/Icon";
 import { isFinanceRole, roleLabel } from "@/lib/auth/app-role";
+import { hasAdminRights } from "@/lib/auth/app-role";
+import { ALL_APP_KEYS, appTitle, resolveAppAccess } from "@/lib/apps";
 import { EmployeeActions } from "./EmployeeActions";
 
 export default async function MitarbeiterPage() {
@@ -84,6 +86,7 @@ export default async function MitarbeiterPage() {
               <th>Name</th>
               <th>E-Mail</th>
               <th>Login</th>
+              <th>Apps</th>
               <th>Status</th>
               <th>Rolle</th>
               <th>Angelegt</th>
@@ -144,6 +147,19 @@ export default async function MitarbeiterPage() {
                   )}
                 </td>
                 <td>
+                  {(() => {
+                    const apps = resolveAppAccess(emp.app_access, hasAdminRights(emp.app_role));
+                    return (
+                      <span
+                        title={apps.length ? apps.map(appTitle).join(", ") : "Keine App freigeschaltet"}
+                        style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: apps.length ? "var(--fg)" : "var(--fg-subtle)" }}
+                      >
+                        {apps.length === ALL_APP_KEYS.length ? "Alle" : `${apps.length}/${ALL_APP_KEYS.length}`}
+                      </span>
+                    );
+                  })()}
+                </td>
+                <td>
                   <span
                     style={{
                       fontFamily: "var(--font-mono)",
@@ -184,6 +200,7 @@ export default async function MitarbeiterPage() {
           </tbody>
         </table>
       )}
+
     </div>
   );
 }

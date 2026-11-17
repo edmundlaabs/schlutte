@@ -12,6 +12,7 @@ import {
   roleLabel,
   type AppRole,
 } from "@/lib/auth/app-role";
+import { parseAppKeys } from "@/lib/apps";
 
 // ─── DB-Row → Employee ────────────────────────────────────────────────────────
 
@@ -22,6 +23,8 @@ interface DBEmployee {
   email?: string | null;
   /** Fehlt, solange die Migration 20260925_auslagen.sql nicht gelaufen ist. */
   role?: string | null;
+  /** Fehlt, solange die Migration 20261116_app_access.sql nicht gelaufen ist. */
+  app_access?: string[] | null;
   is_admin: boolean;
   is_active: boolean;
   created_at: string;
@@ -40,6 +43,7 @@ function toEmployee(row: DBEmployee): Employee {
     app_role: appRole,
     is_admin: row.is_admin,
     is_active: row.is_active,
+    app_access: row.app_access == null ? undefined : parseAppKeys(row.app_access),
     created_at: formatDate(row.created_at),
     updated_at: row.updated_at ? formatDate(row.updated_at) : undefined,
   };
@@ -51,18 +55,40 @@ function toEmployee(row: DBEmployee): Employee {
 
 const BASE_COLUMNS = "id, initials, name, email, is_admin, is_active, created_at, updated_at";
 const ROLE_COLUMNS = `${BASE_COLUMNS}, role`;
+const FULL_COLUMNS = `${ROLE_COLUMNS}, app_access`;
 
 type QueryResult = { data: unknown; error: PostgrestError | null };
+
+/** Wie isMissingRoleColumnError, aber für employees.app_access. */
+function isMissingAppAccessColumnError(
+  error: { code?: string | null; message?: string | null } | null | undefined
+): boolean {
+  if (!error) return false;
+  const message = (error.message ?? "").toLowerCase();
+  if (!message.includes("app_access")) return false;
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    message.includes("does not exist") ||
+    message.includes("schema cache")
+  );
+}
 
 async function selectWithRoleFallback(
   run: (columns: string) => PromiseLike<QueryResult>
 ): Promise<QueryResult> {
-  const result = await run(ROLE_COLUMNS);
+  let result = await run(FULL_COLUMNS);
+  if (result.error && isMissingAppAccessColumnError(result.error)) {
+    result = await run(ROLE_COLUMNS);
+  }
   if (result.error && isMissingRoleColumnError(result.error)) {
     return run(BASE_COLUMNS);
   }
   return result;
 }
+
+const APP_ACCESS_NEEDS_MIGRATION =
+  "App-Berechtigungen sind erst verfügbar, wenn die Datenbank-Migration 20261116_app_access.sql ausgeführt wurde.";
 
 const CEO_NEEDS_MIGRATION =
   "Die Rolle „CEO“ ist erst verfügbar, wenn die Datenbank-Migration 20260925_auslagen.sql ausgeführt wurde.";
@@ -72,6 +98,10 @@ async function writeWithRoleFallback(
   run: (payload: Record<string, unknown>) => PromiseLike<{ error: PostgrestError | null }>
 ): Promise<{ error: PostgrestError | null }> {
   const result = await run(payload);
+  // Berechtigungen nie still verlieren — ohne Spalte klar melden.
+  if (result.error && "app_access" in payload && isMissingAppAccessColumnError(result.error)) {
+    throw new Error(APP_ACCESS_NEEDS_MIGRATION);
+  }
   if (result.error && "role" in payload && isMissingRoleColumnError(result.error)) {
     // Ohne Spalte lässt sich "ceo" nicht abbilden — lieber klar melden als still verlieren.
     if (payload.role === "ceo") throw new Error(CEO_NEEDS_MIGRATION);
@@ -231,6 +261,7 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<void> 
       role,
       is_admin: role === "admin",
       is_active: input.is_active ?? true,
+      ...(input.app_access !== undefined ? { app_access: parseAppKeys(input.app_access) } : {}),
     },
     (row) => supabase.from("employees").insert(row)
   );
@@ -278,6 +309,7 @@ export async function updateEmployee(
     updates.is_admin = input.is_admin;
   }
   if (input.is_active !== undefined) updates.is_active = input.is_active;
+  if (input.app_access !== undefined) updates.app_access = parseAppKeys(input.app_access);
 
   const { error } = await writeWithRoleFallback(updates, (row) =>
     supabase.from("employees").update(row).eq("id", id)

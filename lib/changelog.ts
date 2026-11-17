@@ -12,6 +12,16 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.2.0",
+    date: "17.11.2026",
+    changes: [
+      "Neue Druckvorlage „Auftragsoberfläche (Muster)“ (A5-Label: geölt, gebeizt, lackiert)",
+      "Anzahl Labels frei wählbar, Druck immer auf A4 quer mit zwei A5-Labels pro Blatt (ungerade Anzahl: letztes Blatt nur links)",
+      "Schnittmarken oben und unten in der Blattmitte",
+      "Live-Vorschau im Formular; die Vorlage gehört zur neuen App „Druckvorlagen Büro/Personal“ (Kachel 03) und ist in der Kommission auffindbar",
+    ],
+  },
+  {
     version: "0.1.0",
     date: "26.05.2026",
     changes: [

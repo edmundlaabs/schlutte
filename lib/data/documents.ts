@@ -7,6 +7,8 @@ import type {
   PalettePrintPage,
   LaufzettelFormData,
   PaletteFormData,
+  OberflaecheFormData,
+  OberflaechePrintData,
   Document,
 } from "@/lib/types";
 import {
@@ -197,7 +199,7 @@ export async function getDocumentsByCommissionNumber(
       client: comm.customer_name,
       stamp: formatDate(item.created_at),
       by: item.created_by_initials || "EDL",
-      formData: item.form_data as unknown as LaufzettelFormData | PaletteFormData | undefined,
+      formData: item.form_data as unknown as LaufzettelFormData | PaletteFormData | OberflaecheFormData | undefined,
     }));
   } catch (e) {
     console.error("Failed to connect to Supabase server client for commission documents:", e);
@@ -205,7 +207,11 @@ export async function getDocumentsByCommissionNumber(
   }
 }
 
-export type DocumentCounts = { laufzettel: number; palette: number };
+export type DocumentCounts = {
+  laufzettel: number;
+  palette: number;
+  oberflaeche: number;
+};
 
 /**
  * Liefert die Anzahl der Laufzettel- und Paletten-Dokumente je Kommission,
@@ -231,9 +237,11 @@ export async function getDocumentCountsByCommission(): Promise<
     for (const row of data) {
       const id = row.commission_id as string | null;
       if (!id) continue;
-      const entry = counts.get(id) ?? { laufzettel: 0, palette: 0 };
+      const entry = counts.get(id) ?? { laufzettel: 0, palette: 0, oberflaeche: 0 };
       if (row.document_type === "palette") {
         entry.palette += 1;
+      } else if (row.document_type === "oberflaeche") {
+        entry.oberflaeche += 1;
       } else {
         entry.laufzettel += 1;
       }
@@ -827,3 +835,122 @@ export async function getPalettePrintRangeByDocId(
 }
 
 
+
+
+/* ---------- Auftragsoberfläche (Muster) ---------- */
+
+/** Normalisiert die Formulardaten (genau 3 Schritte je Spalte, max. 3 Zeilen Vorbereitung, labelCount ≥ 1). */
+export function normalizeOberflaecheFormData(fd: OberflaecheFormData): OberflaecheFormData {
+  const three = (a?: string[]) => [0, 1, 2].map((i) => (a?.[i] ?? "").trim());
+  const count = Number.isInteger(fd.labelCount) ? fd.labelCount : parseInt(String(fd.labelCount), 10);
+  return {
+    ...fd,
+    oilSteps: three(fd.oilSteps),
+    stainSteps: three(fd.stainSteps),
+    lacquerSteps: three(fd.lacquerSteps),
+    preparation: (fd.preparation || "")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .slice(0, 3)
+      .join("\n"),
+    labelCount: Number.isFinite(count) && count >= 1 ? count : 1,
+  };
+}
+
+export async function createOberflaecheDocument(
+  commissionNo: string,
+  formData: OberflaecheFormData
+): Promise<string> {
+  const supabase = await createClient();
+  const fd = normalizeOberflaecheFormData(formData);
+
+  const { data: comm, error: commErr } = await supabase
+    .from("commissions")
+    .select("id")
+    .eq("commission_number", commissionNo)
+    .maybeSingle();
+
+  if (commErr || !comm) {
+    throw new Error(`Kommission ${commissionNo} nicht gefunden.`);
+  }
+
+  const { data, error } = await supabase
+    .from("documents")
+    .insert({
+      commission_id: comm.id,
+      document_type: "oberflaeche",
+      title: `Auftragsoberfläche (Anzahl: ${fd.labelCount})`,
+      form_data: fd as unknown as Record<string, unknown>,
+      created_by_initials: (fd.employeeInitials || "EDL").toUpperCase(),
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    console.error("Error creating Auftragsoberfläche in Supabase:", error?.message);
+    if (error?.message.includes("row-level security") || error?.message.includes("violates row-level security")) {
+      throw new Error("Bitte melden Sie sich an, um Dokumente zu speichern.");
+    }
+    if (error?.message.includes("documents_document_type_check")) {
+      throw new Error("Dokumenttyp „oberflaeche“ ist in der Datenbank noch nicht freigeschaltet (Migration 20261117_documents_add_oberflaeche.sql ausführen).");
+    }
+    throw new Error(`Supabase Fehler: ${error?.message || "Unbekannter Fehler"}`);
+  }
+
+  return data.id;
+}
+
+export async function updateOberflaecheDocument(
+  id: string,
+  formData: OberflaecheFormData
+): Promise<void> {
+  const supabase = await createClient();
+  const fd = normalizeOberflaecheFormData(formData);
+  const { error } = await supabase
+    .from("documents")
+    .update({
+      title: `Auftragsoberfläche (Anzahl: ${fd.labelCount})`,
+      form_data: fd as unknown as Record<string, unknown>,
+      created_by_initials: (fd.employeeInitials || "EDL").toUpperCase(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("document_type", "oberflaeche");
+
+  if (error) {
+    console.error(`Error updating Auftragsoberfläche ${id}:`, error.message);
+    if (error.message.includes("row-level security") || error.message.includes("violates row-level security")) {
+      throw new Error("Bitte melden Sie sich an, um Dokumente zu bearbeiten.");
+    }
+    throw new Error(`Supabase Fehler: ${error.message}`);
+  }
+}
+
+/** Lädt Formulardaten + Kommissionsnummer für den Druck und protokolliert den Druck. */
+export async function getOberflaechePrintDataByDocId(
+  docId: string
+): Promise<(OberflaechePrintData & { owner: string }) | null> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("documents")
+      .select("form_data, created_by_initials, commissions(commission_number)")
+      .eq("id", docId)
+      .eq("document_type", "oberflaeche")
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    const comm = data.commissions as unknown as { commission_number: string } | null;
+    const formData = normalizeOberflaecheFormData(data.form_data as unknown as OberflaecheFormData);
+    const owner = data.created_by_initials || "EDL";
+
+    await logPrintAction(docId, `Auftragsoberfläche (${formData.labelCount} Labels)`, owner);
+
+    return { formData, commissionNo: comm?.commission_number ?? formData.commissionNo, owner };
+  } catch (e) {
+    console.error("Error in getOberflaechePrintDataByDocId:", e);
+    return null;
+  }
+}

@@ -48,6 +48,9 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isLoginRoute = path === "/login";
+  // Passwort-Recovery muss ohne Anmeldung erreichbar sein (Link aus der E-Mail).
+  const isPublicRoute =
+    isLoginRoute || path === "/passwort-vergessen" || path === "/passwort-neu";
 
   // Redirects übernehmen die ggf. soeben erneuerten Session-Cookies.
   const redirectTo = (url: URL) => {
@@ -56,7 +59,7 @@ export async function proxy(request: NextRequest) {
     return response;
   };
 
-  if (!user && !isLoginRoute) {
+  if (!user && !isPublicRoute) {
     // Redirect unauthenticated user to login page
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";

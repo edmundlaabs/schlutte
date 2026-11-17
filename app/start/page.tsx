@@ -6,6 +6,7 @@ import { getEmployeeRoleForUser } from "@/lib/data/employees";
 import { hasAdminRights, roleLabel } from "@/lib/auth/app-role";
 import { listSubmittedClaims, type InboxClaim } from "@/lib/data/auslagen-inbox";
 import type { UpcomingItem } from "@/lib/types";
+import { appTitle, isAppKey, resolveAppAccess, type AppKey } from "@/lib/apps";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,13 @@ function firstNameOf(raw: string): string {
   return first.charAt(0).toUpperCase() + first.slice(1);
 }
 
-export default async function StartPage() {
+export default async function StartPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ "kein-zugriff"?: string }>;
+}) {
+  const denied = (await searchParams)["kein-zugriff"];
+  let allowedApps: AppKey[] = [];
   let displayName: string | null = null;
   let userName = "Benutzer";
   let userInitials = "USR";
@@ -91,6 +98,8 @@ export default async function StartPage() {
         userRole = `${roleLabel(data.app_role)} · ${data.initials ?? ""}`.trim();
         displayName = firstNameOf(data.name || local);
         isAdmin = hasAdminRights(role);
+        // Inaktive Admins haben role "mitarbeiter" → es gelten die vergebenen Apps.
+        allowedApps = resolveAppAccess(data.app_access, isAdmin);
       } else {
         userName = humanizeName(local);
         userInitials = user.email.slice(0, 3).toUpperCase();
@@ -121,6 +130,8 @@ export default async function StartPage() {
       userInitials={userInitials}
       userRole={userRole}
       isAdmin={isAdmin}
+      allowedApps={allowedApps}
+      deniedApp={isAppKey(denied) && !allowedApps.includes(denied) ? appTitle(denied) : null}
       inbox={inbox}
       events={events}
       birthdays={birthdays}
