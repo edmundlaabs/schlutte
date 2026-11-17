@@ -89,3 +89,39 @@ export async function deleteAuthUserByEmail(email: string): Promise<void> {
   const { error } = await admin.auth.admin.deleteUser(id);
   if (error) throw new Error(`Login konnte nicht gelöscht werden: ${error.message}`);
 }
+
+/**
+ * Lädt per E-Mail ein (Supabase sendet einen Link; Ziel: /passwort-neu).
+ * Existiert schon ein Login, passiert nichts ("exists"). Redirect-URL muss in
+ * Supabase unter Authentication → URL Configuration freigegeben sein.
+ */
+export async function inviteUserByEmail(
+  email: string,
+  redirectTo: string
+): Promise<"invited" | "exists"> {
+  const mail = email.trim();
+  if (!mail) throw new Error("Für eine Einladung wird eine E-Mail-Adresse benötigt.");
+  if (await findAuthUserIdByEmail(mail)) return "exists";
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.inviteUserByEmail(mail, { redirectTo });
+  if (error) throw new Error(`Einladung fehlgeschlagen: ${error.message}`);
+  return "invited";
+}
+
+/**
+ * Sperrt bzw. entsperrt den Login zur E-Mail (Ban). Kein Login → false.
+ * Bereits ausgestellte Sitzungen laufen bis zum Ablauf des Tokens weiter.
+ */
+export async function setAuthUserBanned(email: string, banned: boolean): Promise<boolean> {
+  const mail = email.trim();
+  if (!mail) return false;
+  const id = await findAuthUserIdByEmail(mail);
+  if (!id) return false;
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.updateUserById(id, {
+    ban_duration: banned ? "876000h" : "none",
+  });
+  if (error) throw new Error(`Login konnte nicht ${banned ? "gesperrt" : "entsperrt"} werden: ${error.message}`);
+  return true;
+}

@@ -1,6 +1,6 @@
 # Zugänge, App-Berechtigungen, Passwort-Recovery und Gerda-Umzug
 
-Stand: 16.11.2026. Die Schlutte ist die zentrale Plattform: ein Login, eine Datenbank
+Stand: 17.11.2026. Die Schlutte ist die zentrale Plattform: ein Login, eine Datenbank
 (Supabase), eine Rechteverwaltung für alle Apps.
 
 ## Konzept
@@ -15,7 +15,9 @@ Stand: 16.11.2026. Die Schlutte ist die zentrale Plattform: ein Login, eine Date
   |---|---|---|
   | Druckvorlagen Werkstatt, Bestellliste, Auslagen & Belege | intern | Kachel weg + Seiten serverseitig gesperrt (`requireAppAccess`) |
   | Gerda | Datenbank | Kachel weg + Row Level Security auf den `gerda_*`-Tabellen (`public.has_app_access('gerda')`) |
-  | Warenbestand WERK 2, Höllental | nur Kachel | Kachel weg — die App selbst prüft (noch) nichts, die URL bleibt direkt erreichbar |
+  | PandaCAD | intern | Kachel weg + `/pandacad` serverseitig gesperrt; Downloads über Signed URLs, Storage-RLS mit `has_app_access('pandacad')` |
+  | Projekte (nic) | intern, noch nicht live | Kachel erst sichtbar, wenn `live: true` in `lib/apps.ts` |
+  | Warenbestand WERK 2 | nur Kachel | Kachel weg — die App selbst prüft (noch) nichts, die URL bleibt direkt erreichbar |
   | Druckvorlagen Personal, Urlaubsantrag | folgt | vorab vergebbar |
 - **Passwort global**: Es gibt nur noch ein Passwort (Supabase). Zurücksetzen per
   Selbstservice (`/passwort-vergessen` → E-Mail-Link → `/passwort-neu`) oder durch den Admin
@@ -23,6 +25,17 @@ Stand: 16.11.2026. Die Schlutte ist die zentrale Plattform: ein Login, eine Date
 - **Gerda** (Repo `ppl`, Ordner `antigravity-list`) bleibt eine eigene App unter eigener
   Domain, nutzt aber Login und Datenbank der Schlutte. Firebase entfällt komplett.
   Nächster Ausbauschritt: Gerda als Modul in die Schlutte holen.
+
+## Zugänge-Matrix, Einladen, Deaktivieren
+
+- **Matrix**: *Mitarbeiter → Zugänge (App-Matrix)* (`/mitarbeiter/zugaenge`, nur CEO/Admin). Zeilen = aktive
+  Mitarbeiter, Spalten = Apps. Jeder Klick speichert sofort; bei Fehler springt der Haken zurück und eine Meldung
+  erscheint. „alle an/aus“ je App und je Mitarbeiter. Admin-Zeilen sind gesperrt (Admin hat immer Zugriff).
+- **Einladen**: Neuer Mitarbeiter mit E-Mail, aktiv und ohne Passwort → Einladungsmail (`inviteUserByEmail`,
+  Link auf `/passwort-neu`). Mit Passwort wird wie bisher direkt ein Login angelegt.
+  Verknüpfung Mitarbeiter ↔ Login bleibt die E-Mail.
+- **Deaktivieren**: `employees.is_active = false` sperrt zusätzlich den Login (Auth-Ban) und blendet den Mitarbeiter aus
+  der Matrix aus. Reaktivieren hebt den Ban auf. Bereits ausgestellte Sitzungen laufen bis zum Ablauf des Tokens.
 
 ## Einrichtung und Umzug (in dieser Reihenfolge)
 
@@ -62,8 +75,8 @@ Stand: 16.11.2026. Die Schlutte ist die zentrale Plattform: ein Login, eine Date
 
 - Der Schutz interner Schlutte-Apps greift auf Seitenebene (Layouts), nicht in den
   RLS-Policies der jeweiligen Tabellen. Gerda ist per RLS geschützt.
-- Warenbestand WERK 2 und Höllental brauchen eine eigene Anbindung, damit die
+- Warenbestand WERK 2 braucht eine eigene Anbindung, damit die
   Berechtigung dort wirklich durchgesetzt wird.
-- „Inaktiv“ sperrt weiterhin keinen Login; dafür Apps entziehen.
+- „Inaktiv“ sperrt den Login per Ban (Service-Role-Key nötig); laufende Sitzungen enden erst mit dem Token.
 - Gerda und Schlutte liegen auf verschiedenen Domains: gleiches Passwort, aber getrennte
   Anmeldung, bis Gerda ein Modul der Schlutte ist.

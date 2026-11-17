@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { UpcomingItem } from "@/lib/types";
-import type { AppKey } from "@/lib/apps";
+import { APPS, type AppKey } from "@/lib/apps";
 import type { InboxClaim } from "@/lib/data/auslagen-inbox";
 import { formatEUR } from "@/lib/auslagen/format";
 import { formatDate } from "@/lib/utils";
@@ -148,6 +148,26 @@ const TILES: Tile[] = [
     href: "/auslagen",
     live: true,
   },
+  {
+    no: "08",
+    icon: "workshop",
+    app: "pandacad",
+    title: "PandaCAD",
+    hint: "Palette CAD installieren und einrichten — Schritt für Schritt, mit Pfaden, Anleitungen und Konfigurationsdatei.",
+    meta: "CAD · Installation",
+    href: "/pandacad",
+    live: true,
+  },
+  {
+    no: "09",
+    icon: "report",
+    app: "projekte",
+    title: "Projekte",
+    hint: "Projekte, Aufgaben und Dateien im Team.",
+    meta: "Projekte · Aufgaben",
+    href: "/projekte",
+    live: false,
+  },
 ];
 
 function TileInner({ tile, unreadCount = 0 }: { tile: Tile; unreadCount?: number }) {
@@ -211,7 +231,11 @@ export function IntranetHub({
   const router = useRouter();
   const [dark, setDark] = useState(false);
   const unreadCount = inbox.filter((claim) => claim.unread).length;
-  const visibleTiles = TILES.filter((tile) => allowedApps.includes(tile.app));
+  // "Projekte" erscheint erst, wenn das Modul live ist (lib/apps.ts).
+  const liveApps = new Set(APPS.filter((a) => a.live).map((a) => a.key));
+  const visibleTiles = TILES.filter(
+    (tile) => allowedApps.includes(tile.app) && (tile.app !== "projekte" || liveApps.has("projekte"))
+  );
 
   const toggleTheme = () => {
     const next = !dark;
