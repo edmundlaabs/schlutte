@@ -227,7 +227,7 @@ export default function GerdaApp() {
                   <MessageSquarePlus className="w-4 h-4 text-[#8A8278]" /> Feedback an Eddy & Updateinfos
                 </button>
                 <Link
-                  href="/start"
+                  href="/"
                   className="w-full text-left px-4 py-3 text-sm flex items-center gap-2 text-[#0E0E0D] hover:bg-[#C9A86A]/20 transition-colors"
                 >
                   <LogOut className="w-4 h-4 text-[#8A8278]" /> Zurück zum Intranet

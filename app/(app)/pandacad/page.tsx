@@ -69,7 +69,7 @@ export default async function PandaCadPage() {
   return (
     <div style={{ padding: "40px 56px 80px", maxWidth: 900, margin: "0 auto", width: "100%" }}>
       <Link
-        href="/start"
+        href="/"
         style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.18em", color: "var(--fg-muted)", textTransform: "uppercase", textDecoration: "none" }}
       >
         ← Intranet

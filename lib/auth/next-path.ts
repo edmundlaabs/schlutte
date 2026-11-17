@@ -4,7 +4,7 @@
  * nicht /login selbst. Wird von proxy.ts und der Login-Seite genutzt.
  */
 
-const FALLBACK = "/start";
+const FALLBACK = "/";
 
 export function safeNextPath(raw: string | null | undefined): string | null {
   if (!raw || raw.length > 2000) return null;
@@ -26,7 +26,7 @@ export function safeNextPath(raw: string | null | undefined): string | null {
   }
 }
 
-/** Ziel nach erfolgreichem Login: geprüftes next oder /start. */
+/** Ziel nach erfolgreichem Login: geprüftes next oder /. */
 export function loginRedirectTarget(raw: string | null | undefined): string {
   return safeNextPath(raw) ?? FALLBACK;
 }

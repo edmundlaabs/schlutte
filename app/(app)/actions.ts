@@ -17,7 +17,7 @@ async function run(fn: (initials?: string) => Promise<void>): Promise<Result> {
   try {
     const me = await requireAdmin();
     await fn(me.initials);
-    revalidatePath("/start");
+    revalidatePath("/");
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Ein unbekannter Fehler ist aufgetreten." };

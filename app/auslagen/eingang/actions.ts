@@ -7,7 +7,7 @@ import { markSubmittedClaimsRead } from "@/lib/data/auslagen-inbox";
 export async function markClaimsReadAction(ids: string[]): Promise<{ ok: boolean; error?: string }> {
   try {
     await markSubmittedClaimsRead(ids);
-    revalidatePath("/start");
+    revalidatePath("/");
     revalidatePath("/auslagen/eingang");
     return { ok: true };
   } catch (error) {

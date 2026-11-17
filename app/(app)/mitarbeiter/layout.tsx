@@ -14,7 +14,7 @@ export default async function MitarbeiterLayout({
 }) {
   const ctx = await getCurrentUserContext();
   if (!ctx || !hasAdminRights(ctx.role)) {
-    redirect("/start");
+    redirect("/");
   }
   return <>{children}</>;
 }

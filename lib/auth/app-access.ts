@@ -19,7 +19,7 @@ export async function requireAppAccess(app: AppKey): Promise<UserContext> {
   const ctx = await getCurrentUserContext();
   if (!ctx) redirect("/login");
   if (!appAccessOf(ctx).includes(app)) {
-    redirect(`/start?kein-zugriff=${app}`);
+    redirect(`/?kein-zugriff=${app}`);
   }
   return ctx;
 }

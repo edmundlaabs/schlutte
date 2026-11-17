@@ -34,7 +34,7 @@ export default async function AuslagenLayout({ children }: { children: ReactNode
   // Rolle serverseitig ermitteln (steuert nur die Navigation; Seiten prüfen selbst).
   const ctx = await getCurrentUserContext();
   if (!ctx) redirect("/login?next=/auslagen");
-  if (!appAccessOf(ctx).includes("auslagen")) redirect("/start?kein-zugriff=auslagen");
+  if (!appAccessOf(ctx).includes("auslagen")) redirect("/?kein-zugriff=auslagen");
 
   const initials =
     ctx.employee?.initials || (ctx.email ? ctx.email.slice(0, 3).toUpperCase() : "USR");
@@ -43,7 +43,7 @@ export default async function AuslagenLayout({ children }: { children: ReactNode
   return (
     <div className="aus">
       <header className="aus-top">
-        <Link href="/start" className="aus-brand" aria-label="Zur Intranet-Startseite">
+        <Link href="/" className="aus-brand" aria-label="Zur Intranet-Startseite">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/grabner-schlutte-logo.svg" alt="Grabner Schlutte" className="grb-logo" />
         </Link>

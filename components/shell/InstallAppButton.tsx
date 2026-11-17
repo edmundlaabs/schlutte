@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
-const APP_URL = "https://schlutte.vercel.app/start";
+const APP_URL = "https://schlutte.vercel.app/";
 
 type InstallPrompt = Event & {
   prompt: () => Promise<void>;
