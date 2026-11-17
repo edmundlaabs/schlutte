@@ -97,7 +97,7 @@ Die Tabellen wurden verifiziert und die Data-Schicht auf das reale Schema angepa
 - **Formulardaten (form_data):** Alle dokumentenspezifischen Felder werden als JSONB im Feld `form_data` abgelegt:
   - *Laufzettel:* `area`, `componentName`, `material`, `surface`, `note`, `employeeInitials`, `categories`
   - *Palette:* `objectName`, `dimensions`, `positionNumber`, `packageCount`, `shippingNote`, `employeeInitials`
-- **Kommissionsdetailseite:** Die Detailseite (`/kommissionen/[nr]`) lädt alle zugehörigen Dokumente aus Supabase und stellt sie in den jeweiligen Tabellen bzw. Rastern dar.
+- **Kommissionsdetailseite:** Die Detailseite (`/werkstatt/kommissionen/[nr]`, früher `/kommissionen/[nr]`) lädt alle zugehörigen Dokumente aus Supabase und stellt sie in den jeweiligen Tabellen bzw. Rastern dar.
 
 ## Authentifizierung & Berechtigungen
 
@@ -184,3 +184,14 @@ Die Tabellen wurden verifiziert und die Data-Schicht auf das reale Schema angepa
 - **Zählung je Kommission:** `getDocumentCountsByCommission` zählt `oberflaeche` getrennt (vorher wäre alles Nicht-Palette als Laufzettel gezählt worden).
 - **Zuordnung zur App „Druckvorlagen Büro/Personal“ (Kachel 03, App-Key `personal`):** Die Auftragsoberfläche gehört nicht zur Werkstatt. Eigene Routen `/personal` (Startseite), `/personal/oberflaeche` (Kommission wählen), `/personal/oberflaeche/[nr]/neu` und `…/[nr]/[id]/bearbeiten`, Druck unter `/print-personal/oberflaeche/document/[id]` mit eigenem Layout und Zugriffsschutz `requireAppAccess("personal")`. Aus Werkstatt-Dashboard, Dokumenttyp-Auswahl und Vorlagenliste ist sie entfernt. Die Kommissionsseite zeigt die Dokumente weiter und verlinkt in die Personal-Routen.
 
+
+## Navigation, Layout und Modulstruktur (Version 0.3.0)
+
+- **Ein Rahmen für alle Seiten:** `components/shell/AppShell.tsx` im Layout der Route Group `app/(app)`. Zeile 1 überall gleich: Logo (→ `/`), App-Wechsler, Breadcrumb, Feedback-Icon, Avatar-Menü (Mein Konto, Passwort ändern, Admin nur CEO/Admin, Design, App installieren, Abmelden). Zeile 2: Tabs der aktuellen App, mobil (< 768 px) als Tab-Leiste unten. Keine Suche, bis es eine globale Suche gibt.
+- **Benutzerdaten serverseitig:** Name, Kürzel, Rolle und freigeschaltete Apps lädt das Layout über `getCurrentUserContext()` und übergibt sie als Props. Das Self-Provisioning des Mitarbeiter-Eintrags steckt dort ebenfalls (`lib/auth/provision.ts`).
+- **Eine Quelle:** `lib/apps.ts` (App-Register) liefert Startseite, Wechsler und Tabs (`href`, `group`, `icon`, `nav`). Admin-Tabs: `ADMIN_NAV`. `AppKey`s sind unverändert (`employees.app_access`, RLS `has_app_access`).
+- **Alles liegt in der Schlutte:** keine externen Kacheln mehr. `warenbestand` hat die interne Route `/warenbestand` (Umzugshinweis mit Weiterleitung auf die bisherige App, bis der Warenbestand portiert ist).
+- **Routen:** `/` Startseite (vorher `/start`), `/werkstatt/...` (Dashboard, Kommissionen, Archiv, Dokument erstellen), `/admin/...` (Mitarbeiter, Zugänge, Feedback-Eingang; Layout mit `hasAdminRights`), `/feedback` bleibt das Formular für alle. `/personal`, `/auslagen`, `/bestellliste`, `/pandacad`, `/gerda`, `/print/*` unverändert; `/print/*` ohne Shell. `/vorlagen` entfernt.
+- **Redirects:** alte URLs leiten per 301 in `next.config.ts` (`redirects()`) um: `/start`, `/kommissionen/*`, `/archiv/*`, `/dokument-erstellen/*`, `/mitarbeiter/*`, `/mitarbeiter/zugaenge`, `/vorlagen`.
+- **Zugriff:** `requireAppAccess(key)` in jedem App-Layout (neu auch Werkstatt und Warenbestand); RLS unverändert. `/` verlangt nur Anmeldung, keine App-Freischaltung.
+- **Gerda:** läuft im Rahmen; Gerdas eigene Ansichts-Tabs (Personen) bleiben als zweite Leiste unter der Shell, Logo und „Zurück zum Intranet“ entfallen. Gerda-CSS ist auf `.gerda-root` begrenzt.

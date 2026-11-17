@@ -12,6 +12,17 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.3.0",
+    date: "17.11.2026",
+    changes: [
+      "Einheitlicher Rahmen für alle Seiten: Logo, App-Wechsler, Breadcrumb, Feedback und Avatar-Menü oben, darunter die Tabs der jeweiligen App; mobil als Tab-Leiste unten",
+      "Die Startseite liegt jetzt auf „/“ und zeigt die Apps in drei Gruppen, dazu „Zu erledigen“ sowie Termine und Geburtstage",
+      "Die Werkstatt liegt unter /werkstatt (Kommissionen, Archiv, Dokument erstellen); alte Links leiten automatisch weiter",
+      "Mitarbeiter, Zugänge und Feedback-Eingang liegen im Admin-Bereich (nur CEO und Admin); das Feedback-Formular bleibt für alle erreichbar",
+      "Gerda und Auslagen laufen im gemeinsamen Rahmen; der Feedback-Button unten rechts entfällt, die Warenbestand-Kachel führt zu einem Umzugshinweis",
+    ],
+  },
+  {
     version: "0.2.0",
     date: "17.11.2026",
     changes: [
