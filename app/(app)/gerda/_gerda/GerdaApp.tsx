@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import Link from 'next/link';
 import { TaskBoard } from './components/TaskBoard';
 import { useTasks } from './hooks/useTasks';
 import { usePersons } from './hooks/usePersons';
 import { useFeedback } from './hooks/useFeedback';
 import { generatePDFReport } from './utils/generatePDF';
 import { generateCSVReport } from './utils/generateCSV';
-import { FileDown, MessageSquarePlus, Settings, Lightbulb, X, Plus, Trash2, Edit2, Power, PowerOff, LogOut, Printer } from 'lucide-react';
+import { FileDown, MessageSquarePlus, Settings, Lightbulb, X, Plus, Trash2, Edit2, Power, PowerOff, Printer } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export type TabType = 'Alle' | string;
@@ -127,17 +126,11 @@ export default function GerdaApp() {
   };
 
   return (
-    <div className="gerda-root min-h-screen flex flex-col font-sans">
+    <div className="gerda-root flex-1 flex flex-col font-sans">
 
       {/* Header Container — MVP-style: glassmorphism + hairline */}
-      <div className="sticky top-0 z-[500] px-9 py-4 border-b border-[rgba(14,14,13,0.10)] backdrop-blur-md bg-[rgba(246,242,234,0.92)]">
-        <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-
-          {/* Logo Area */}
-          <div className="flex items-end gap-1.5 w-full md:w-auto">
-            <img src="/gerda_logo.svg" alt="Gerda Liste Logo" className="h-8 w-auto object-contain" />
-            <span className="text-xs text-[#8A8278] leading-none mb-[2px] ml-1">v0.6</span>
-          </div>
+      <div className="sticky top-[var(--shell-top-h)] z-[400] px-9 py-4 border-b border-[rgba(14,14,13,0.10)] backdrop-blur-md bg-[rgba(246,242,234,0.92)]">
+        <div className="max-w-[1440px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8">
 
           {/* MVP-style tabs: minimal, brass underline on active */}
           <nav className="flex items-stretch whitespace-nowrap overflow-x-auto no-scrollbar w-full md:w-auto max-w-full" aria-label="Ansichten">
@@ -226,12 +219,6 @@ export default function GerdaApp() {
                 >
                   <MessageSquarePlus className="w-4 h-4 text-[#8A8278]" /> Feedback an Eddy & Updateinfos
                 </button>
-                <Link
-                  href="/"
-                  className="w-full text-left px-4 py-3 text-sm flex items-center gap-2 text-[#0E0E0D] hover:bg-[#C9A86A]/20 transition-colors"
-                >
-                  <LogOut className="w-4 h-4 text-[#8A8278]" /> Zurück zum Intranet
-                </Link>
               </div>
             </div>
           </div>

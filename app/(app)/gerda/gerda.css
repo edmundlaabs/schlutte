@@ -37,7 +37,7 @@
   font-family: var(--font-sans);
   font-size: var(--fs-15);
   line-height: var(--lh-normal);
-  min-height: 100vh;
+  min-height: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -199,23 +199,23 @@
 /* =========================================================================
    Scrollbar (minimal, editorial)
    ========================================================================= */
-::-webkit-scrollbar {
+.gerda-root ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-::-webkit-scrollbar-track {
+.gerda-root ::-webkit-scrollbar-track {
   background: transparent;
 }
-::-webkit-scrollbar-thumb {
+.gerda-root ::-webkit-scrollbar-thumb {
   background: var(--gd-stone-300);
   border-radius: 0;
 }
-::-webkit-scrollbar-thumb:hover {
+.gerda-root ::-webkit-scrollbar-thumb:hover {
   background: var(--gd-stone-500);
 }
 
 @media all {
-  .no-scrollbar::-webkit-scrollbar {
+  .no-scrollbar.gerda-root ::-webkit-scrollbar {
     display: none;
   }
   .no-scrollbar {

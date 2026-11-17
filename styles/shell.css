@@ -3,7 +3,7 @@
    Zeile 1: .shell-top · Zeile 2: .shell-sub · mobil: .shell-tabbar
    ========================================================================= */
 
-.shell { min-height: 100vh; min-height: 100dvh; height: auto; }
+.shell { --shell-top-h: calc(60px + env(safe-area-inset-top, 0px)); min-height: 100vh; min-height: 100dvh; height: auto; }
 .shell-content { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
 
 /* ---------- Zeile 1 ---------- */
@@ -253,6 +253,7 @@
 }
 
 @media (min-width: 768px) {
+  .shell { --shell-top-h: calc(68px + env(safe-area-inset-top, 0px)); }
   .shell-top { min-height: 68px; gap: var(--sp-5); padding-left: var(--sp-7); padding-right: var(--sp-7); }
   .shell-brand .grb-brand-version { display: block; }
   .shell-switch-label { display: inline; }
