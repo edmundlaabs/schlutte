@@ -98,6 +98,7 @@ export default async function DashboardPage({
   return (
     <>
       <div
+        className="m-page"
         style={{
           flex: 1,
           padding: "40px 56px",
@@ -107,10 +108,10 @@ export default async function DashboardPage({
         }}
       >
         {/* Hero / search */}
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, flexWrap: "wrap" }}>
+        <div className="m-hero" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 32, flexWrap: "wrap" }}>
           <div>
             <span className="grb-eyebrow">Dashboard · Schlutte</span>
-            <h1 className="grb-h-display" style={{ fontSize: 56, marginTop: 12 }}>
+            <h1 className="grb-h-display m-display" style={{ fontSize: 56, marginTop: 12 }}>
               {greeting}
             </h1>
             <p style={{ fontFamily: "var(--font-sans)", fontSize: 16, color: "var(--fg-muted)", marginTop: 12, maxWidth: 560 }}>
@@ -119,7 +120,7 @@ export default async function DashboardPage({
                 : `${commissions.length} aktive Kommissionen in der Datenbank erfasst.`}
             </p>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 400, flex: "0 0 400px" }}>
+          <div className="m-hero-side" style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 400, flex: "0 0 400px" }}>
             <form action="/werkstatt" method="GET" style={{ width: "100%" }}>
               <div className="grb-search-big" style={{ padding: "14px 18px" }}>
                 <Icon name="search" size={20} />
@@ -140,7 +141,7 @@ export default async function DashboardPage({
                 )}
               </div>
             </form>
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
+            <div className="m-btnrow" style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
               <Link href="/werkstatt/kommissionen/neu" className="grb-btn grb-btn-primary">
                 <Icon name="plus" size={14} /> Neue Kommission
               </Link>
@@ -157,7 +158,7 @@ export default async function DashboardPage({
             <span className="grb-eyebrow">Dokument für bestehende Kommission erstellen</span>
             <span className="grb-index">01 / 02</span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+          <div className="m-grid-1" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
             <DashTile idx="01" title="Palettenlabel intern" hint="Gewerke-Stationen, Stückliste, Maße." icon="pallet-boards" href="/werkstatt/dokument-erstellen/laufzettel" />
             <DashTile idx="02" title="Palettenversand-Label" hint="Versand · Beschriftung 1 von n. Mehrfachdruck." icon="truck" href="/werkstatt/dokument-erstellen/palette" />
           </div>
@@ -182,6 +183,7 @@ export default async function DashboardPage({
                   <Link
                     key={k.no}
                     href={`/werkstatt/kommissionen/${k.no}`}
+                    className="m-krow"
                     style={{
                       display: "grid",
                       gridTemplateColumns: "80px 1fr auto auto auto",
@@ -215,7 +217,7 @@ export default async function DashboardPage({
             </div>
           </section>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 48 }}>
+          <div className="m-grid-1" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 48 }}>
             <section>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
                 <span className="grb-eyebrow">Letzte Kommissionen</span>
@@ -228,6 +230,7 @@ export default async function DashboardPage({
                   <Link
                     key={k.no}
                     href={`/werkstatt/kommissionen/${k.no}`}
+                    className="m-krow"
                     style={{
                       display: "grid",
                       gridTemplateColumns: "80px 1fr auto auto auto",

@@ -6,8 +6,8 @@ import { getCommissions } from "@/lib/data/commissions";
 export default async function KommissionenPage() {
   const commissions = await getCommissions();
   return (
-    <div style={{ padding: "40px 56px", display: "flex", flexDirection: "column", gap: 24 }}>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+    <div className="m-page" style={{ padding: "40px 56px", display: "flex", flexDirection: "column", gap: 24 }}>
+      <div className="m-hero" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
           <span className="grb-eyebrow">Kommissionen</span>
           <h1 className="grb-h-h1" style={{ marginTop: 8 }}>
@@ -24,6 +24,7 @@ export default async function KommissionenPage() {
 
       <div style={{ borderTop: "1px solid var(--fg)" }}>
         <div
+          className="m-krow-head"
           style={{
             display: "grid",
             gridTemplateColumns: "100px 1fr auto auto 120px 80px",
@@ -43,6 +44,7 @@ export default async function KommissionenPage() {
           <Link
             key={k.no}
             href={`/werkstatt/kommissionen/${k.no}`}
+            className="m-krow"
             style={{
               display: "grid",
               gridTemplateColumns: "100px 1fr auto auto 120px 80px",

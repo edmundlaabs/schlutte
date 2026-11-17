@@ -14,6 +14,7 @@ export default async function BestelllistePage() {
 
   return (
     <div
+      className="m-page"
       style={{
         padding: "40px 56px 80px",
         maxWidth: 1320,
