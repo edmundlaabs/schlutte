@@ -239,3 +239,12 @@
 :where(.gerda-root) img { max-width: 100%; height: auto; }
 :where(.gerda-root) table { border-collapse: collapse; text-indent: 0; border-color: inherit; }
 :where(.gerda-root) a { color: inherit; text-decoration: inherit; }
+
+/* ---------- Mobil: nur innerhalb von Gerda ---------- */
+@media (max-width: 767px) {
+  .gerda-root { overflow-x: clip; }
+  .gerda-root input:not([type="checkbox"]):not([type="radio"]),
+  .gerda-root select,
+  .gerda-root textarea { font-size: 16px; }
+  .gerda-root input[type="checkbox"], .gerda-root input[type="radio"] { width: 22px; height: 22px; }
+}
