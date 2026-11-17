@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Ebene_2" data-name="Ebene 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 407.39 167.96">
+  <defs>
+    <style>
+      .cls-1 {
+        fill-rule: evenodd;
+      }
+
+      .cls-1, .cls-2, .cls-3 {
+        fill: #1d1d1b;
+      }
+
+      .cls-4 {
+        letter-spacing: .89em;
+      }
+
+      .cls-5 {
+        letter-spacing: .91em;
+      }
+
+      .cls-6 {
+        letter-spacing: .9em;
+      }
+
+      .cls-7 {
+        letter-spacing: .91em;
+      }
+
+      .cls-8 {
+        letter-spacing: .9em;
+      }
+
+      .cls-3 {
+        font-family: IBMPlexSans-Medium, 'IBM Plex Sans';
+        font-size: 46px;
+        font-weight: 500;
+      }
+    </style>
+  </defs>
+  <g id="Ebene_1-2" data-name="Ebene 1">
+    <text class="cls-3" transform="translate(117.39 156.09)"><tspan class="cls-5" x="0" y="0">L</tspan><tspan class="cls-8" x="65.25" y="0">I</tspan><tspan class="cls-7" x="125.8" y="0">S</tspan><tspan class="cls-4" x="195.08" y="0">T</tspan><tspan class="cls-6" x="262.72" y="0">E</tspan></text>
+    <rect class="cls-2" x="119.53" y="107.99" width="287.45" height="2.49"/>
+    <path class="cls-1" d="M248.29,31.04V15h-31.89c-16.11,0-15.95,16.04-15.95,16.04v64.14h15.95V31.04h31.89Z"/>
+    <path class="cls-1" d="M406.98,95.17V31.04s0-16.04-15.94-16.04h-31.89s-15.95,0-15.95,16.04h47.84v16.03h-31.89c-15.95,0-15.95,16.04-15.95,16.04v16.03s-.16,16.04,15.95,16.04h47.84ZM391.04,79.14h-31.89v-16.03h31.89v16.03Z"/>
+    <path class="cls-1" d="M277.37,95.17h47.84S325.21,0,325.21,0h-15.95s0,15,0,15h-31.89s-15.94,0-15.94,16.04v48.1s0,16.04,15.94,16.04ZM277.37,31.04h31.89v48.1h-31.89V31.04Z"/>
+    <path class="cls-1" d="M185.12,79.14h-47.84v-16.03h47.84V31.04s.16-16.04-15.94-16.04h-31.89s-15.95,0-15.95,16.04v48.1s0,16.04,15.95,16.04h31.89s15.94,0,15.94-16.04ZM169.17,47.07h-31.89v-16.03h31.89v16.03Z"/>
+    <path class="cls-1" d="M108.85,15.32c0,18.68-17.41,19.85-19.6,19.92v41.12c0,19.13-19.82,19.93-19.82,19.93h-19.82v9.97h10.35c20.02,0,19.82,19.93,19.82,19.93v9.97c0,19.93-19.82,19.93-19.82,19.93h-30.17c-19.82,0-19.82-19.93-19.82-19.93v-9.97c0-19.93,19.82-19.93,19.82-19.93h1.03v-9.97h-10.99S0,96.3,0,76.37v-41.12C0,15.32,19.82,15.32,19.82,15.32h89.03ZM69.43,76.37v-41.12H19.82v41.12h49.61ZM59.96,137.83v-13.06h-30.17v13.06h30.17Z"/>
+  </g>
+</svg>
