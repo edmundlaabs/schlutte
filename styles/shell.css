@@ -1,0 +1,269 @@
+/* =========================================================================
+   SCHLUTTE — gemeinsamer Rahmen (components/shell/AppShell)
+   Zeile 1: .shell-top · Zeile 2: .shell-sub · mobil: .shell-tabbar
+   ========================================================================= */
+
+.shell { min-height: 100vh; min-height: 100dvh; height: auto; }
+.shell-content { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+
+/* ---------- Zeile 1 ---------- */
+.shell-top {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: calc(60px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) max(var(--sp-4), env(safe-area-inset-right, 0px)) 0 max(var(--sp-4), env(safe-area-inset-left, 0px));
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+}
+.shell-brand { display: inline-flex; flex: 0 0 auto; color: inherit; text-decoration: none; }
+.shell-brand .grb-brand-version { display: none; }
+
+.shell-pop { position: relative; flex: 0 0 auto; }
+
+.shell-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 12px;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.shell-switch:hover,
+.shell-switch.is-open { border-color: var(--fg); background: var(--bg-raised); }
+.shell-switch-label { display: none; }
+
+.shell-crumb {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+  white-space: nowrap;
+}
+.shell-crumb a { color: var(--fg-subtle); text-decoration: none; }
+.shell-crumb a:hover { color: var(--fg); }
+.shell-crumb strong { font-weight: 500; color: var(--accent); overflow: hidden; text-overflow: ellipsis; }
+
+.shell-right { margin-left: auto; display: flex; align-items: center; gap: var(--sp-3); flex: 0 0 auto; }
+
+.shell-iconbtn {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--fg-muted);
+  border: 1px solid transparent;
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+.shell-iconbtn:hover { color: var(--fg); border-color: var(--border-strong); }
+
+.shell-avatar {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--fg-inverse);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.shell-avatar:focus-visible,
+.shell-switch:focus-visible,
+.shell-iconbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Menüs (Wechsler, Avatar) ---------- */
+.shell-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  z-index: var(--z-overlay);
+  min-width: 240px;
+  padding: var(--sp-2) 0;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 18px 50px rgba(14, 14, 13, 0.18);
+}
+.shell-menu-apps { left: 0; width: min(300px, calc(100vw - 24px)); max-height: calc(100dvh - 90px); overflow-y: auto; }
+.shell-menu-user { right: 0; width: min(280px, calc(100vw - 24px)); }
+.shell-menu-group { padding-top: var(--sp-2); border-top: 1px solid var(--hairline); margin-top: var(--sp-2); }
+.shell-menu-eyebrow {
+  display: block;
+  padding: 4px 16px 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.shell-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--fg);
+  text-decoration: none;
+  cursor: pointer;
+}
+.shell-menu-item:hover { background: var(--bg-alt); }
+.shell-menu-item.is-current { box-shadow: inset 2px 0 0 var(--accent); }
+.shell-menu-item.is-disabled { color: var(--fg-subtle); cursor: not-allowed; }
+.shell-menu-item.is-disabled:hover { background: transparent; }
+.shell-menu-item em {
+  margin-left: auto;
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.shell-menu-item.is-danger { color: var(--accent); border-top: 1px solid var(--hairline); margin-top: var(--sp-2); }
+.shell-menu-who { display: flex; flex-direction: column; gap: 2px; padding: 10px 16px 12px; border-bottom: 1px solid var(--hairline); margin-bottom: var(--sp-2); }
+.shell-menu-who strong { font-size: 14px; font-weight: 500; }
+.shell-menu-who span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.shell-menu-install { padding: 4px 16px; }
+.shell-menu-install .install-app { display: block; }
+.shell-menu-install .install-app-button { width: 100%; justify-content: flex-start; }
+.shell-menu-install .install-app-popover { right: auto; left: 0; top: calc(100% + 8px); }
+.shell-menu-install .install-app-popover::before { right: auto; left: 25px; }
+
+/* ---------- Zeile 2: Tabs (ab Tablet) ---------- */
+.shell-sub {
+  display: none;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: 0 var(--sp-7);
+  min-height: 44px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.shell-sub a {
+  position: relative;
+  padding: 13px 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.shell-sub a:hover,
+.shell-sub a.is-active { color: var(--fg); }
+.shell-sub a.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: var(--accent);
+}
+
+/* ---------- Mobil: Tab-Leiste unten ---------- */
+.shell { --shell-tab-h: 60px; }
+.shell:has(.shell-tabbar) .shell-content {
+  padding-bottom: calc(var(--shell-tab-h) + env(safe-area-inset-bottom, 0px));
+}
+.shell-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-header);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  background: var(--bg-alt);
+  border-top: 1px solid var(--border);
+}
+.shell-tab {
+  position: relative;
+  min-height: var(--shell-tab-h);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 2px;
+  color: var(--fg-subtle);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.shell-tab svg { flex: 0 0 auto; }
+.shell-tab-label {
+  max-width: 100%;
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shell-tab.is-active { color: var(--fg); }
+.shell-tab.is-active::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 22%;
+  right: 22%;
+  height: 2px;
+  background: var(--fg);
+}
+
+@media (min-width: 768px) {
+  .shell-top { min-height: 68px; gap: var(--sp-5); padding-left: var(--sp-7); padding-right: var(--sp-7); }
+  .shell-brand .grb-brand-version { display: block; }
+  .shell-switch-label { display: inline; }
+  .shell-crumb { display: flex; }
+  .shell-sub { display: flex; }
+  .shell-tabbar { display: none; }
+  .shell:has(.shell-tabbar) .shell-content { padding-bottom: 0; }
+}
+
+@media print {
+  .shell-top,
+  .shell-sub,
+  .shell-tabbar { display: none !important; }
+}

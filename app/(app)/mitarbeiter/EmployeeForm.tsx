@@ -223,7 +223,6 @@ export function EmployeeForm({
               <span>
                 {app.title}
                 {!app.live && <span style={{ color: "var(--fg-subtle)" }}> (folgt)</span>}
-                {app.enforcement === "kachel" && <span style={{ color: "var(--fg-subtle)" }}> *</span>}
               </span>
             </label>
           ))}
