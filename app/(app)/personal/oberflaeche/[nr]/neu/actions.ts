@@ -19,9 +19,9 @@ export async function saveOberflaecheAction(
     } else {
       finalDocId = await createOberflaecheDocument(commissionNo, formData);
     }
-    revalidatePath(`/kommissionen/${commissionNo}`);
+    revalidatePath(`/werkstatt/kommissionen/${commissionNo}`);
     revalidatePath("/personal");
-    revalidatePath("/");
+    revalidatePath("/werkstatt");
     return { success: true, documentId: finalDocId };
   } catch (e) {
     return {

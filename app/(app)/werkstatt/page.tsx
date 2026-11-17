@@ -120,7 +120,7 @@ export default async function DashboardPage({
             </p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 400, flex: "0 0 400px" }}>
-            <form action="/" method="GET" style={{ width: "100%" }}>
+            <form action="/werkstatt" method="GET" style={{ width: "100%" }}>
               <div className="grb-search-big" style={{ padding: "14px 18px" }}>
                 <Icon name="search" size={20} />
                 <input
@@ -131,7 +131,7 @@ export default async function DashboardPage({
                 />
                 {searchQuery && (
                   <Link
-                    href="/"
+                    href="/werkstatt"
                     style={{ color: "var(--fg-muted)", display: "flex", alignItems: "center" }}
                     title="Suche zurücksetzen"
                   >
@@ -141,10 +141,10 @@ export default async function DashboardPage({
               </div>
             </form>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", flexWrap: "wrap" }}>
-              <Link href="/kommissionen/neu" className="grb-btn grb-btn-primary">
+              <Link href="/werkstatt/kommissionen/neu" className="grb-btn grb-btn-primary">
                 <Icon name="plus" size={14} /> Neue Kommission
               </Link>
-              <Link href="/archiv" className="grb-btn grb-btn-quiet">
+              <Link href="/werkstatt/archiv" className="grb-btn grb-btn-quiet">
                 <Icon name="archive" size={14} /> Archiv
               </Link>
             </div>
@@ -158,8 +158,8 @@ export default async function DashboardPage({
             <span className="grb-index">01 / 02</span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-            <DashTile idx="01" title="Palettenlabel intern" hint="Gewerke-Stationen, Stückliste, Maße." icon="pallet-boards" href="/dokument-erstellen/laufzettel" />
-            <DashTile idx="02" title="Palettenversand-Label" hint="Versand · Beschriftung 1 von n. Mehrfachdruck." icon="truck" href="/dokument-erstellen/palette" />
+            <DashTile idx="01" title="Palettenlabel intern" hint="Gewerke-Stationen, Stückliste, Maße." icon="pallet-boards" href="/werkstatt/dokument-erstellen/laufzettel" />
+            <DashTile idx="02" title="Palettenversand-Label" hint="Versand · Beschriftung 1 von n. Mehrfachdruck." icon="truck" href="/werkstatt/dokument-erstellen/palette" />
           </div>
         </section>
 
@@ -168,7 +168,7 @@ export default async function DashboardPage({
           <section>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
               <span className="grb-eyebrow">Suchergebnisse Kommissionen</span>
-              <Link href="/" className="grb-btn-link" style={{ fontSize: 11 }}>
+              <Link href="/werkstatt" className="grb-btn-link" style={{ fontSize: 11 }}>
                 Suche schließen <Icon name="x" size={12} />
               </Link>
             </div>
@@ -181,7 +181,7 @@ export default async function DashboardPage({
                 commissions.map((k) => (
                   <Link
                     key={k.no}
-                    href={`/kommissionen/${k.no}`}
+                    href={`/werkstatt/kommissionen/${k.no}`}
                     style={{
                       display: "grid",
                       gridTemplateColumns: "80px 1fr auto auto auto",
@@ -219,7 +219,7 @@ export default async function DashboardPage({
             <section>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
                 <span className="grb-eyebrow">Letzte Kommissionen</span>
-                <Link href="/kommissionen" className="grb-btn-link" style={{ fontSize: 11 }}>
+                <Link href="/werkstatt/kommissionen" className="grb-btn-link" style={{ fontSize: 11 }}>
                   Alle ansehen <Icon name="arrow" size={12} />
                 </Link>
               </div>
@@ -227,7 +227,7 @@ export default async function DashboardPage({
                 {commissions.slice(0, 5).map((k) => (
                   <Link
                     key={k.no}
-                    href={`/kommissionen/${k.no}`}
+                    href={`/werkstatt/kommissionen/${k.no}`}
                     style={{
                       display: "grid",
                       gridTemplateColumns: "80px 1fr auto auto auto",
@@ -263,7 +263,7 @@ export default async function DashboardPage({
             <section>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
                 <span className="grb-eyebrow">Zuletzt bearbeitet</span>
-                <Link href="/archiv" className="grb-btn-link" style={{ fontSize: 11 }}>
+                <Link href="/werkstatt/archiv" className="grb-btn-link" style={{ fontSize: 11 }}>
                   Archiv <Icon name="arrow" size={12} />
                 </Link>
               </div>
@@ -271,7 +271,7 @@ export default async function DashboardPage({
                 {recentDocs.map((d, i) => (
                   <Link
                     key={i}
-                    href={`/kommissionen/${d.kommission}`}
+                    href={`/werkstatt/kommissionen/${d.kommission}`}
                     style={{
                       padding: "14px 0",
                       borderBottom: "1px solid var(--hairline)",

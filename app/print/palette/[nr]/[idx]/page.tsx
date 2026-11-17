@@ -17,7 +17,7 @@ export default async function PalettePrintPage({
 
   return (
     <>
-      <PrintToolbar backUrl={`/kommissionen/${nr}`} />
+      <PrintToolbar backUrl={`/werkstatt/kommissionen/${nr}`} />
       <PaletteSheet
         commission={data.commission}
         palette={data.palette}

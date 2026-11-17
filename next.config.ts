@@ -1,7 +1,21 @@
 import type { NextConfig } from "next";
 
+/**
+ * Alte URLs (vor der Navigations-Umstellung) leiten dauerhaft auf die neuen Pfade weiter.
+ * Reihenfolge beachten: spezifischere Regeln vor allgemeineren.
+ */
 const nextConfig: NextConfig = {
-  /* config options here */
+  async redirects() {
+    return [
+      { source: "/start", destination: "/", permanent: true },
+      { source: "/kommissionen", destination: "/werkstatt/kommissionen", permanent: true },
+      { source: "/kommissionen/:path*", destination: "/werkstatt/kommissionen/:path*", permanent: true },
+      { source: "/archiv", destination: "/werkstatt/archiv", permanent: true },
+      { source: "/archiv/:path*", destination: "/werkstatt/archiv/:path*", permanent: true },
+      { source: "/dokument-erstellen/:path*", destination: "/werkstatt/dokument-erstellen/:path*", permanent: true },
+      { source: "/vorlagen", destination: "/werkstatt", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -29,7 +29,7 @@ export function CommissionSelect({
 
   const getFormUrl = (no: string) => {
     if (formBase) return `${formBase}/${no}/neu`;
-    return `/kommissionen/${no}/dokumente/${documentType}/neu`;
+    return `/werkstatt/kommissionen/${no}/dokumente/${documentType}/neu`;
   };
 
   return (
@@ -66,7 +66,7 @@ export function CommissionSelect({
               Möchtest du eine neue Kommission mit dieser Nummer anlegen?
             </div>
             <Link
-              href="/kommissionen/neu"
+              href="/werkstatt/kommissionen/neu"
               className="grb-btn grb-btn-primary"
               style={{ fontSize: 11 }}
             >
