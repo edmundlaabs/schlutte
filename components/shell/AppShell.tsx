@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { ShellHeader, type ShellUser } from "@/components/shell/ShellHeader";
+import { InstallHint } from "@/components/install/InstallHint";
+import { InstallSheet } from "@/components/install/InstallSheet";
 import { SubNav } from "@/components/shell/SubNav";
 import { appsByGroup, type AppKey } from "@/lib/apps";
 import "@/styles/shell.css";
@@ -36,8 +38,10 @@ export function AppShell({
     <div className="grb shell">
       <ShellHeader user={user} groups={groups} />
       <SubNav variant="top" finance={finance} isAdmin={user.isAdmin} />
+      <InstallHint />
       <div className="shell-content">{children}</div>
       <SubNav variant="tabs" finance={finance} isAdmin={user.isAdmin} />
+      <InstallSheet />
     </div>
   );
 }

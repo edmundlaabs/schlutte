@@ -169,7 +169,7 @@ export function ShellHeader({ user, groups }: { user: ShellUser; groups: ShellAp
               <button type="button" role="menuitem" className="shell-menu-item" onClick={toggleTheme}>
                 {dark ? "Helles Design" : "Dunkles Design"}
               </button>
-              <div className="shell-menu-install"><InstallAppButton /></div>
+              <InstallAppButton onOpen={() => setOpen(null)} />
               <button type="button" role="menuitem" className="shell-menu-item is-danger" onClick={logout}>
                 Abmelden
               </button>

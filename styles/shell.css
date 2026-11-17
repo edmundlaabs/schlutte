@@ -156,11 +156,6 @@
   text-transform: uppercase;
   color: var(--fg-subtle);
 }
-.shell-menu-install { padding: 4px 16px; }
-.shell-menu-install .install-app { display: block; }
-.shell-menu-install .install-app-button { width: 100%; justify-content: flex-start; }
-.shell-menu-install .install-app-popover { right: auto; left: 0; top: calc(100% + 8px); }
-.shell-menu-install .install-app-popover::before { right: auto; left: 25px; }
 
 /* ---------- Zeile 2: Tabs (ab Tablet) ---------- */
 .shell-sub {
