@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import {
   createEmployee,
   updateEmployee,
@@ -12,6 +13,8 @@ import {
 import {
   setPasswordForEmail,
   deleteAuthUserByEmail,
+  inviteUserByEmail,
+  setAuthUserBanned,
   MIN_PASSWORD_LENGTH,
 } from "@/lib/data/auth-admin";
 import { requireAdmin } from "@/lib/auth/admin-guard";
@@ -26,6 +29,13 @@ import type { CreateEmployeeInput, UpdateEmployeeInput } from "@/lib/types";
 function appAccessFromForm(formData: FormData) {
   if (formData.get("apps_present") !== "1") return undefined;
   return parseAppKeys(formData.getAll("apps"));
+}
+
+async function passwordRedirectUrl(): Promise<string> {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}/passwort-neu`;
 }
 
 export async function createEmployeeAction(
@@ -62,6 +72,17 @@ export async function createEmployeeAction(
     // Login erst nach erfolgreichem Anlegen des Datensatzes erzeugen.
     if (password && input.email) {
       await setPasswordForEmail(input.email, password);
+    } else if (input.email?.trim() && input.is_active) {
+      // Kein Passwort vergeben → per E-Mail einladen (Link führt auf /passwort-neu).
+      // Schlägt der Versand fehl, bleibt der Mitarbeiter angelegt; Meldung folgt.
+      try {
+        await inviteUserByEmail(input.email, await passwordRedirectUrl());
+      } catch (e) {
+        revalidatePath("/mitarbeiter");
+        return {
+          error: `Mitarbeiter angelegt, aber die Einladung ging nicht raus: ${(e as Error).message}`,
+        };
+      }
     }
   } catch (e) {
     return { error: (e as Error).message };
@@ -88,6 +109,10 @@ export async function updateEmployeeAction(
   try {
     await requireAdmin();
     await updateEmployee(id, input);
+    // Login-Sperre mit dem Aktiv-Flag synchron halten.
+    if (input.is_active !== undefined && input.email?.trim()) {
+      await setAuthUserBanned(input.email, !input.is_active);
+    }
   } catch (e) {
     return { error: (e as Error).message };
   }
@@ -138,7 +163,17 @@ export async function toggleActiveAction(
 ): Promise<void> {
   await requireAdmin();
   await setEmployeeActive(id, active);
+  // Login mitsperren/entsperren. Fehlt der Service-Role-Key, bleibt der Flag trotzdem gesetzt.
+  const employee = await getEmployeeById(id);
+  if (employee?.email) {
+    try {
+      await setAuthUserBanned(employee.email, !active);
+    } catch (e) {
+      console.warn("Login-Sperre nicht angepasst:", (e as Error).message);
+    }
+  }
   revalidatePath("/mitarbeiter");
+  revalidatePath("/mitarbeiter/zugaenge");
 }
 
 export async function deleteEmployeeAction(

@@ -20,7 +20,8 @@ export type AppKey =
   | "warenbestand"
   | "bestellliste"
   | "urlaub"
-  | "hoellental"
+  | "projekte"
+  | "pandacad"
   | "auslagen";
 
 export type AppDefinition = {
@@ -37,7 +38,8 @@ export const APPS: readonly AppDefinition[] = [
   { key: "warenbestand", title: "Warenbestand WERK 2", enforcement: "kachel", live: true },
   { key: "bestellliste", title: "Bestellliste", enforcement: "intern", live: true },
   { key: "urlaub", title: "Urlaubsantrag", enforcement: "intern", live: false },
-  { key: "hoellental", title: "Höllental", enforcement: "kachel", live: true },
+  { key: "projekte", title: "Projekte", enforcement: "intern", live: false },
+  { key: "pandacad", title: "PandaCAD", enforcement: "intern", live: true },
   { key: "auslagen", title: "Auslagen & Belege", enforcement: "intern", live: true },
 ];
 

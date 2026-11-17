@@ -59,9 +59,14 @@ export default async function MitarbeiterPage() {
             erscheinen nicht mehr in Auswahlfeldern.
           </p>
         </div>
-        <Link href="/mitarbeiter/neu" className="grb-btn grb-btn-primary">
-          <Icon name="plus" size={14} /> Neuer Mitarbeiter
-        </Link>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Link href="/mitarbeiter/zugaenge" className="grb-btn">
+            Zugänge (App-Matrix)
+          </Link>
+          <Link href="/mitarbeiter/neu" className="grb-btn grb-btn-primary">
+            <Icon name="plus" size={14} /> Neuer Mitarbeiter
+          </Link>
+        </div>
       </div>
 
       {/* Tabelle */}
