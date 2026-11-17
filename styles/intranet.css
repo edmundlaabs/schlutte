@@ -330,6 +330,7 @@
   padding: 2px 8px;
 }
 
+<<<<<<< Updated upstream
 /* ---------- Footer ---------- */
 .sch-foot {
   flex: 0 0 auto;
@@ -344,6 +345,14 @@
   text-transform: uppercase;
   color: var(--fg-subtle);
   background: var(--bg-alt);
+=======
+/* ---------- Drei Blöcke in einer Reihe: Zu erledigen · Events · Geburtstage ---------- */
+.sch-blocks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-6);
+  align-items: start;
+>>>>>>> Stashed changes
 }
 
 /* ---------- Responsive ---------- */
