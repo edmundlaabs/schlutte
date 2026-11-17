@@ -1,12 +1,8 @@
-import { getFeedbackList } from "@/lib/data/feedback";
 import { CHANGELOG } from "@/lib/changelog";
 import { APP_VERSION } from "@/lib/version";
 import { FeedbackForm } from "./FeedbackForm";
-import { FeedbackList } from "./FeedbackList";
 
-export default async function FeedbackPage() {
-  const feedbackList = await getFeedbackList();
-
+export default function FeedbackPage() {
   return (
     <div
       style={{
@@ -151,26 +147,6 @@ export default async function FeedbackPage() {
             </div>
           ))}
         </div>
-      </section>
-
-      {/* ─── Feedback-Verwaltung ─────────────────────────────────── */}
-      <section>
-        <div style={{ marginBottom: 20 }}>
-          <span className="grb-eyebrow">Feedback-Verwaltung</span>
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 22,
-              fontWeight: 400,
-              color: "var(--fg)",
-              letterSpacing: "-0.005em",
-              marginTop: 4,
-            }}
-          >
-            Alle Einträge · {feedbackList.length} gesamt
-          </div>
-        </div>
-        <FeedbackList entries={feedbackList} />
       </section>
     </div>
   );

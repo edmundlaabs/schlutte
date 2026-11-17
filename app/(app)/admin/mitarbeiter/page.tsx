@@ -60,10 +60,10 @@ export default async function MitarbeiterPage() {
           </p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <Link href="/mitarbeiter/zugaenge" className="grb-btn">
+          <Link href="/admin/zugaenge" className="grb-btn">
             Zugänge (App-Matrix)
           </Link>
-          <Link href="/mitarbeiter/neu" className="grb-btn grb-btn-primary">
+          <Link href="/admin/mitarbeiter/neu" className="grb-btn grb-btn-primary">
             <Icon name="plus" size={14} /> Neuer Mitarbeiter
           </Link>
         </div>

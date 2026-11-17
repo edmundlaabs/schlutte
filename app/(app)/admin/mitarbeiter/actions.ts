@@ -78,7 +78,7 @@ export async function createEmployeeAction(
       try {
         await inviteUserByEmail(input.email, await passwordRedirectUrl());
       } catch (e) {
-        revalidatePath("/mitarbeiter");
+        revalidatePath("/admin/mitarbeiter");
         return {
           error: `Mitarbeiter angelegt, aber die Einladung ging nicht raus: ${(e as Error).message}`,
         };
@@ -88,8 +88,8 @@ export async function createEmployeeAction(
     return { error: (e as Error).message };
   }
 
-  revalidatePath("/mitarbeiter");
-  redirect("/mitarbeiter");
+  revalidatePath("/admin/mitarbeiter");
+  redirect("/admin/mitarbeiter");
 }
 
 export async function updateEmployeeAction(
@@ -117,8 +117,8 @@ export async function updateEmployeeAction(
     return { error: (e as Error).message };
   }
 
-  revalidatePath("/mitarbeiter");
-  redirect("/mitarbeiter");
+  revalidatePath("/admin/mitarbeiter");
+  redirect("/admin/mitarbeiter");
 }
 
 /**
@@ -172,8 +172,8 @@ export async function toggleActiveAction(
       console.warn("Login-Sperre nicht angepasst:", (e as Error).message);
     }
   }
-  revalidatePath("/mitarbeiter");
-  revalidatePath("/mitarbeiter/zugaenge");
+  revalidatePath("/admin/mitarbeiter");
+  revalidatePath("/admin/zugaenge");
 }
 
 export async function deleteEmployeeAction(
@@ -195,7 +195,7 @@ export async function deleteEmployeeAction(
       }
     }
 
-    revalidatePath("/mitarbeiter");
+    revalidatePath("/admin/mitarbeiter");
     return { softOnly: result.softOnly };
   } catch (e) {
     return { softOnly: false, error: (e as Error).message };

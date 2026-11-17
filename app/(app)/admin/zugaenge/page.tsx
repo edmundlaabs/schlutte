@@ -7,7 +7,7 @@ import { ZugaengeMatrix, type MatrixRow } from "./ZugaengeMatrix";
 
 export const dynamic = "force-dynamic";
 
-/** Zugänge-Matrix: Zeilen = aktive Mitarbeiter, Spalten = Apps. Zugriff regelt das Layout /mitarbeiter. */
+/** Zugänge-Matrix: Zeilen = aktive Mitarbeiter, Spalten = Apps. Zugriff regelt das Layout /admin. */
 export default async function ZugaengePage() {
   const employees = await getEmployees();
 
@@ -27,7 +27,7 @@ export default async function ZugaengePage() {
   return (
     <div style={{ padding: "40px 32px 80px", maxWidth: 1320, margin: "0 auto", width: "100%" }}>
       <Link
-        href="/mitarbeiter"
+        href="/admin/mitarbeiter"
         style={{
           fontFamily: "var(--font-mono)",
           fontSize: 11,

@@ -12,7 +12,7 @@ export default function NeuMitarbeiterPage() {
       }}
     >
       <Link
-        href="/mitarbeiter"
+        href="/admin/mitarbeiter"
         style={{
           fontFamily: "var(--font-mono)",
           fontSize: 11,

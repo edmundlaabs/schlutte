@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Icon } from "@/components/ui/Icon";
 import type { FeedbackEntry, FeedbackStatus } from "@/lib/types";
-import { updateStatusAction, saveResponseAction } from "./actions";
+import { updateStatusAction, saveResponseAction } from "../../feedback/actions";
 import { formatDate } from "@/lib/utils";
 
 const STATUS_LABEL: Record<FeedbackStatus, string> = {

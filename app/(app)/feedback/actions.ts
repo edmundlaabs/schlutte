@@ -43,6 +43,7 @@ export async function submitFeedbackAction(
     );
 
     revalidatePath("/feedback");
+    revalidatePath("/admin/feedback");
     return { success: true };
   } catch (e) {
     return { error: (e as Error).message };
@@ -55,6 +56,7 @@ export async function updateStatusAction(
 ): Promise<void> {
   await updateFeedbackStatus(id, status);
   revalidatePath("/feedback");
+  revalidatePath("/admin/feedback");
 }
 
 export async function saveResponseAction(
@@ -64,6 +66,7 @@ export async function saveResponseAction(
   try {
     await saveFeedbackResponse(id, update);
     revalidatePath("/feedback");
+    revalidatePath("/admin/feedback");
     return {};
   } catch (e) {
     return { error: (e as Error).message };

@@ -24,6 +24,6 @@ export async function setAccessAction(
   } catch (e) {
     return { error: (e as Error).message };
   }
-  revalidatePath("/mitarbeiter");
+  revalidatePath("/admin/mitarbeiter");
   return {};
 }

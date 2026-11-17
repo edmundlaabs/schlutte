@@ -23,7 +23,7 @@ export default async function BearbeitenMitarbeiterPage({
       }}
     >
       <Link
-        href="/mitarbeiter"
+        href="/admin/mitarbeiter"
         style={{
           fontFamily: "var(--font-mono)",
           fontSize: 11,

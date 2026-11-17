@@ -261,7 +261,7 @@ export function EmployeeForm({
             ? "Änderungen speichern"
             : "Mitarbeiter anlegen"}
         </button>
-        <Link href="/mitarbeiter" className="grb-btn grb-btn-ghost">
+        <Link href="/admin/mitarbeiter" className="grb-btn grb-btn-ghost">
           Abbrechen
         </Link>
       </div>

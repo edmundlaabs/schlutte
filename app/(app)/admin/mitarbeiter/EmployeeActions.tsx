@@ -49,7 +49,7 @@ export function EmployeeActions({
       }}
     >
       <Link
-        href={`/mitarbeiter/${id}/bearbeiten`}
+        href={`/admin/mitarbeiter/${id}/bearbeiten`}
         style={{ padding: "4px 8px", color: "var(--fg-muted)" }}
         title="Bearbeiten"
       >
