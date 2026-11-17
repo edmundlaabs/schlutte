@@ -124,7 +124,8 @@
   flex-shrink: 0;
   position: relative;
 }
-/* Schnittmarken: 1 cm lang, 1 pt breit, oben und unten auf der Mittellinie (148,5 mm). */
+/* Schnittmarken: 1 cm lang, 1 pt breit, oben und unten auf der Mittellinie (148,5 mm),
+   4 mm vom Papierrand nach innen versetzt (nicht bedruckbarer Druckerrand). */
 .imposition-mark {
   position: absolute;
   left: calc(148.5mm - 0.5pt);
@@ -133,8 +134,8 @@
   background: #000;
   pointer-events: none;
 }
-.imposition-mark--top { top: 0; }
-.imposition-mark--bottom { bottom: 0; }
+.imposition-mark--top { top: 4mm; }
+.imposition-mark--bottom { bottom: 4mm; }
 .imposition-slot {
   width: 148.5mm;
   height: 210mm;

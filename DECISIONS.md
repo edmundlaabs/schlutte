@@ -179,7 +179,7 @@ Die Tabellen wurden verifiziert und die Data-Schicht auf das reale Schema angepa
 - **Label:** exakt A5 hochkant (148 × 210 mm), Komponente `components/print/OberflaecheLabel.tsx`. Lange Texte über `FitText`, Rahmen `overflow: hidden`. Nur 100 % Schwarz, Hairlines, scharfe Ecken (wie Palette).
 - **Imposition:** Ausgabe immer auf A4 quer (297 × 210 mm), je Blatt zwei A5-Labels nebeneinander, 100 % Größe, keine Skalierung. Gerade Anzahl: alle Blätter voll. Ungerade Anzahl: letztes Blatt nur links. 1 → 1 Blatt, 3 → 2 Blätter, 5 → 3 Blätter.
 - **Warum kein globales `@page`:** Das globale `@page { size: A4 landscape }` in `styles/print.css` gilt ohnehin für alle Vorlagen; die neue Vorlage nutzt eigene Klassen (`.imposition-sheet`, `.imposition-slot`) ohne Padding. `.print-sheet` (Palette/Laufzettel) bleibt unverändert.
-- **Schnittmarken:** je 1 cm lang, 1 pt breit, oben und unten auf der Mittellinie (148,5 mm) jedes Blatts. Hinweis: Drucker haben meist ~4 mm nicht bedruckbaren Rand, daher kann das äußerste Stück der Marke abgeschnitten werden.
+- **Schnittmarken:** je 1 cm lang, 1 pt breit, oben und unten auf der Mittellinie (148,5 mm) jedes Blatts, **4 mm vom Papierrand nach innen versetzt**, weil Drucker meist ~4 mm Rand nicht bedrucken.
 - **Datenbank:** `documents_document_type_check` war ein Check-Constraint (`laufzettel`, `palette`). Migration `supabase/migrations/20261117_documents_add_oberflaeche.sql` muss manuell im SQL-Editor ausgeführt werden. Ohne sie schlägt das Speichern fehl (verständliche Fehlermeldung).
 - **Zählung je Kommission:** `getDocumentCountsByCommission` zählt `oberflaeche` getrennt (vorher wäre alles Nicht-Palette als Laufzettel gezählt worden).
 

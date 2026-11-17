@@ -12,7 +12,7 @@ export function imposeLabels(count: number): Array<[boolean, boolean]> {
 /**
  * Imposition: A4 quer (297 × 210 mm), je Blatt zwei A5-Labels nebeneinander, 100 %.
  * Ungerade Anzahl → letztes Blatt nur links belegt.
- * Schnittmarken (1 cm × 1 pt) oben und unten auf der Mittellinie bei 148,5 mm.
+ * Schnittmarken (1 cm × 1 pt) oben und unten auf der Mittellinie bei 148,5 mm, 4 mm vom Rand versetzt.
  */
 export function OberflaecheSheets({ data }: { data: OberflaecheFormData }) {
   const sheets = imposeLabels(data.labelCount);
