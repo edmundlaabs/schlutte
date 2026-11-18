@@ -11,9 +11,7 @@ import { firstNameOf } from "@/lib/auth/provision";
 import { listSubmittedClaims, type InboxClaim } from "@/lib/data/auslagen-inbox";
 import { appsByGroup, appTitle, getApp, isAppKey } from "@/lib/apps";
 import { ladeStartWidget } from "@/lib/data/urlaub";
-import { StartWidget } from "@/components/urlaub/StartWidget";
-import { formatEUR } from "@/lib/auslagen/format";
-import { formatDate } from "@/lib/utils";
+import { StatusKachel } from "@/components/intranet/StatusKachel";
 import {
   createEventAction,
   updateEventAction,
@@ -62,7 +60,7 @@ export default async function StartPage({
     catch (error) { console.error("Antragseingang konnte nicht geladen werden:", error); }
   }
   const [events, birthdays] = await Promise.all([getUpcomingEvents(), getUpcomingBirthdays()]);
-  // Urlaub-Widget: nur mit Freischaltung, Mitarbeiter-Eintrag und sobald das Modul live ist.
+  // Urlaub-Zelle der Status-Kachel: nur mit Freischaltung, Mitarbeiter-Eintrag und sobald das Modul live ist.
   const urlaubWidget =
     getApp("urlaub").live && allowedApps.includes("urlaub") && ctx.employee?.id
       ? await ladeStartWidget(ctx.employee.id, isAdmin)
@@ -90,53 +88,18 @@ export default async function StartPage({
           )}
         </section>
 
-        {urlaubWidget && (
-          <section className="sch-blocks" style={{ gridTemplateColumns: "minmax(0, 1fr)" }} aria-label="Urlaub">
-            <StartWidget daten={urlaubWidget} />
-          </section>
-        )}
+        <StatusKachel
+          birthdays={birthdays}
+          events={events}
+          auslagen={allowedApps.includes("auslagen") ? { isAdmin, offen: inbox.length, ungelesen: unreadCount } : null}
+          urlaub={urlaubWidget}
+        />
 
-        <section className="sch-blocks">
-          <div className="sch-block" aria-label="Zu erledigen">
-            <div className="sch-block-head">
-              <div>
-                <span className="sch-eyebrow">Auslagen</span>
-                <h2>
-                  Zu erledigen{" "}
-                  {unreadCount > 0 && <span className="sch-notification-dot is-inline" aria-label={`${unreadCount} ungelesen`} />}
-                </h2>
-              </div>
-              {isAdmin && <Link href="/auslagen/eingang">Alle Anträge ansehen →</Link>}
-            </div>
-            {isAdmin && inbox.length > 0 ? (
-              <div className="sch-claims-list">
-                {inbox.slice(0, 5).map((claim) => (
-                  <Link href={`/auslagen/eingang/${claim.id}`} key={claim.id} className="sch-claim-row">
-                    <span className="sch-claim-name">
-                      {claim.unread && <span className="sch-notification-dot is-inline" aria-label="Ungelesen" />} {claim.applicantName}
-                    </span>
-                    <span>{formatDate(claim.sentAt)}</span>
-                    <strong>{formatEUR(claim.totalGross)}</strong>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="sch-block-empty">
-                {isAdmin ? "Noch keine Anträge eingereicht." : "Aktuell ist nichts zu erledigen."}
-              </p>
-            )}
-          </div>
-
-          <div className="sch-block" aria-label="Events">
-            <div className="sch-block-head">
-              <div>
-                <span className="sch-eyebrow">Team</span>
-                <h2>Events</h2>
-              </div>
-            </div>
-            <div className="sch-info">
+        {isAdmin && (
+          <details className="sch-edit">
+            <summary>Events und Geburtstage bearbeiten</summary>
+            <div className="sch-edit-body">
               <ListTile
-                bare
                 heading="Events"
                 items={events}
                 isAdmin={isAdmin}
@@ -147,19 +110,7 @@ export default async function StartPage({
                 onUpdate={updateEventAction}
                 onDelete={deleteEventAction}
               />
-            </div>
-          </div>
-
-          <div className="sch-block" aria-label="Geburtstage">
-            <div className="sch-block-head">
-              <div>
-                <span className="sch-eyebrow">Team</span>
-                <h2>Geburtstage</h2>
-              </div>
-            </div>
-            <div className="sch-info">
               <ListTile
-                bare
                 heading="Geburtstage"
                 items={birthdays}
                 isAdmin={isAdmin}
@@ -171,8 +122,8 @@ export default async function StartPage({
                 onDelete={deleteBirthdayAction}
               />
             </div>
-          </div>
-        </section>
+          </details>
+        )}
 
         <section className="sch-cols" aria-label="Apps">
           {groups.length === 0 && (
