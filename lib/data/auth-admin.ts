@@ -79,10 +79,33 @@ export async function setPasswordForEmail(
   return "created";
 }
 
-/** Entfernt den Login zu einer E-Mail (falls vorhanden). Best-effort. */
-export async function deleteAuthUserByEmail(email: string): Promise<void> {
+/**
+ * Teilt sich ein anderer Mitarbeiter (außer exceptEmployeeId) dieselbe Login-E-Mail?
+ * Der Login hängt nur an der E-Mail; ohne diese Prüfung würde das Sperren/Löschen
+ * eines Duplikats den Login des anderen treffen. onlyActive: nur aktive zählen.
+ */
+async function emailSharedWithOthers(
+  email: string,
+  exceptEmployeeId: string,
+  onlyActive: boolean
+): Promise<boolean> {
+  const admin = createAdminClient();
+  let q = admin
+    .from("employees")
+    .select("id", { count: "exact", head: true })
+    .ilike("email", email.trim())
+    .neq("id", exceptEmployeeId);
+  if (onlyActive) q = q.eq("is_active", true);
+  const { count, error } = await q;
+  if (error) throw new Error(`Prüfung auf doppelte E-Mail fehlgeschlagen: ${error.message}`);
+  return (count ?? 0) > 0;
+}
+
+/** Entfernt den Login zu einer E-Mail (falls vorhanden). Best-effort. Bleibt, wenn ihn ein anderer Mitarbeiter mitnutzt. */
+export async function deleteAuthUserByEmail(email: string, employeeId: string): Promise<void> {
   const mail = email.trim();
   if (!mail) return;
+  if (await emailSharedWithOthers(mail, employeeId, false)) return;
   const id = await findAuthUserIdByEmail(mail);
   if (!id) return;
   const admin = createAdminClient();
@@ -113,9 +136,15 @@ export async function inviteUserByEmail(
  * Sperrt bzw. entsperrt den Login zur E-Mail (Ban). Kein Login → false.
  * Bereits ausgestellte Sitzungen laufen bis zum Ablauf des Tokens weiter.
  */
-export async function setAuthUserBanned(email: string, banned: boolean): Promise<boolean> {
+export async function setAuthUserBanned(
+  email: string,
+  banned: boolean,
+  employeeId: string
+): Promise<boolean> {
   const mail = email.trim();
   if (!mail) return false;
+  // Gesperrt wird nur, wenn kein anderer aktiver Mitarbeiter denselben Login nutzt.
+  if (banned && (await emailSharedWithOthers(mail, employeeId, true))) return false;
   const id = await findAuthUserIdByEmail(mail);
   if (!id) return false;
   const admin = createAdminClient();

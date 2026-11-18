@@ -113,7 +113,7 @@ export async function updateEmployeeAction(
     await updateEmployee(id, input);
     // Login-Sperre mit dem Aktiv-Flag synchron halten.
     if (input.is_active !== undefined && input.email?.trim()) {
-      await setAuthUserBanned(input.email, !input.is_active);
+      await setAuthUserBanned(input.email, !input.is_active, id);
     }
   } catch (e) {
     return { error: (e as Error).message };
@@ -173,7 +173,7 @@ export async function toggleActiveAction(
   const employee = await getEmployeeById(id);
   if (employee?.email) {
     try {
-      await setAuthUserBanned(employee.email, !active);
+      await setAuthUserBanned(employee.email, !active, id);
     } catch (e) {
       console.warn("Login-Sperre nicht angepasst:", (e as Error).message);
     }
@@ -195,7 +195,7 @@ export async function deleteEmployeeAction(
     // Login nur bei echtem Löschen (nicht bei Soft-Delete) entfernen.
     if (!result.softOnly && employee?.email) {
       try {
-        await deleteAuthUserByEmail(employee.email);
+        await deleteAuthUserByEmail(employee.email, id);
       } catch (e) {
         console.warn("Login konnte nicht entfernt werden:", (e as Error).message);
       }
