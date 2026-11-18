@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
 import type { Commission, LaufzettelFormData } from "@/lib/types";
-import { STATIONS } from "@/mocks/data";
+import { STATIONS, LEGACY_STATION_NAMES } from "@/mocks/data";
 import { LaufzettelSheet } from "@/components/print/LaufzettelSheet";
 import { saveLaufzettelAction } from "./actions";
 
@@ -36,7 +36,7 @@ export function LaufzettelForm({
   const [owner, setOwner] = useState(initialData?.employeeInitials || currentInitials || "");
   // Default: keine Stationen vorgewählt — der Nutzer hakt im Formular ab.
   const [selectedStations, setSelectedStations] = useState<string[]>(
-    initialData?.stations ?? []
+    (initialData?.stations ?? []).map((s) => LEGACY_STATION_NAMES[s] ?? s)
   );
 
   // Wrapper-Höhe an die tatsächlich gerenderte Sheet-Höhe binden
