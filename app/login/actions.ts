@@ -18,9 +18,12 @@ export async function loginWithEmployee(
     const admin = createAdminClient();
     const { data: emp } = await admin
       .from("employees")
-      .select("email, is_active")
+      .select("email, is_active, pending_approval")
       .eq("id", employeeId)
       .maybeSingle();
+    if (emp?.pending_approval) {
+      return { error: "Dein Konto wartet noch auf Freigabe durch CEO oder Administrator." };
+    }
     if (!emp?.email || emp.is_active === false) return { error: GENERIC_ERROR };
 
     const supabase = await createClient();

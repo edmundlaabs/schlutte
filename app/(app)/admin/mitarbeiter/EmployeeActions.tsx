@@ -3,22 +3,31 @@
 import Link from "next/link";
 import { useTransition } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { toggleActiveAction, deleteEmployeeAction } from "./actions";
+import { toggleActiveAction, deleteEmployeeAction, approveEmployeeAction } from "./actions";
 
 export function EmployeeActions({
   id,
   isActive,
   name,
+  pending = false,
 }: {
   id: string;
   isActive: boolean;
   name: string;
+  pending?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
 
   const handleToggleActive = () => {
     startTransition(async () => {
       await toggleActiveAction(id, !isActive);
+    });
+  };
+
+  const handleApprove = () => {
+    startTransition(async () => {
+      const res = await approveEmployeeAction(id);
+      if (res.error) alert(`Fehler: ${res.error}`);
     });
   };
 
@@ -48,6 +57,16 @@ export function EmployeeActions({
         opacity: isPending ? 0.5 : 1,
       }}
     >
+      {pending && (
+        <button
+          onClick={handleApprove}
+          disabled={isPending}
+          className="grb-btn grb-btn-primary"
+          style={{ padding: "4px 10px", fontSize: 12 }}
+        >
+          Freigeben
+        </button>
+      )}
       <Link
         href={`/admin/mitarbeiter/${id}/bearbeiten`}
         style={{ padding: "4px 8px", color: "var(--fg-muted)" }}
