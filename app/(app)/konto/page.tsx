@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isSyntheticLoginEmail } from "@/lib/auth/login-email";
 import { redirect } from "next/navigation";
 import { appAccessOf } from "@/lib/auth/app-access";
 import { getCurrentUserContext, roleLabel } from "@/lib/auth/roles";
@@ -21,7 +22,7 @@ export default async function KontoPage() {
         {[
           ["Name", ctx.employee?.name ?? "—"],
           ["Kürzel", ctx.employee?.initials ?? "—"],
-          ["E-Mail", ctx.email ?? "—"],
+          ["E-Mail", isSyntheticLoginEmail(ctx.email) ? "—" : (ctx.email ?? "—")],
           ["Rolle", roleLabel(ctx.role)],
           ["Apps", APPS.filter((a) => apps.includes(a.key)).map((a) => a.title).join(", ") || "Keine freigeschaltet"],
         ].map(([label, value]) => (

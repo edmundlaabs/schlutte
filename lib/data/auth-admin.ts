@@ -125,3 +125,19 @@ export async function setAuthUserBanned(email: string, banned: boolean): Promise
   if (error) throw new Error(`Login konnte nicht ${banned ? "gesperrt" : "entsperrt"} werden: ${error.message}`);
   return true;
 }
+
+/**
+ * Mitarbeiter, die sich anmelden können (aktiv + Login vorhanden) — für den
+ * Namens-Dropdown der Login-Seite. Liefert nur id und Name, nie E-Mails.
+ */
+export async function getLoginChoices(): Promise<{ id: string; name: string }[]> {
+  const admin = createAdminClient();
+  const [{ data, error }, loginEmails] = await Promise.all([
+    admin.from("employees").select("id, name, email").eq("is_active", true).order("name"),
+    getLoginEmails(),
+  ]);
+  if (error) throw new Error(`Mitarbeiterliste fehlgeschlagen: ${error.message}`);
+  return (data ?? [])
+    .filter((e) => e.email && loginEmails.has(String(e.email).toLowerCase()))
+    .map((e) => ({ id: String(e.id), name: String(e.name) }));
+}

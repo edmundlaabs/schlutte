@@ -1,4 +1,5 @@
 "use client";
+import { isSyntheticLoginEmail } from "@/lib/auth/login-email";
 
 import { useActionState } from "react";
 import Link from "next/link";
@@ -118,7 +119,7 @@ export function EmployeeForm({
           id="emp-email"
           name="email"
           type="email"
-          defaultValue={employee?.email ?? ""}
+          defaultValue={isSyntheticLoginEmail(employee?.email) ? "" : (employee?.email ?? "")}
           placeholder="max@grabner-design.at"
           style={{
             fontFamily: "var(--font-sans)",
@@ -159,7 +160,7 @@ export function EmployeeForm({
             }}
           />
           <span style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--fg-subtle)" }}>
-            Wird ein Passwort gesetzt, wird zusammen mit der E-Mail direkt ein Login angelegt.
+            Wird ein Passwort gesetzt, entsteht direkt ein Login. Ohne E-Mail meldet sich der Mitarbeiter über sein Namens-Dropdown an.
             Ohne Passwort entsteht nur ein Datensatz (Login später über „Bearbeiten“).
           </span>
         </div>
