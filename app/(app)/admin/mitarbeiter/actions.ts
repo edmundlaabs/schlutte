@@ -17,6 +17,7 @@ import {
   setAuthUserBanned,
   MIN_PASSWORD_LENGTH,
 } from "@/lib/data/auth-admin";
+import { isSyntheticLoginEmail, syntheticLoginEmail } from "@/lib/auth/login-email";
 import { requireAdmin } from "@/lib/auth/admin-guard";
 import { parseAppRole } from "@/lib/auth/app-role";
 import { parseAppKeys } from "@/lib/apps";
@@ -59,8 +60,9 @@ export async function createEmployeeAction(
 
     // Optionales Login: nur wenn ein Passwort gesetzt wurde.
     if (password) {
+      // Ohne E-Mail: technische Login-Adresse aus dem Kürzel (Anmeldung per Namens-Dropdown).
       if (!input.email?.trim()) {
-        return { error: "Für ein Login wird eine E-Mail-Adresse benötigt." };
+        input.email = syntheticLoginEmail(input.initials);
       }
       if (password.length < MIN_PASSWORD_LENGTH) {
         return { error: `Passwort muss mindestens ${MIN_PASSWORD_LENGTH} Zeichen haben.` };
@@ -138,19 +140,23 @@ export async function setPasswordAction(
 
     const employee = await getEmployeeById(employeeId);
     if (!employee) return { error: "Mitarbeiter nicht gefunden." };
-    if (!employee.email?.trim()) {
-      return { error: "Der Mitarbeiter hat keine E-Mail-Adresse — bitte zuerst hinterlegen." };
-    }
     if (password.length < MIN_PASSWORD_LENGTH) {
       return { error: `Passwort muss mindestens ${MIN_PASSWORD_LENGTH} Zeichen haben.` };
     }
 
-    const result = await setPasswordForEmail(employee.email, password);
+    // Keine E-Mail hinterlegt: technische Login-Adresse erzeugen und beim Mitarbeiter speichern.
+    let email = employee.email?.trim() ?? "";
+    if (!email) {
+      email = syntheticLoginEmail(employee.initials ?? "");
+      await updateEmployee(employeeId, { email });
+    }
+
+    const result = await setPasswordForEmail(email, password);
+    revalidatePath("/admin/mitarbeiter");
+    const who = isSyntheticLoginEmail(email) ? employee.name : email;
     return {
       success:
-        result === "created"
-          ? `Login für ${employee.email} angelegt.`
-          : `Passwort für ${employee.email} aktualisiert.`,
+        result === "created" ? `Login für ${who} angelegt.` : `Passwort für ${who} aktualisiert.`,
     };
   } catch (e) {
     return { error: (e as Error).message };

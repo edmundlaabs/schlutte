@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isSyntheticLoginEmail } from "@/lib/auth/login-email";
 import { getEmployees } from "@/lib/data/employees";
 import { getLoginEmails } from "@/lib/data/auth-admin";
 import { Icon } from "@/components/ui/Icon";
@@ -130,7 +131,7 @@ export default async function MitarbeiterPage() {
                     color: "var(--fg-muted)",
                   }}
                 >
-                  {emp.email || "—"}
+                  {isSyntheticLoginEmail(emp.email) ? "Anmeldung per Name" : emp.email || "—"}
                 </td>
                 <td>
                   {loginEmails === null ? (
@@ -149,7 +150,7 @@ export default async function MitarbeiterPage() {
                     </span>
                   ) : (
                     <span
-                      title={emp.email ? "Kein Login — beim Passwort-Setzen wird einer angelegt" : "Keine E-Mail hinterlegt"}
+                      title="Kein Login — beim Passwort-Setzen wird einer angelegt"
                       style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--fg-subtle)" }}
                     >
                       —

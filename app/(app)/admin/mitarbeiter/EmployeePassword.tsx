@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Icon } from "@/components/ui/Icon";
+import { isSyntheticLoginEmail } from "@/lib/auth/login-email";
 import { setPasswordAction } from "./actions";
 
 type State = { error?: string; success?: string } | null;
@@ -13,6 +14,7 @@ export function EmployeePassword({
   employeeId: string;
   email?: string;
 }) {
+  const nameLogin = isSyntheticLoginEmail(email);
   const boundAction = setPasswordAction.bind(null, employeeId);
   const [state, action, isPending] = useActionState<State, FormData>(
     boundAction,
@@ -36,7 +38,12 @@ export function EmployeePassword({
           Login &amp; Passwort
         </h2>
         <p style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "var(--fg-muted)", marginTop: 8 }}>
-          {email ? (
+          {nameLogin ? (
+            <>
+              Dieser Mitarbeiter meldet sich über den <strong>Namen im Login-Dropdown</strong> an
+              (keine E-Mail nötig). Hier vergibst bzw. ersetzt du das Passwort.
+            </>
+          ) : email ? (
             <>
               Setzt bzw. ersetzt das Passwort für <strong>{email}</strong>. Existiert noch
               kein Login zu dieser E-Mail, wird er dabei angelegt.{" "}
@@ -44,7 +51,10 @@ export function EmployeePassword({
               Login-Seite zurücksetzen.
             </>
           ) : (
-            <>Für den Zugang zuerst oben eine E-Mail-Adresse hinterlegen und speichern.</>
+            <>
+              Keine E-Mail hinterlegt — das ist in Ordnung: Mit dem ersten Passwort entsteht ein Login,
+              und der Mitarbeiter wählt beim Anmelden einfach seinen Namen aus.
+            </>
           )}
         </p>
       </div>
@@ -96,7 +106,7 @@ export function EmployeePassword({
             required
             minLength={8}
             autoComplete="new-password"
-            disabled={!email || isPending}
+            disabled={isPending}
             placeholder="Mind. 8 Zeichen"
             style={{
               fontFamily: "var(--font-sans)",
@@ -106,14 +116,14 @@ export function EmployeePassword({
               background: "var(--bg)",
               color: "var(--fg)",
               width: 320,
-              opacity: email ? 1 : 0.5,
+              
             }}
           />
         </div>
         <button
           type="submit"
           className="grb-btn grb-btn-primary"
-          disabled={!email || isPending}
+          disabled={isPending}
         >
           <Icon name="check" size={14} />
           {isPending ? "Wird gesetzt …" : "Passwort setzen"}
