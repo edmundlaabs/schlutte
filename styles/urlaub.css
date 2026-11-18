@@ -1,0 +1,119 @@
+/* =========================================================================
+   SCHLUTTE — Urlaub & Abwesenheit (/urlaub). Präfix: urlaub-
+   Baut auf styles/auslagen.css (aus-Klassen für Formulare, Buttons, Chips) und tokens.css auf.
+   Hairlines statt Schatten, scharfe Ecken. Farben nur über Tokens.
+   ========================================================================= */
+
+.urlaub {
+  --u-cell: 22px;
+  --u-name: 96px;
+  --u-genehmigt: var(--fg);
+  --u-beantragt: var(--fg-muted);
+  --u-kollege: var(--fg-muted);
+  --u-ferien: color-mix(in srgb, var(--accent) 55%, transparent);
+  --u-sperre: color-mix(in srgb, var(--aus-danger) 40%, transparent);
+  --u-grau: color-mix(in srgb, var(--fg) 7%, transparent);
+}
+
+/* ---------- Konto-Kopf ---------- */
+.urlaub-rest { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.urlaub-rest-zahl { font-family: var(--font-display); font-size: clamp(56px, 18vw, 88px); font-weight: 300; line-height: 1; letter-spacing: -0.02em; }
+.urlaub-rest-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-muted); }
+.urlaub-konto-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--border); border-left: 1px solid var(--border); margin-top: var(--sp-4); }
+.urlaub-konto-grid > div { padding: 12px 14px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.urlaub-konto-grid dt { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-muted); }
+.urlaub-konto-grid dd { margin: 4px 0 0; font-family: var(--font-display); font-size: 24px; font-weight: 300; font-variant-numeric: tabular-nums; }
+.urlaub-konto-grid dd small { display: block; font-family: var(--font-sans); font-size: 11px; color: var(--fg-subtle); font-weight: 400; }
+@media (min-width: 720px) { .urlaub-konto-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
+/* ---------- Formular ---------- */
+.urlaub-form { display: flex; flex-direction: column; gap: var(--sp-4); padding: var(--sp-4); border: 1px solid var(--border-strong); background: var(--bg-raised); }
+.urlaub-dates { display: grid; grid-template-columns: 1fr; gap: var(--sp-3); }
+@media (min-width: 560px) { .urlaub-dates { grid-template-columns: 1fr 1fr; } }
+.urlaub-live { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px; border: 1px solid var(--border); background: var(--bg-alt); }
+.urlaub-live strong { font-family: var(--font-display); font-size: 28px; font-weight: 300; font-variant-numeric: tabular-nums; }
+.urlaub-hinweise { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.45; color: var(--fg-muted); }
+.urlaub-hinweise li::before { content: "— "; color: var(--accent); }
+.urlaub-hinweise .is-warn { color: var(--aus-warning); }
+.urlaub-krank { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- Listen ---------- */
+.urlaub-konflikte { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.urlaub-badge { display: inline-flex; padding: 3px 8px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid var(--aus-danger); color: var(--aus-danger); }
+.urlaub-zeile { display: flex; flex-direction: column; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.urlaub-zeile:first-child { border-top: 1px solid var(--border); }
+.urlaub-zeile-kopf { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.urlaub-zeile-titel { font-weight: 500; }
+.urlaub-zeile-meta { font-size: 13px; color: var(--fg-muted); line-height: 1.5; }
+.urlaub-inline-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+.urlaub-inline-form .aus-field { flex: 1 1 140px; }
+.urlaub-chip-genehmigt { color: var(--aus-success); border-color: var(--aus-success); }
+.urlaub-chip-abgelehnt, .urlaub-chip-storniert { color: var(--aus-danger); border-color: var(--aus-danger); }
+.urlaub-meldung { font-size: 13px; line-height: 1.45; margin: 0; }
+.urlaub-meldung.is-ok { color: var(--aus-success); }
+.urlaub-meldung.is-fehler { color: var(--aus-danger); }
+
+/* ---------- Tabellen (Konten, Einstellungen) ---------- */
+.urlaub-tabelle-wrap { overflow-x: auto; border: 1px solid var(--border); }
+.urlaub-tabelle { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px; }
+.urlaub-tabelle th { text-align: left; padding: 10px 12px; font-family: var(--font-mono); font-size: 10px; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-muted); border-bottom: 1px solid var(--border-strong); white-space: nowrap; }
+.urlaub-tabelle td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; font-variant-numeric: tabular-nums; }
+.urlaub-tabelle .aus-input { min-height: 40px; padding: 8px 10px; font-size: 16px; min-width: 70px; }
+.urlaub-tabelle td.is-rest { font-weight: 600; }
+.urlaub-tage { display: flex; flex-wrap: wrap; gap: 10px 16px; }
+.urlaub-tage label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+
+/* ---------- Kalender-Raster (ein Monat) ---------- */
+.urlaub-jahr { display: grid; grid-template-columns: 1fr; gap: var(--sp-5); }
+.urlaub-monat { min-width: 0; }
+.urlaub-monat-titel { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 8px; font-family: var(--font-display); font-size: 20px; font-weight: 400; }
+.urlaub-raster-wrap { overflow-x: auto; border: 1px solid var(--border); background: var(--bg); }
+.urlaub-raster { min-width: calc(var(--u-name) + var(--u-cell) * var(--tage)); }
+.urlaub-rzeile { display: grid; grid-template-columns: var(--u-name) repeat(var(--tage), minmax(var(--u-cell), 1fr)); align-items: stretch; border-bottom: 1px solid var(--hairline); min-height: 26px; position: relative; }
+.urlaub-rzeile:last-child { border-bottom: 0; }
+.urlaub-rname { grid-row: 1; grid-column: 1; position: sticky; left: 0; z-index: 3; display: flex; align-items: center; padding: 0 8px; background: var(--bg); border-right: 1px solid var(--border); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.urlaub-kopf .urlaub-rname { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-muted); }
+.urlaub-zelle { grid-row: 1; border-right: 1px solid var(--hairline); }
+.urlaub-zelle.is-we, .urlaub-zelle.is-feiertag { background: var(--u-grau); }
+.urlaub-zelle.is-ferien { background: var(--u-ferien); }
+.urlaub-zelle.is-sperre { background-image: repeating-linear-gradient(135deg, transparent 0 4px, var(--u-sperre) 4px 5px); }
+.urlaub-zelle.is-heute { box-shadow: inset 0 0 0 1px var(--accent); }
+.urlaub-kopf .urlaub-zelle { display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 10px; line-height: 1.2; color: var(--fg-muted); padding: 3px 0; }
+.urlaub-kopf .urlaub-zelle b { font-weight: 500; color: var(--fg); font-size: 11px; }
+.urlaub-balken { grid-row: 1; z-index: 2; margin: 4px 1px; min-width: 0; display: flex; align-items: center; padding: 0 6px; font-size: 11px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; color: var(--fg-inverse); background: var(--u-genehmigt); border: 1px solid var(--u-genehmigt); }
+.urlaub-balken.is-kollege { background: var(--u-kollege); border-color: var(--u-kollege); }
+.urlaub-balken.is-beantragt { background: transparent; color: var(--fg); border: 1px dashed var(--fg-muted); opacity: 0.8; }
+.urlaub-balken.is-ferien { background: var(--u-ferien); border-color: transparent; color: var(--fg); }
+.urlaub-balken.is-sperre { background: var(--u-sperre); border-color: transparent; color: var(--fg); }
+.urlaub-balken.is-konflikt { background: var(--aus-danger); border-color: var(--aus-danger); color: #fff; }
+.urlaub-balken.is-konflikt.is-beantragt { background: transparent; color: var(--aus-danger); border: 1px dashed var(--aus-danger); }
+a.urlaub-balken:hover { opacity: 0.8; }
+.urlaub-balken.is-halb-start { margin-left: calc(100% / var(--n) / 2 + 1px); }
+.urlaub-balken.is-halb-ende { margin-right: calc(100% / var(--n) / 2 + 1px); }
+.urlaub-leer { padding: 10px; font-size: 13px; color: var(--fg-subtle); }
+
+/* Legende + Steuerung */
+.urlaub-legende { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12px; color: var(--fg-muted); margin: 0 0 12px; padding: 0; list-style: none; }
+.urlaub-legende li { display: inline-flex; align-items: center; gap: 6px; }
+.urlaub-legende i { width: 14px; height: 10px; display: inline-block; background: var(--u-genehmigt); }
+.urlaub-legende i.l-beantragt { background: transparent; border: 1px dashed var(--fg-muted); }
+.urlaub-legende i.l-kollege { background: var(--u-kollege); }
+.urlaub-legende i.l-ferien { background: var(--u-ferien); }
+.urlaub-legende i.l-sperre { background-image: repeating-linear-gradient(135deg, transparent 0 3px, var(--aus-danger) 3px 4px); border: 1px solid var(--u-sperre); background-color: transparent; }
+.urlaub-legende i.l-konflikt { background: var(--aus-danger); }
+.urlaub-steuerung { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.urlaub-monatswahl { display: flex; align-items: center; gap: 8px; }
+.urlaub-monatswahl strong { font-family: var(--font-display); font-size: 20px; font-weight: 400; min-width: 9ch; text-align: center; }
+
+/* Mobil: nur ein Monat sichtbar (per Auswahl), ab Tablet alle 12 */
+@media (max-width: 767px) {
+  .urlaub-monat { display: none; }
+  .urlaub-monat.is-aktuell { display: block; }
+}
+@media (min-width: 768px) {
+  .urlaub-monatswahl.nur-mobil { display: none; }
+  .urlaub-jahr { gap: var(--sp-6); }
+}
+@media (max-width: 767px) {
+  .urlaub { --u-cell: 26px; --u-name: 84px; }
+}

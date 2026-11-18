@@ -9,7 +9,9 @@ import { hasAdminRights } from "@/lib/auth/app-role";
 import { getCurrentUserContext } from "@/lib/auth/roles";
 import { firstNameOf } from "@/lib/auth/provision";
 import { listSubmittedClaims, type InboxClaim } from "@/lib/data/auslagen-inbox";
-import { appsByGroup, appTitle, isAppKey } from "@/lib/apps";
+import { appsByGroup, appTitle, getApp, isAppKey } from "@/lib/apps";
+import { ladeStartWidget } from "@/lib/data/urlaub";
+import { StartWidget } from "@/components/urlaub/StartWidget";
 import { formatEUR } from "@/lib/auslagen/format";
 import { formatDate } from "@/lib/utils";
 import {
@@ -60,6 +62,11 @@ export default async function StartPage({
     catch (error) { console.error("Antragseingang konnte nicht geladen werden:", error); }
   }
   const [events, birthdays] = await Promise.all([getUpcomingEvents(), getUpcomingBirthdays()]);
+  // Urlaub-Widget: nur mit Freischaltung, Mitarbeiter-Eintrag und sobald das Modul live ist.
+  const urlaubWidget =
+    getApp("urlaub").live && allowedApps.includes("urlaub") && ctx.employee?.id
+      ? await ladeStartWidget(ctx.employee.id, isAdmin)
+      : null;
 
   const unreadCount = inbox.filter((claim) => claim.unread).length;
   const groups = appsByGroup(allowedApps);
@@ -82,6 +89,12 @@ export default async function StartPage({
             </p>
           )}
         </section>
+
+        {urlaubWidget && (
+          <section className="sch-blocks" style={{ gridTemplateColumns: "minmax(0, 1fr)" }} aria-label="Urlaub">
+            <StartWidget daten={urlaubWidget} />
+          </section>
+        )}
 
         <section className="sch-blocks">
           <div className="sch-block" aria-label="Zu erledigen">
