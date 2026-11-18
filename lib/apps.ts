@@ -85,7 +85,7 @@ export const APPS: readonly AppDefinition[] = [
     nav: [],
   },
   {
-    key: "personal", title: "Personal", enforcement: "intern", live: true,
+    key: "personal", title: "Vorlagen", enforcement: "intern", live: true,
     href: "/personal", group: "buero-personal", icon: "staff",
     hint: "Vorlagen für Büro und Verwaltung, z. B. Auftragsoberfläche (Muster).",
     nav: [],
