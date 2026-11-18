@@ -118,7 +118,7 @@ export function ListTile({
         padding: bare ? 0 : "18px 20px",
         display: "flex",
         flexDirection: "column",
-        gap: bare ? 6 : 14,
+        gap: bare ? 2 : 14,
       }}
     >
       {/* Kopf */}
@@ -214,22 +214,22 @@ export function ListTile({
               key={it.id}
               style={{
                 display: "grid",
-                gridTemplateColumns: bare ? "70px minmax(0, 1fr) auto" : "84px minmax(0, 1fr) auto",
+                gridTemplateColumns: bare ? "60px minmax(0, 1fr) auto" : "84px minmax(0, 1fr) auto",
                 alignItems: "start",
                 columnGap: bare ? 8 : 12,
-                padding: bare ? "6px 0" : "10px 0",
+                padding: bare ? "3px 0" : "10px 0",
                 borderTop: "1px solid var(--border)",
                 fontFamily: "var(--font-sans)",
-                fontSize: bare ? 13 : 14,
+                fontSize: bare ? 12 : 14,
                 color: "var(--fg)",
               }}
             >
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: bare ? 12 : 13, color: "var(--fg)", whiteSpace: "nowrap", paddingTop: 1 }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: bare ? 11 : 13, color: "var(--fg)", whiteSpace: "nowrap", paddingTop: 1 }}>
                 {it.dateLabel}
               </span>
               <span style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
                 <span style={{ overflowWrap: "anywhere", lineHeight: 1.35 }}>{it.text}</span>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: bare ? 11 : 12, color: "var(--fg-muted)" }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: bare ? 10 : 12, color: "var(--fg-muted)" }}>
                   {it.daysLabel}
                 </span>
               </span>
