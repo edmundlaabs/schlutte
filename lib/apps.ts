@@ -11,6 +11,8 @@
  *              Zugriff per Row Level Security, public.has_app_access() — Gerda.
  */
 
+import type { BadgeKey } from "@/lib/inbox/counts";
+
 export type AppKey =
   | "gerda"
   | "werkstatt"
@@ -46,6 +48,8 @@ export type AppNavItem = {
   icon?: "receipt" | "doc-stripe" | "user" | "card" | "settings" | "home" | "list" | "archive" | "box" | "mail";
   /** Nur bei exakt gleichem Pfad aktiv (z. B. Übersicht-Tab). */
   exact?: boolean;
+  /** Roter Punkt mit offenen Eingängen (nur CEO/Admin, Zähler aus lib/inbox/counts.ts). */
+  badge?: BadgeKey;
 };
 
 export type AppDefinition = {
@@ -97,7 +101,7 @@ export const APPS: readonly AppDefinition[] = [
     nav: [
       { label: "Belege", href: "/auslagen", match: ["/auslagen/erfassen", "/auslagen/belege"], icon: "receipt" },
       { label: "Anträge", href: "/auslagen/antraege", match: ["/auslagen/antrag"], icon: "doc-stripe" },
-      { label: "Eingang", href: "/auslagen/eingang", finance: true, icon: "doc-stripe" },
+      { label: "Eingang", href: "/auslagen/eingang", finance: true, icon: "doc-stripe", badge: "auslagen" },
       { label: "Profil", href: "/auslagen/profil", icon: "user" },
       { label: "Abgleich", href: "/auslagen/abgleich", finance: true, icon: "card" },
       { label: "Einstellungen", href: "/auslagen/einstellungen", finance: true, icon: "settings" },
@@ -109,7 +113,7 @@ export const APPS: readonly AppDefinition[] = [
     hint: "Urlaub und Abwesenheit beantragen.",
     nav: [
       { label: "Übersicht", href: "/urlaub", exact: true, icon: "home" },
-      { label: "Eingang", href: "/urlaub/verwaltung", exact: true, finance: true, icon: "mail", match: ["/urlaub/verwaltung/antrag"] },
+      { label: "Eingang", href: "/urlaub/verwaltung", exact: true, finance: true, icon: "mail", match: ["/urlaub/verwaltung/antrag"], badge: "urlaub" },
       { label: "Team", href: "/urlaub/verwaltung/team", finance: true, icon: "list" },
       { label: "Konten", href: "/urlaub/verwaltung/konten", finance: true, icon: "user" },
       { label: "Einstellungen", href: "/urlaub/verwaltung/einstellungen", finance: true, icon: "settings" },
@@ -137,9 +141,9 @@ export const APPS: readonly AppDefinition[] = [
 
 /** Unternavigation des Admin-Bereichs (nur CEO/Admin). */
 export const ADMIN_NAV: readonly AppNavItem[] = [
-  { label: "Mitarbeiter", href: "/admin/mitarbeiter", icon: "user" },
+  { label: "Mitarbeiter", href: "/admin/mitarbeiter", icon: "user", badge: "registrierungen" },
   { label: "Zugänge", href: "/admin/zugaenge", icon: "settings" },
-  { label: "Feedback", href: "/admin/feedback", icon: "mail" },
+  { label: "Feedback", href: "/admin/feedback", icon: "mail", badge: "feedback" },
 ];
 
 export const ALL_APP_KEYS: readonly AppKey[] = APPS.map((app) => app.key);

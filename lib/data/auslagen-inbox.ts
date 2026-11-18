@@ -13,6 +13,9 @@ export type InboxClaim = {
   totalGross: number;
   receiptCount: number;
   unread: boolean;
+  /** versendet = offen, erledigt = abgeschlossen. */
+  status: "versendet" | "erledigt";
+  doneAt: string | null;
 };
 
 type ClaimRow = {
@@ -25,6 +28,8 @@ type ClaimRow = {
   total_gross: number;
   receipt_count: number;
   pdf_path: string | null;
+  status: "versendet" | "erledigt";
+  done_at: string | null;
 };
 
 export async function listSubmittedClaims(): Promise<InboxClaim[]> {
@@ -33,8 +38,8 @@ export async function listSubmittedClaims(): Promise<InboxClaim[]> {
   const claims: ClaimRow[] = [];
   for (let offset = 0; ; offset += 500) {
     const { data, error } = await db.from("expense_claims")
-      .select("id, user_id, company_id, applicant, claim_date, sent_at, total_gross, receipt_count, pdf_path")
-      .eq("status", "versendet").neq("user_id", userId).not("pdf_path", "is", null)
+      .select("id, user_id, company_id, applicant, claim_date, sent_at, total_gross, receipt_count, pdf_path, status, done_at")
+      .in("status", ["versendet", "erledigt"]).neq("user_id", userId).not("pdf_path", "is", null)
       .order("sent_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + 499);
     if (error) throw toAuslagenError(error, "Eingereichte Anträge konnten nicht geladen werden");
     claims.push(...((data ?? []) as ClaimRow[]));
@@ -57,7 +62,9 @@ export async function listSubmittedClaims(): Promise<InboxClaim[]> {
     sentAt: claim.sent_at ?? claim.claim_date,
     totalGross: Number(claim.total_gross),
     receiptCount: claim.receipt_count,
-    unread: !readIds.has(claim.id),
+    unread: claim.status === "versendet" && !readIds.has(claim.id),
+    status: claim.status,
+    doneAt: claim.done_at,
   }));
 }
 
@@ -67,7 +74,7 @@ export async function getSubmittedClaimPdf(id: string): Promise<{ path: string; 
   const db = await createClient();
   const { data, error } = await db.from("expense_claims")
     .select("user_id, applicant, claim_date, pdf_path")
-    .eq("id", id).eq("status", "versendet").neq("user_id", userId).maybeSingle();
+    .eq("id", id).in("status", ["versendet", "erledigt"]).neq("user_id", userId).maybeSingle();
   if (error) throw toAuslagenError(error, "Antrag konnte nicht geladen werden");
   if (!data?.pdf_path) throw new AuslagenError("not_found", "Antrags-PDF nicht gefunden.");
   const applicant = data.applicant as ClaimRow["applicant"];
@@ -86,7 +93,7 @@ export async function markSubmittedClaimsRead(ids: string[]): Promise<void> {
   }
   const db = await createClient();
   const { data: claims, error: claimsError } = await db.from("expense_claims")
-    .select("id").in("id", valid).eq("status", "versendet").neq("user_id", userId);
+    .select("id").in("id", valid).in("status", ["versendet", "erledigt"]).neq("user_id", userId);
   if (claimsError) throw toAuslagenError(claimsError, "Anträge konnten nicht geprüft werden");
   if (claims?.length !== valid.length) throw new AuslagenError("forbidden", "Ein Antrag ist nicht zugänglich.");
   const now = new Date().toISOString();
@@ -95,4 +102,13 @@ export async function markSubmittedClaimsRead(ids: string[]): Promise<void> {
     { onConflict: "claim_id,user_id" }
   );
   if (error) throw toAuslagenError(error, "Lesestatus konnte nicht gespeichert werden");
+}
+
+/** Antrag als erledigt markieren (done = true) oder zurücknehmen (false). Nur CEO/Admin, nie der eigene Antrag. */
+export async function setClaimDone(id: string, done: boolean): Promise<void> {
+  await requireFinance();
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new AuslagenError("not_found", "Antrag nicht gefunden.");
+  const db = await createClient();
+  const { error } = await db.rpc("set_claim_done", { claim: id, done });
+  if (error) throw toAuslagenError(error, done ? "Antrag konnte nicht als erledigt markiert werden" : "Antrag konnte nicht zurückgesetzt werden");
 }

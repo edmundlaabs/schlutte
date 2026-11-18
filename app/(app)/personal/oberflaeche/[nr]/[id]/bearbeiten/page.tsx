@@ -29,7 +29,7 @@ export default async function EditOberflaechePage({
           href="/personal"
           style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.18em", color: "var(--fg-muted)", textTransform: "uppercase", textDecoration: "none" }}
         >
-          ← Büro/Personal
+          ← Vorlagen
         </Link>
         <span className="grb-eyebrow" style={{ display: "block", marginTop: 18 }}>
           Dokument bearbeiten

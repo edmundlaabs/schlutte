@@ -65,3 +65,25 @@ export function getGreeting(name?: string | null): string {
   }
   return "Willkommen in Schlutte.";
 }
+
+/**
+ * Vergleicht zwei Versionen "major.minor.patch". Fehlende/ungültige Teile zählen als 0.
+ * Rückgabe: <0 wenn a < b, 0 wenn gleich, >0 wenn a > b. Null/leer ist kleiner als jede Version.
+ */
+export function compareSemver(a: string | null | undefined, b: string | null | undefined): number {
+  const parse = (v: string | null | undefined): number[] | null => {
+    if (!v || !/^\d+(\.\d+){0,2}$/.test(v.trim())) return null;
+    const parts = v.trim().split(".").map(Number);
+    while (parts.length < 3) parts.push(0);
+    return parts;
+  };
+  const pa = parse(a);
+  const pb = parse(b);
+  if (!pa && !pb) return 0;
+  if (!pa) return -1;
+  if (!pb) return 1;
+  for (let i = 0; i < 3; i++) {
+    if (pa[i] !== pb[i]) return pa[i] < pb[i] ? -1 : 1;
+  }
+  return 0;
+}

@@ -8,7 +8,10 @@ import { appAccessOf } from "@/lib/auth/app-access";
 import { hasAdminRights } from "@/lib/auth/app-role";
 import { getCurrentUserContext } from "@/lib/auth/roles";
 import { firstNameOf } from "@/lib/auth/provision";
-import { listSubmittedClaims, type InboxClaim } from "@/lib/data/auslagen-inbox";
+import { getInboxCounts } from "@/lib/data/inbox-counts";
+import { Badge } from "@/components/ui/Badge";
+import { APP_BADGE } from "@/lib/inbox/counts";
+import { TodoSection } from "@/components/intranet/TodoSection";
 import { appsByGroup, appTitle, getApp, isAppKey } from "@/lib/apps";
 import { ladeStartWidget } from "@/lib/data/urlaub";
 import { StatusKachel } from "@/components/intranet/StatusKachel";
@@ -54,11 +57,7 @@ export default async function StartPage({
   const isAdmin = hasAdminRights(ctx.role);
   const displayName = firstNameOf(ctx.employee?.name || ctx.email?.split("@")[0] || "");
 
-  let inbox: InboxClaim[] = [];
-  if (isAdmin) {
-    try { inbox = await listSubmittedClaims(); }
-    catch (error) { console.error("Antragseingang konnte nicht geladen werden:", error); }
-  }
+  const counts = await getInboxCounts();
   const [events, birthdays] = await Promise.all([getUpcomingEvents(), getUpcomingBirthdays()]);
   // Urlaub-Zelle der Status-Kachel: nur mit Freischaltung, Mitarbeiter-Eintrag und sobald das Modul live ist.
   const urlaubWidget =
@@ -66,7 +65,6 @@ export default async function StartPage({
       ? await ladeStartWidget(ctx.employee.id, isAdmin)
       : null;
 
-  const unreadCount = inbox.filter((claim) => claim.unread).length;
   const groups = appsByGroup(allowedApps);
   const now = new Date();
   const deniedApp = isAppKey(denied) && !allowedApps.includes(denied) ? appTitle(denied) : null;
@@ -91,9 +89,12 @@ export default async function StartPage({
         <StatusKachel
           birthdays={birthdays}
           events={events}
-          auslagen={allowedApps.includes("auslagen") ? { isAdmin, offen: inbox.length, ungelesen: unreadCount } : null}
+          auslagen={allowedApps.includes("auslagen") ? { isAdmin, offen: counts.auslagen } : null}
           urlaub={urlaubWidget}
+          urlaubOffen={counts.urlaub}
         />
+
+        {isAdmin && <TodoSection counts={counts} allowedApps={allowedApps} />}
 
         {isAdmin && (
           <details className="sch-edit">
@@ -137,9 +138,7 @@ export default async function StartPage({
                   <>
                     <span className="sch-app-icon">
                       <AppIcon name={app.icon} size={30} stroke={1.3} />
-                      {app.key === "auslagen" && unreadCount > 0 && (
-                        <span className="sch-notification-dot" aria-label={`${unreadCount} ungelesene Anträge`} />
-                      )}
+                      {APP_BADGE[app.key] && <Badge count={counts[APP_BADGE[app.key]!]} kind={APP_BADGE[app.key]} />}
                     </span>
                     <span className="sch-app-body">
                       <span className="sch-app-title">{app.title}</span>

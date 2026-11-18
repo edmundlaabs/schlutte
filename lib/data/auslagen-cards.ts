@@ -79,13 +79,13 @@ export async function listCardReceipts(): Promise<Receipt[]> {
   return (data ?? []) as Receipt[];
 }
 
-/** Erfasste Firmenbelege und Belege aus versendeten Mitarbeiteranträgen. */
+/** Erfasste Firmenbelege und Belege aus versendeten und erledigten Mitarbeiteranträgen. */
 export async function listReconciliationReceipts(): Promise<PaymentReceipt[]> {
   await requireFinance();
   const db = await createClient();
   const submitted = new Set<string>();
   for (let offset = 0; ; offset += 500) {
-    const { data, error } = await db.from("expense_claims").select("id").eq("status", "versendet").order("id").range(offset, offset + 499);
+    const { data, error } = await db.from("expense_claims").select("id").in("status", ["versendet", "erledigt"]).order("id").range(offset, offset + 499);
     if (error) throw toAuslagenError(error, "Eingereichte Anträge konnten nicht geladen werden");
     for (const row of data ?? []) submitted.add(row.id);
     if ((data ?? []).length < 500) break;

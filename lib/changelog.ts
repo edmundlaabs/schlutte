@@ -8,9 +8,42 @@ export type ChangelogEntry = {
   version: string;
   date: string; // "TT.MM.JJJJ"
   changes: string[];
+  /** Optional: Inhalt des Release-Popups „Was ist neu“. Ohne highlights erscheint kein Popup. */
+  highlights?: { title: string; text: string }[];
+  /** Titel und Einleitung des Popups. */
+  popupTitle?: string;
+  popupIntro?: string;
+  /** Zusätzlicher Block nur für CEO/Admin im Popup. */
+  adminHighlights?: string;
 };
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "1.0.0",
+    date: "18.11.2026",
+    popupTitle: "Willkommen in der Schlutte 1.0",
+    popupIntro: "Die Schlutte ist jetzt unsere gemeinsame Firmen-App – alles an einem Ort, mit einem Login.",
+    highlights: [
+      { title: "Ein Login für alles", text: "Anmeldung über Supabase, Passwort selbst zurücksetzen per E-Mail. Welche Apps du siehst, legt der Admin fest." },
+      { title: "Neue Startseite", text: "Apps in drei Gruppen (Werkstatt & Lager, Büro & Personal, Planung & Tools), dazu „Zu erledigen“, Termine und Geburtstage." },
+      { title: "Einheitliche Navigation", text: "Logo, App-Wechsler, Breadcrumb und Avatar-Menü oben, darunter die Tabs der App; auf dem Handy als Tab-Leiste unten." },
+      { title: "Werkstatt", text: "Kommissionen anlegen, bearbeiten, durchsuchen, archivieren; Palettenlabels (intern und Versand, mehrere pro Kommission) erstellen und drucken." },
+      { title: "Druckvorlagen", text: "Neue Vorlage „Auftragsoberfläche (Muster)“: A5-Labels geölt/gebeizt/lackiert, beliebige Anzahl, 2 pro A4-Blatt, Live-Vorschau." },
+      { title: "Urlaub (neu)", text: "Urlaub, Überstundenabbau und Sonderurlaub beantragen, auch halbe Tage; Resturlaub und Kalender mit Feiertagen BW, Betriebsferien und Urlaubssperren." },
+      { title: "Auslagen", text: "Belege erfassen und als Antrag einreichen." },
+      { title: "Gerda und PandaCAD", text: "Gerda läuft jetzt in der Schlutte; PandaCAD-Installation mit Downloads für die Büro-PCs." },
+      { title: "Schlutte aufs Handy", text: "Im Avatar-Menü „Als App“ zeigt die passende Anleitung für iPhone, Android oder Computer." },
+      { title: "Feedback", text: "Fehler oder Wünsche jederzeit über den Feedback-Button oben melden." },
+    ],
+    adminHighlights:
+      "Mitarbeiter, Zugänge und Feedback-Eingang findest du im Admin-Bereich. Im Urlaub gibt es den Eingang mit Genehmigen/Ablehnen, den Teamkalender mit Konflikten und die Konten. Bei Auslagen gibt es Eingang und Abgleich. Neue rote Punkte zeigen offene Vorgänge.",
+    changes: [
+      "Zusammenfassung 0.1.0–0.5.0: Login mit Supabase und Rollen, Werkstatt mit Kommissionen und Palettenlabels, Druckvorlage „Auftragsoberfläche (Muster)“, neue Navigation und Startseite, Schlutte als App aufs Handy, Modul „Urlaub“",
+      "Admin/CEO: rote Punkte für offene Eingänge (Urlaub, Auslagen, Feedback, Registrierungen)",
+      "Auslagen: Anträge können als erledigt markiert werden",
+      "Hinweisfenster zu neuen Versionen",
+    ],
+  },
   {
     version: "0.5.0",
     date: "18.11.2026",

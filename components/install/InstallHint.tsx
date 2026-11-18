@@ -1,5 +1,6 @@
 "use client";
 
+import { useShell } from "@/components/shell/ShellProvider";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { dismissHint, isHintDismissed, openInstallSheet, useInstallEnv } from "@/lib/install";
@@ -9,6 +10,7 @@ import "@/styles/install.css";
 export function InstallHint() {
   const pathname = usePathname() ?? "/";
   const { device, standalone } = useInstallEnv();
+  const { releaseOpen } = useShell();
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
@@ -17,7 +19,7 @@ export function InstallHint() {
   }, []);
 
   const excluded = pathname === "/login" || pathname.startsWith("/print");
-  if (!device || device === "desktop" || standalone || dismissed || excluded) return null;
+  if (!device || device === "desktop" || standalone || dismissed || excluded || releaseOpen) return null;
 
   return (
     <div className="install-hint" role="region" aria-label="Schlutte als App">

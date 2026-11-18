@@ -21,6 +21,6 @@ export default async function EingereichteAntraegePage() {
   if (error) return <div className="aus-note is-danger" role="alert"><div className="aus-note-body"><p>{error}</p></div></div>;
   return <>
     <header className="aus-head"><Link className="aus-back" href="/auslagen/antraege">← Anträge</Link><span className="aus-eyebrow">Auslagen &amp; Belege · Finanzen</span><h1 className="aus-h1">Antragseingang</h1><p className="aus-lede">Eingereichte Anträge von Mitarbeitern. Neue PDFs kannst du einzeln oder gesammelt herunterladen.</p></header>
-    <InboxList key={claims.map((claim) => `${claim.id}:${claim.unread}`).join("|")} initialClaims={claims} companyNames={companyNames} />
+    <InboxList key={claims.map((claim) => `${claim.id}:${claim.unread}:${claim.status}`).join("|")} initialClaims={claims} companyNames={companyNames} />
   </>;
 }

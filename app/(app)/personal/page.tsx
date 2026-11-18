@@ -38,10 +38,10 @@ export default function PersonalHomePage() {
           ← Startseite
         </Link>
         <span className="grb-eyebrow" style={{ display: "block", marginTop: 18 }}>
-          Büro · Personal
+          Büro · Vorlagen
         </span>
         <h1 className="grb-h-h1" style={{ marginTop: 6 }}>
-          Druckvorlagen Büro/Personal
+          Vorlagen
         </h1>
         <p className="gd-lede" style={{ marginTop: 10 }}>
           Vorlagen für Büro und Verwaltung. Weitere Vorlagen folgen.

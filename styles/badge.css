@@ -1,0 +1,29 @@
+/* Roter Punkt für offene Eingänge (components/ui/Badge.tsx) */
+.ui-badge {
+  --badge-red: #d22b2b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 5px;
+  margin-left: 6px;
+  border-radius: 8px;
+  background: var(--badge-red);
+  color: #fff;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: middle;
+  flex: 0 0 auto;
+}
+/* Tab-Leiste mobil: Punkt oben rechts am Icon */
+.shell-tab .ui-badge { position: absolute; top: 6px; left: 50%; margin-left: 6px; }
+/* Kachel-Icon der Startseite */
+.sch-app-icon .ui-badge { position: absolute; top: -6px; right: -9px; margin: 0; }
+.shell-menu-item .ui-badge { margin-left: auto; }
+.shell-avatar { position: relative; }
+.shell-avatar .shell-avatar-badge { position: absolute; top: -5px; right: -7px; margin: 0; }
+.shell-sub a { display: inline-flex; align-items: center; }

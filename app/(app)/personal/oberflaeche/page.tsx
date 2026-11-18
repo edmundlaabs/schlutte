@@ -30,7 +30,7 @@ export default async function CreateOberflaecheSelectPage() {
               textDecoration: "none",
             }}
           >
-            ← Büro/Personal
+            ← Vorlagen
           </Link>
           <span className="grb-eyebrow" style={{ display: "block", marginTop: 18 }}>
             Auftragsoberfläche erstellen

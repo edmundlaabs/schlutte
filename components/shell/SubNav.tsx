@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Badge } from "@/components/ui/Badge";
+import { useShell } from "@/components/shell/ShellProvider";
 import { Icon } from "@/components/ui/Icon";
 import { ADMIN_NAV, appForPath, isNavItemActive, type AppNavItem } from "@/lib/apps";
 
@@ -16,6 +18,7 @@ export function SubNav({
   isAdmin: boolean;
 }) {
   const pathname = usePathname() ?? "/";
+  const { counts } = useShell();
   let items: readonly AppNavItem[] = [];
   let label = "Bereich";
   if (pathname.startsWith("/admin")) {
@@ -46,6 +49,7 @@ export function SubNav({
               aria-current={active ? "page" : undefined}
             >
               {item.label}
+              {item.badge && <Badge count={counts[item.badge]} kind={item.badge} />}
             </Link>
           );
         })}
@@ -66,6 +70,7 @@ export function SubNav({
           >
             <Icon name={item.icon ?? "list"} size={22} stroke={1.5} />
             <span className="shell-tab-label">{item.label}</span>
+            {item.badge && <Badge count={counts[item.badge]} kind={item.badge} />}
           </Link>
         );
       })}
