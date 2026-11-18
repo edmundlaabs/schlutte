@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Badge } from "@/components/ui/Badge";
 import type { UpcomingItem } from "@/lib/types";
 import type { StartWidgetDaten } from "@/lib/data/urlaub";
 import { tageText, zeitraumText } from "@/lib/urlaub/datum";
@@ -7,7 +8,6 @@ export type AuslagenStatus = {
   /** Nur CEO/Admin: eingereichte Anträge. */
   isAdmin: boolean;
   offen: number;
-  ungelesen: number;
 };
 
 function Zelle({ titel, href, children }: { titel: string; href?: string; children: React.ReactNode }) {
@@ -39,6 +39,7 @@ export function StatusKachel({
   events,
   auslagen,
   urlaub,
+  urlaubOffen,
 }: {
   birthdays: UpcomingItem[];
   events: UpcomingItem[];
@@ -46,6 +47,8 @@ export function StatusKachel({
   auslagen: AuslagenStatus | null;
   /** null = Urlaub nicht freigeschaltet/nicht live (Zelle entfällt). */
   urlaub: StartWidgetDaten | null;
+  /** Offene Urlaubsanträge (nur CEO/Admin ungleich 0), Anzeige über Badge. */
+  urlaubOffen: number;
 }) {
   return (
     <section className="sch-status" aria-label="Status">
@@ -58,7 +61,7 @@ export function StatusKachel({
             auslagen.offen > 0 ? (
               <p className="sch-status-main">
                 {auslagen.offen} {auslagen.offen === 1 ? "Antrag" : "Anträge"} offen
-                {auslagen.ungelesen > 0 && <span className="sch-notification-dot is-inline" aria-label={`${auslagen.ungelesen} ungelesen`} />}
+                <Badge count={auslagen.offen} kind="auslagen" />
               </p>
             ) : <p className="sch-status-muted">Nichts zu erledigen.</p>
           ) : (
@@ -68,10 +71,13 @@ export function StatusKachel({
       )}
 
       {urlaub && (
-        <Zelle titel="Urlaub" href={urlaub.offeneGesamt ? "/urlaub/verwaltung" : "/urlaub"}>
+        <Zelle titel="Urlaub" href={urlaubOffen > 0 ? "/urlaub/verwaltung" : "/urlaub"}>
           <p className="sch-status-main">{tageText(urlaub.rest)} Tage Rest</p>
-          {urlaub.offeneGesamt !== null && urlaub.offeneGesamt > 0 && (
-            <p className="sch-status-sub">{urlaub.offeneGesamt} {urlaub.offeneGesamt === 1 ? "Antrag wartet" : "Anträge warten"}</p>
+          {urlaubOffen > 0 && (
+            <p className="sch-status-sub">
+              {urlaubOffen === 1 ? "Antrag wartet" : "Anträge warten"}
+              <Badge count={urlaubOffen} kind="urlaub" />
+            </p>
           )}
           {urlaub.offeneEigene.length > 0 ? (
             <p className="sch-status-sub">{urlaub.offeneEigene.length} eigene{urlaub.offeneEigene.length === 1 ? "r" : ""} offen</p>

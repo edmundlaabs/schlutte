@@ -6,6 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { Icon } from "@/components/ui/Icon";
+import { Badge } from "@/components/ui/Badge";
+import { useShell } from "@/components/shell/ShellProvider";
+import { APP_BADGE, sumCounts } from "@/lib/inbox/counts";
 import { InstallAppButton } from "@/components/shell/InstallAppButton";
 import { appForPath, type AppIconName } from "@/lib/apps";
 import { createClient } from "@/lib/supabase/client";
@@ -28,6 +31,8 @@ function sectionName(pathname: string): string | null {
 export function ShellHeader({ user, groups }: { user: ShellUser; groups: ShellAppGroup[] }) {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
+  const { counts } = useShell();
+  const adminSum = sumCounts(counts, ["feedback", "registrierungen"]);
   const [open, setOpen] = useState<"apps" | "user" | null>(null);
   const [dark, setDark] = useState(false);
   const rootRef = useRef<HTMLElement>(null);
@@ -113,6 +118,7 @@ export function ShellHeader({ user, groups }: { user: ShellUser; groups: ShellAp
                     >
                       <AppIcon name={app.icon} size={18} stroke={1.5} />
                       <span>{app.title}</span>
+                      {APP_BADGE[app.key] && <Badge count={counts[APP_BADGE[app.key]!]} kind={APP_BADGE[app.key]} />}
                     </Link>
                   ) : (
                     <span key={app.key} className="shell-menu-item is-disabled" aria-disabled="true">
@@ -154,6 +160,7 @@ export function ShellHeader({ user, groups }: { user: ShellUser; groups: ShellAp
             onClick={() => setOpen(open === "user" ? null : "user")}
           >
             {user.initials}
+            {user.isAdmin && <Badge count={adminSum} label={`${adminSum} offene Vorgänge im Admin-Bereich`} className="shell-avatar-badge" />}
           </button>
           {open === "user" && (
             <div className="shell-menu shell-menu-user" role="menu">
@@ -165,9 +172,15 @@ export function ShellHeader({ user, groups }: { user: ShellUser; groups: ShellAp
               <Link href="/passwort-neu" role="menuitem" className="shell-menu-item">Passwort ändern</Link>
               {user.isAdmin && (
                 <>
-                  <Link href="/admin/mitarbeiter" role="menuitem" className="shell-menu-item">Mitarbeiterverwaltung</Link>
+                  <Link href="/admin/mitarbeiter" role="menuitem" className="shell-menu-item">
+                    Mitarbeiterverwaltung
+                    <Badge count={counts.registrierungen} kind="registrierungen" />
+                  </Link>
                   <Link href="/admin/zugaenge" role="menuitem" className="shell-menu-item">Zugänge</Link>
-                  <Link href="/admin/feedback" role="menuitem" className="shell-menu-item">Feedback</Link>
+                  <Link href="/admin/feedback" role="menuitem" className="shell-menu-item">
+                    Feedback
+                    <Badge count={counts.feedback} kind="feedback" />
+                  </Link>
                 </>
               )}
               <button type="button" role="menuitem" className="shell-menu-item" onClick={toggleTheme}>

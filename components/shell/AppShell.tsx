@@ -2,6 +2,10 @@ import type { ReactNode } from "react";
 import { ShellHeader, type ShellUser } from "@/components/shell/ShellHeader";
 import { InstallHint } from "@/components/install/InstallHint";
 import { InstallSheet } from "@/components/install/InstallSheet";
+import { ShellProvider } from "@/components/shell/ShellProvider";
+import { ReleasePopup } from "@/components/shell/ReleasePopup";
+import type { InboxCounts } from "@/lib/inbox/counts";
+import type { ReleasePopupData } from "@/lib/data/release-notes";
 import { SubNav } from "@/components/shell/SubNav";
 import { appsByGroup, type AppKey } from "@/lib/apps";
 import "@/styles/shell.css";
@@ -15,11 +19,15 @@ export function AppShell({
   user,
   allowedApps,
   finance,
+  counts,
+  release,
   children,
 }: {
   user: ShellUser;
   allowedApps: readonly AppKey[];
   finance: boolean;
+  counts: InboxCounts;
+  release: ReleasePopupData | null;
   children: ReactNode;
 }) {
   const groups = appsByGroup(allowedApps).map((group) => ({
@@ -35,6 +43,7 @@ export function AppShell({
   }));
 
   return (
+    <ShellProvider initialCounts={counts} poll={finance}>
     <div className="grb shell">
       <ShellHeader user={user} groups={groups} />
       <SubNav variant="top" finance={finance} isAdmin={user.isAdmin} />
@@ -42,6 +51,8 @@ export function AppShell({
       <div className="shell-content">{children}</div>
       <SubNav variant="tabs" finance={finance} isAdmin={user.isAdmin} />
       <InstallSheet />
+      {release && <ReleasePopup data={release} isAdmin={user.isAdmin} />}
     </div>
+    </ShellProvider>
   );
 }

@@ -7,7 +7,12 @@ import { zipSync } from "fflate";
 import { formatEUR } from "@/lib/auslagen/format";
 import { formatDate } from "@/lib/utils";
 import type { InboxClaim } from "@/lib/data/auslagen-inbox";
-import { markClaimsReadAction } from "./actions";
+import { markClaimsReadAction, setClaimDoneAction } from "./actions";
+
+/** In dieser Browser-Sitzung erledigte Anträge: nur dafür wird „Rückgängig“ angeboten. */
+const doneThisSession = new Set<string>();
+
+type Filter = "offen" | "erledigt" | "alle";
 
 function fileName(claim: InboxClaim) {
   const person = claim.applicantName.replace(/[^a-zA-Z0-9_-]+/g, "_").slice(0, 60);
@@ -39,7 +44,29 @@ export function InboxList({ initialClaims, companyNames }: { initialClaims: Inbo
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [filter, setFilter] = useState<Filter>("offen");
+  const [, bump] = useState(0);
   const unread = claims.filter((claim) => claim.unread);
+  const openCount = claims.filter((claim) => claim.status === "versendet").length;
+  const doneCount = claims.length - openCount;
+  const visible = claims.filter((claim) => filter === "alle" || (filter === "offen" ? claim.status === "versendet" : claim.status === "erledigt"));
+
+  async function toggleDone(claim: InboxClaim, done: boolean) {
+    if (busy) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      const result = await setClaimDoneAction(claim.id, done);
+      if (!result.ok) throw new Error(result.error || "Status konnte nicht geändert werden.");
+      if (done) doneThisSession.add(claim.id); else doneThisSession.delete(claim.id);
+      setClaims((previous) => previous.map((item) => item.id === claim.id
+        ? { ...item, status: done ? "erledigt" : "versendet", doneAt: done ? new Date().toISOString() : null, unread: false }
+        : item));
+      bump((n) => n + 1);
+      setMessage(done ? "Als erledigt markiert." : "Zurück auf offen gesetzt.");
+      router.refresh();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Status konnte nicht geändert werden."); }
+    finally { setBusy(false); }
+  }
 
   async function markRead(ids: string[]) {
     for (let index = 0; index < ids.length; index += 500) {
@@ -84,11 +111,12 @@ export function InboxList({ initialClaims, companyNames }: { initialClaims: Inbo
 
   return <section className="aus-section aus-stack">
     <div className="aus-section-head"><h2 className="aus-h2">Eingereichte Anträge</h2><span className="aus-chip is-plain">{unread.length} ungelesen</span></div>
+    <div className="aus-filters" role="group" aria-label="Filter">{([["offen", `Offen (${openCount})`], ["erledigt", `Erledigt (${doneCount})`], ["alle", "Alle"]] as const).map(([key, label]) => <button type="button" key={key} className={`aus-filter${filter === key ? " is-active" : ""}`} aria-pressed={filter === key} onClick={() => setFilter(key)}>{label}</button>)}</div>
     {unread.length > 0 && <button type="button" className="aus-btn aus-btn-primary" onClick={downloadAll} disabled={busy}>Alle neuen PDFs als ZIP herunterladen</button>}
-    {claims.length ? <div className="aus-stack">{claims.map((claim) => <article className="aus-card aus-stack" key={claim.id}>
-      <div className="aus-card-head"><div><span className="aus-eyebrow">{companyNames[claim.companyId] || claim.companyId} · {formatDate(claim.sentAt)}</span><h3 className="aus-card-title">{claim.unread && <span className="aus-unread-dot" aria-label="Ungelesen" />} {claim.applicantName}</h3><p className="aus-help">Antrag vom {formatDate(claim.claimDate)} · {claim.receiptCount} Belege</p></div><strong className="aus-amount">{formatEUR(claim.totalGross)}</strong></div>
-      <div className="aus-actions"><Link className="aus-btn aus-btn-secondary" href={`/auslagen/eingang/${claim.id}`}>Antrag ansehen</Link><button type="button" className="aus-btn aus-btn-quiet" onClick={() => downloadOne(claim)} disabled={busy}>PDF herunterladen</button></div>
-    </article>)}</div> : <div className="aus-empty"><p className="aus-empty-title">Noch keine eingereichten Anträge</p></div>}
+    {visible.length ? <div className="aus-stack">{visible.map((claim) => <article className="aus-card aus-stack" key={claim.id} style={claim.status === "erledigt" ? { opacity: 0.55 } : undefined}>
+      <div className="aus-card-head"><div><span className="aus-eyebrow">{companyNames[claim.companyId] || claim.companyId} · {formatDate(claim.sentAt)}</span><h3 className="aus-card-title">{claim.unread && <span className="aus-unread-dot" aria-label="Ungelesen" />} {claim.applicantName}{claim.status === "erledigt" && <span className="aus-chip is-done" style={{ marginLeft: 8 }}>Erledigt</span>}</h3><p className="aus-help">Antrag vom {formatDate(claim.claimDate)} · {claim.receiptCount} Belege</p></div><strong className="aus-amount">{formatEUR(claim.totalGross)}</strong></div>
+      <div className="aus-actions"><Link className="aus-btn aus-btn-secondary" href={`/auslagen/eingang/${claim.id}`}>Antrag ansehen</Link><button type="button" className="aus-btn aus-btn-quiet" onClick={() => downloadOne(claim)} disabled={busy}>PDF herunterladen</button>{claim.status === "versendet" ? <button type="button" className="aus-btn aus-btn-primary" onClick={() => toggleDone(claim, true)} disabled={busy}>Als erledigt markieren</button> : doneThisSession.has(claim.id) ? <button type="button" className="aus-btn aus-btn-quiet" onClick={() => toggleDone(claim, false)} disabled={busy}>Rückgängig</button> : null}</div>
+    </article>)}</div> : <div className="aus-empty"><p className="aus-empty-title">{claims.length ? "Keine Anträge in dieser Ansicht" : "Noch keine eingereichten Anträge"}</p></div>}
     {error && <div className="aus-note is-danger" role="alert"><div className="aus-note-body"><p>{error}</p></div></div>}
     {message && <p className="aus-field-ok" role="status">{message}</p>}
   </section>;

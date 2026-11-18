@@ -137,7 +137,7 @@ export type Receipt = {
 
 // ─── Anträge auf Auslagenerstattung ──────────────────────────────────────────
 
-export type ClaimStatus = "erstellt" | "versendet";
+export type ClaimStatus = "erstellt" | "versendet" | "erledigt";
 
 /** Tabelle expense_claims. */
 export type ExpenseClaim = {
@@ -298,6 +298,7 @@ export const PAYMENT_CHANNEL_LABEL: Record<PaymentChannel, string> = {
 export const CLAIM_STATUS_LABEL: Record<ClaimStatus, string> = {
   erstellt: "Erstellt",
   versendet: "Versendet",
+  erledigt: "Erledigt",
 };
 
 export const STATEMENT_STATUS_LABEL: Record<StatementStatus, string> = {
