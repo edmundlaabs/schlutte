@@ -12,6 +12,10 @@ import { APP_BADGE, sumCounts } from "@/lib/inbox/counts";
 import { InstallAppButton } from "@/components/shell/InstallAppButton";
 import { appForPath, type AppIconName } from "@/lib/apps";
 import { createClient } from "@/lib/supabase/client";
+import { CHANGELOG } from "@/lib/changelog";
+
+const NEWS_SEEN_KEY = "schlutte-news-seen";
+const NEWS_LATEST = CHANGELOG[0]?.version ?? "";
 
 export type ShellApp = { key: string; title: string; href: string; live: boolean; icon: AppIconName };
 export type ShellAppGroup = { key: string; title: string; apps: ShellApp[] };
@@ -33,7 +37,8 @@ export function ShellHeader({ user, groups }: { user: ShellUser; groups: ShellAp
   const router = useRouter();
   const { counts } = useShell();
   const adminSum = sumCounts(counts, ["feedback", "registrierungen"]);
-  const [open, setOpen] = useState<"apps" | "user" | null>(null);
+  const [open, setOpen] = useState<"apps" | "user" | "news" | null>(null);
+  const [newsUnread, setNewsUnread] = useState(false);
   const [dark, setDark] = useState(false);
   const rootRef = useRef<HTMLElement>(null);
   const section = sectionName(pathname);
@@ -67,6 +72,30 @@ export function ShellHeader({ user, groups }: { user: ShellUser; groups: ShellAp
     );
     return () => window.cancelAnimationFrame(frame);
   }, []);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        setNewsUnread(window.localStorage.getItem(NEWS_SEEN_KEY) !== NEWS_LATEST);
+      } catch {
+        setNewsUnread(false);
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  const toggleNews = () => {
+    const next = open === "news" ? null : "news";
+    setOpen(next);
+    if (next) {
+      setNewsUnread(false);
+      try {
+        window.localStorage.setItem(NEWS_SEEN_KEY, NEWS_LATEST);
+      } catch {
+        /* Speicher nicht verfügbar – egal */
+      }
+    }
+  };
 
   const toggleTheme = () => {
     const next = !dark;
@@ -147,6 +176,38 @@ export function ShellHeader({ user, groups }: { user: ShellUser; groups: ShellAp
       </nav>
 
       <div className="shell-right">
+        <div className="shell-pop">
+          <button
+            type="button"
+            className={`shell-newsbtn${open === "news" ? " is-open" : ""}`}
+            aria-haspopup="dialog"
+            aria-expanded={open === "news"}
+            aria-label={newsUnread ? "News – neue Meldungen" : "News"}
+            onClick={toggleNews}
+          >
+            NEWS
+            {newsUnread && <span className="shell-newsdot" aria-hidden="true" />}
+          </button>
+          {open === "news" && (
+            <div className="shell-menu shell-menu-news" role="dialog" aria-label="News und Neuigkeiten">
+              <span className="shell-menu-eyebrow">Neuigkeiten</span>
+              {CHANGELOG.slice(0, 4).map((entry) => (
+                <article key={entry.version} className="shell-news-entry">
+                  <header>
+                    <strong>Version {entry.version}</strong>
+                    <span>{entry.date}</span>
+                  </header>
+                  <ul>
+                    {(entry.highlights ? entry.highlights.map((h) => `${h.title}: ${h.text}`) : entry.changes).map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+              <Link href="/feedback" className="shell-menu-item shell-news-all">Alle Änderungen ansehen</Link>
+            </div>
+          )}
+        </div>
         <Link href="/feedback" className="shell-iconbtn" aria-label="Feedback" title="Feedback an Eddy">
           <Icon name="mail" size={18} />
         </Link>
