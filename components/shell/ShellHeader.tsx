@@ -164,7 +164,11 @@ export function ShellHeader({ user, groups }: { user: ShellUser; groups: ShellAp
               <Link href="/konto" role="menuitem" className="shell-menu-item">Mein Konto</Link>
               <Link href="/passwort-neu" role="menuitem" className="shell-menu-item">Passwort ändern</Link>
               {user.isAdmin && (
-                <Link href="/admin/mitarbeiter" role="menuitem" className="shell-menu-item">Mitarbeiterverwaltung</Link>
+                <>
+                  <Link href="/admin/mitarbeiter" role="menuitem" className="shell-menu-item">Mitarbeiterverwaltung</Link>
+                  <Link href="/admin/zugaenge" role="menuitem" className="shell-menu-item">Zugänge</Link>
+                  <Link href="/admin/feedback" role="menuitem" className="shell-menu-item">Feedback</Link>
+                </>
               )}
               <button type="button" role="menuitem" className="shell-menu-item" onClick={toggleTheme}>
                 {dark ? "Helles Design" : "Dunkles Design"}
