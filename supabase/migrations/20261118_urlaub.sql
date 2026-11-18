@@ -171,6 +171,7 @@ create trigger urlaub_kontingente_set_updated_at
 create or replace function public.urlaub_kontingente_defaults()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   if new.uebertrag_verfall is null then
@@ -435,5 +436,16 @@ $$;
 
 revoke all on function public.urlaub_team_kalender(date, date) from public;
 grant execute on function public.urlaub_team_kalender(date, date) to authenticated;
+
+-- ─── 6. Härtung: Ausführungsrechte ───────────────────────────────────────────
+-- Supabase vergibt EXECUTE standardmäßig auch an anon; "revoke from public" reicht dafür nicht.
+-- Policy-Hilfsfunktionen brauchen authenticated (RLS wertet sie mit dem Nutzerrecht aus),
+-- Trigger-Funktionen niemanden.
+revoke execute on function public.urlaub_my_employee_id() from anon;
+revoke execute on function public.urlaub_is_admin() from anon;
+revoke execute on function public.urlaub_team_kalender(date, date) from anon;
+revoke execute on function public.urlaub_antraege_guard() from anon, authenticated;
+revoke execute on function public.urlaub_antraege_protokoll() from anon, authenticated;
+revoke execute on function public.urlaub_kontingente_defaults() from anon, authenticated;
 
 notify pgrst, 'reload schema';
