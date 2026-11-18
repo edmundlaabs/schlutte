@@ -6,10 +6,12 @@ import { Icon } from "@/components/ui/Icon";
 import { isFinanceRole, roleLabel } from "@/lib/auth/app-role";
 import { hasAdminRights } from "@/lib/auth/app-role";
 import { ALL_APP_KEYS, appTitle, resolveAppAccess } from "@/lib/apps";
+import { getPendingEmployeeIds } from "@/lib/data/registration";
 import { EmployeeActions } from "./EmployeeActions";
 
 export default async function MitarbeiterPage() {
   const employees = await getEmployees();
+  const pendingIds = await getPendingEmployeeIds();
 
   // Login-Status je Mitarbeiter (per E-Mail). Bei fehlender Konfiguration null → Status unbekannt.
   let loginEmails: Set<string> | null = null;
@@ -108,7 +110,7 @@ export default async function MitarbeiterPage() {
             {employees.map((emp) => (
               <tr
                 key={emp.id}
-                style={emp.is_active === false ? { opacity: 0.5 } : undefined}
+                style={emp.is_active === false && !pendingIds.has(emp.id!) ? { opacity: 0.5 } : undefined}
               >
                 <td>
                   <span
@@ -177,10 +179,11 @@ export default async function MitarbeiterPage() {
                       fontSize: 10,
                       letterSpacing: "0.12em",
                       textTransform: "uppercase",
-                      color: emp.is_active !== false ? "var(--fg)" : "var(--fg-subtle)",
+                      color: pendingIds.has(emp.id!) ? "var(--accent)" : emp.is_active !== false ? "var(--fg)" : "var(--fg-subtle)",
+                      fontWeight: pendingIds.has(emp.id!) ? 700 : undefined,
                     }}
                   >
-                    {emp.is_active !== false ? "Aktiv" : "Inaktiv"}
+                    {pendingIds.has(emp.id!) ? "Wartet auf Freigabe" : emp.is_active !== false ? "Aktiv" : "Inaktiv"}
                   </span>
                 </td>
                 <td>
@@ -204,6 +207,7 @@ export default async function MitarbeiterPage() {
                     id={emp.id!}
                     isActive={emp.is_active !== false}
                     name={emp.name}
+                    pending={pendingIds.has(emp.id!)}
                   />
                 </td>
               </tr>

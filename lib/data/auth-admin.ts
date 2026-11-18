@@ -162,7 +162,12 @@ export async function setAuthUserBanned(
 export async function getLoginChoices(): Promise<{ id: string; name: string }[]> {
   const admin = createAdminClient();
   const [{ data, error }, loginEmails] = await Promise.all([
-    admin.from("employees").select("id, name, email").eq("is_active", true).order("name"),
+    admin
+      .from("employees")
+      .select("id, name, email")
+      .eq("is_active", true)
+      .eq("pending_approval", false)
+      .order("name"),
     getLoginEmails(),
   ]);
   if (error) throw new Error(`Mitarbeiterliste fehlgeschlagen: ${error.message}`);

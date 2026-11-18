@@ -18,6 +18,7 @@ import {
   MIN_PASSWORD_LENGTH,
 } from "@/lib/data/auth-admin";
 import { isSyntheticLoginEmail, syntheticLoginEmail } from "@/lib/auth/login-email";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/admin-guard";
 import { parseAppRole } from "@/lib/auth/app-role";
 import { parseAppKeys } from "@/lib/apps";
@@ -161,6 +162,26 @@ export async function setPasswordAction(
   } catch (e) {
     return { error: (e as Error).message };
   }
+}
+
+/** Freigabe einer Selbstregistrierung: aktiv setzen, Wartestatus löschen, Login entsperren. */
+export async function approveEmployeeAction(id: string): Promise<{ error?: string }> {
+  try {
+    await requireAdmin();
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("employees")
+      .update({ is_active: true, pending_approval: false })
+      .eq("id", id);
+    if (error) return { error: error.message };
+    const employee = await getEmployeeById(id);
+    if (employee?.email) await setAuthUserBanned(employee.email, false, id);
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+  revalidatePath("/admin/mitarbeiter");
+  revalidatePath("/admin/zugaenge");
+  return {};
 }
 
 export async function toggleActiveAction(

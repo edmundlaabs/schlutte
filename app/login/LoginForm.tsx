@@ -32,7 +32,9 @@ export function LoginForm({ choices }: { choices: { id: string; name: string }[]
       }
 
       if (error) {
-        if (error.message === "Invalid login credentials") {
+        if (/banned/i.test(error.message)) {
+          setErrorMsg("Dein Konto ist noch nicht freigegeben oder gesperrt. Bitte melde dich beim Administrator.");
+        } else if (error.message === "Invalid login credentials") {
           setErrorMsg("Ungültige E-Mail-Adresse oder falsches Passwort.");
         } else {
           setErrorMsg(error.message);
@@ -193,6 +195,18 @@ export function LoginForm({ choices }: { choices: { id: string; name: string }[]
             {mode === "name" ? "Stattdessen mit E-Mail anmelden" : "Stattdessen Namen auswählen"}
           </button>
         )}
+
+        <a
+          href="/registrieren"
+          style={{
+            textAlign: "center",
+            fontFamily: "var(--font-sans)",
+            fontSize: 13,
+            color: "var(--fg)",
+          }}
+        >
+          Neu hier? Jetzt registrieren
+        </a>
 
         <a
           href="/passwort-vergessen"

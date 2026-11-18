@@ -141,6 +141,9 @@ export default function PasswortNeuPage() {
                 placeholder="Mind. 8 Zeichen"
               />
             </label>
+            <p style={{ margin: "-8px 0 0", fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 600 }}>
+              Bitte gut merken! Dein Passwort kann dir niemand anzeigen.
+            </p>
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span className="grb-eyebrow">Passwort wiederholen</span>
               <input

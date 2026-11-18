@@ -51,7 +51,7 @@ export async function proxy(request: NextRequest) {
   // Passwort-Recovery muss ohne Anmeldung erreichbar sein (Link aus der E-Mail),
   // ebenso die Einrichtungsseite /app (Ziel des QR-Codes).
   const isPublicRoute =
-    isLoginRoute || path === "/passwort-vergessen" || path === "/passwort-neu" || path === "/app";
+    isLoginRoute || path === "/passwort-vergessen" || path === "/passwort-neu" || path === "/app" || path === "/registrieren";
 
   // Redirects übernehmen die ggf. soeben erneuerten Session-Cookies.
   const redirectTo = (url: URL) => {
