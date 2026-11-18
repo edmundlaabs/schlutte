@@ -122,6 +122,8 @@ export type Receipt = {
   payment_reviewed_at: string | null;
   payment_reviewed_by: string | null;
   credit_card_id: string | null;
+  /** Firmenbeleg für CEO/Admin sichtbar (Kartenabgleich)? false = nur Besitzer. */
+  visible_to_finance: boolean;
   /** Storage-Pfad im Bucket "auslagen": {uid}/belege/{uuid}.jpg|pdf */
   file_path: string;
   file_mime: string;

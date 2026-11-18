@@ -6,7 +6,7 @@ import { isISODate, normalizeCurrency, round2 } from "@/lib/auslagen/format";
 import { AUSLAGEN_BUCKET, isAllowedReceiptMime, isOwnStoragePath, SIGNED_URL_TTL_SECONDS } from "@/lib/auslagen/paths";
 import { isPaymentChannel, type PaymentChannel, type PaymentMethod, type Receipt } from "@/lib/auslagen/types";
 
-const COLUMNS = "id, user_id, status, receipt_date, merchant, description, currency, gross_amount, net_amount, vat_amount, vat_rate, gross_amount_eur, payment_method, payment_channel, payment_reviewed_at, payment_reviewed_by, credit_card_id, file_path, file_mime, file_name, extraction, extraction_error, claim_id, created_at, updated_at";
+const COLUMNS = "id, user_id, status, receipt_date, merchant, description, currency, gross_amount, net_amount, vat_amount, vat_rate, gross_amount_eur, payment_method, payment_channel, payment_reviewed_at, payment_reviewed_by, credit_card_id, visible_to_finance, file_path, file_mime, file_name, extraction, extraction_error, claim_id, created_at, updated_at";
 
 export async function listOwnReceipts(): Promise<Receipt[]> {
   const { userId } = await requireUser();
@@ -30,7 +30,7 @@ export async function getReceipt(id: string): Promise<Receipt> {
   const db = await createClient();
   const { data, error } = await db.from("receipts").select(COLUMNS).eq("id", id).maybeSingle();
   if (error) throw toAuslagenError(error, "Beleg konnte nicht geladen werden");
-  if (!data || (data.user_id !== userId && !(isFinance && (data.payment_method === "kreditkarte" || data.claim_id)))) {
+  if (!data || (data.user_id !== userId && !(isFinance && ((data.payment_method === "kreditkarte" && data.visible_to_finance) || data.claim_id)))) {
     throw new AuslagenError("not_found", "Beleg nicht gefunden.");
   }
   return data as Receipt;
@@ -103,6 +103,8 @@ export type ReceiptInput = {
   gross_amount: number | null; net_amount: number | null; vat_amount: number | null;
   vat_rate: number | null; gross_amount_eur: number | null;
   payment_method: PaymentMethod; payment_channel: PaymentChannel | null; credit_card_id: string | null;
+  /** null = unverändert lassen (Feld wurde nicht gesendet). Nur der Besitzer darf es ändern. */
+  visible_to_finance: boolean | null;
 };
 
 export async function saveReceipt(id: string, input: ReceiptInput): Promise<Receipt> {
@@ -155,6 +157,7 @@ export async function saveReceipt(id: string, input: ReceiptInput): Promise<Rece
     gross_amount_eur: currency === "EUR" ? null : round2(input.gross_amount_eur!),
     payment_method: input.payment_method, payment_channel: input.payment_channel, credit_card_id: cardId,
     payment_reviewed_at: null, payment_reviewed_by: null,
+    ...(own && input.visible_to_finance !== null ? { visible_to_finance: input.visible_to_finance } : {}),
   }).eq("id", id).eq("user_id", existing.user_id).is("claim_id", null).select(COLUMNS).maybeSingle();
   if (error) throw toAuslagenError(error, "Beleg konnte nicht gespeichert werden");
   if (!data) throw new AuslagenError("conflict", "Der Beleg wurde zwischenzeitlich geändert.");

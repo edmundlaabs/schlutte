@@ -38,7 +38,7 @@ export default async function BelegPage({ params, searchParams }: { params: Prom
           <img src={previewUrl} alt="Hochgeladener Beleg" style={{ display: "block", maxWidth: "100%", maxHeight: 520, margin: "auto" }} />}
       </div>
     </section>
-    <ReceiptForm receipt={receipt} cards={cards} finance={ctx.isFinance} editable={!receipt.claim_id && (receipt.user_id === ctx.userId || (ctx.isFinance && receipt.payment_method === "kreditkarte"))} deletable={receipt.user_id === ctx.userId && !receipt.claim_id} transactionId={transactionId} statementId={statementId} batchUrl={batchUrl} />
+    <ReceiptForm receipt={receipt} cards={cards} finance={ctx.isFinance} isOwner={receipt.user_id === ctx.userId} editable={!receipt.claim_id && (receipt.user_id === ctx.userId || (ctx.isFinance && receipt.payment_method === "kreditkarte"))} deletable={receipt.user_id === ctx.userId && !receipt.claim_id} transactionId={transactionId} statementId={statementId} batchUrl={batchUrl} />
     <section className="aus-section"><OriginalHint /></section>
   </>;
 }
