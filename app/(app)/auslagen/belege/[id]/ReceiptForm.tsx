@@ -8,8 +8,8 @@ import { PAYMENT_CHANNEL_LABEL, PAYMENT_CHANNELS, type CreditCard, type PaymentC
 import { deleteReceiptAction, saveReceiptAction } from "../actions";
 import { assignReceiptAction } from "../../abgleich/actions";
 
-export function ReceiptForm({ receipt, cards, finance, editable, deletable, transactionId, statementId, batchUrl }: {
-  receipt: Receipt; cards: Pick<CreditCard, "id" | "label" | "last4">[]; finance: boolean; editable: boolean; deletable: boolean; transactionId?: string; statementId?: string; batchUrl?: string | null;
+export function ReceiptForm({ receipt, cards, finance, isOwner, editable, deletable, transactionId, statementId, batchUrl }: {
+  receipt: Receipt; cards: Pick<CreditCard, "id" | "label" | "last4">[]; finance: boolean; isOwner: boolean; editable: boolean; deletable: boolean; transactionId?: string; statementId?: string; batchUrl?: string | null;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -21,6 +21,7 @@ export function ReceiptForm({ receipt, cards, finance, editable, deletable, tran
   const [rate, setRate] = useState(receipt.vat_rate === null ? "" : String(receipt.vat_rate).replace(".", ","));
   const [currency, setCurrency] = useState(receipt.currency);
   const [payment, setPayment] = useState(receipt.payment_method);
+  const [visible, setVisible] = useState(receipt.visible_to_finance ?? true);
   const [channel, setChannel] = useState<PaymentChannel | "">(receipt.payment_channel ?? "");
   const over250 = (parseAmount(gross) ?? 0) > 250;
 
@@ -79,6 +80,11 @@ export function ReceiptForm({ receipt, cards, finance, editable, deletable, tran
         <label className="aus-field"><span className="aus-label">Bezahlt von</span><select className="aus-select" name="payment_method" value={payment} onChange={(e) => setPayment(e.target.value as Receipt["payment_method"])} disabled={!editable || pending}><option value="privat" disabled={editable && !deletable}>Privat bezahlt</option>{finance && <option value="kreditkarte">Firma bezahlt</option>}</select></label>
         {finance && payment === "kreditkarte" && channel !== "bar" && <label className="aus-field"><span className="aus-label">Firmenkarte</span><select className="aus-select" name="credit_card_id" defaultValue={receipt.credit_card_id ?? ""} disabled={!editable || pending}><option value="">Noch nicht zugeordnet</option>{cards.map((card) => <option key={card.id} value={card.id}>{card.label} ·•••• {card.last4 ?? ""}</option>)}</select></label>}
       </div>
+      {finance && payment === "kreditkarte" && isOwner && <div className="aus-field">
+        <input type="hidden" name="visible_to_finance" value="0" />
+        <label className="aus-check"><input type="checkbox" name="visible_to_finance" value="1" checked={visible} onChange={(e) => setVisible(e.target.checked)} disabled={!editable || pending} /> Für CEO/Admin sichtbar (Kartenabgleich)</label>
+        <p className="aus-help">Ohne Haken sieht nur du diesen Beleg. Andere CEO/Admins können ihn dann weder sehen noch einer Kartenbuchung zuordnen.</p>
+      </div>}
       {receipt.extraction && <p className="aus-help">Zahlungsweg {receipt.payment_channel ? "aus dem Beleg erkannt. Bitte prüfen." : "nicht sicher erkannt. Bitte manuell wählen."}</p>}
       {error && <div className="aus-note is-danger" role="alert"><div className="aus-note-body"><p>{error}</p></div></div>}
       {editable && <div className="aus-actions">

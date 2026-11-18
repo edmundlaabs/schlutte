@@ -31,6 +31,8 @@ export async function saveReceiptAction(id: string, formData: FormData): Promise
       gross_amount_eur: parseAmount(get("gross_amount_eur")), payment_method: get("payment_method") === "kreditkarte" ? "kreditkarte" : "privat",
       payment_channel: isPaymentChannel(paymentChannel) ? paymentChannel : null,
       credit_card_id: get("credit_card_id") || null,
+      // Hidden "0" + Checkbox "1": nur wenn das Feld gerendert wurde, wird die Sichtbarkeit geändert.
+      visible_to_finance: formData.getAll("visible_to_finance").length ? formData.getAll("visible_to_finance").includes("1") : null,
     });
     revalidatePath("/auslagen");
     revalidatePath(`/auslagen/belege/${id}`);
