@@ -41,9 +41,14 @@ export const MATERIALS: Material[] = [
   { pos: "06", desc: "Griffleiste · Messing gebürstet", qty: "8 Lfm", dim: "— · L = variabel" },
 ];
 
+/** Alte Stationsnamen → aktueller Name (für bereits gespeicherte Dokumente). */
+export const LEGACY_STATION_NAMES: Record<string, string> = {
+  "CNC · Bohrungen": "CNC Bearbeitung",
+};
+
 export const STATIONS = [
   "Zuschnitt",
-  "CNC · Bohrungen",
+  "CNC Bearbeitung",
   "Kantenbearbeitung",
   "Furnier / Oberfläche",
   "Lackiererei",

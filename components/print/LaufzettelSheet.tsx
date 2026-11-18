@@ -1,5 +1,6 @@
 import { A4Sheet, PrintHeader } from "@/components/print/A4Sheet";
 import type { Commission, LaufzettelFormData } from "@/lib/types";
+import { LEGACY_STATION_NAMES } from "@/mocks/data";
 
 // Druck: nur 100 % Schwarz, keine Grautöne.
 const INK = "#000";
@@ -22,7 +23,7 @@ export function LaufzettelSheet({
   printedBy: string;
   printedAt: string;
 }) {
-  const checkedSet = new Set(formData?.stations ?? []);
+  const checkedSet = new Set((formData?.stations ?? []).map((s) => LEGACY_STATION_NAMES[s] ?? s));
   // Overrides aus formData haben Vorrang vor der Kommission.
   const clientLabel = formData?.client?.trim() || commission.client;
   const projectLabel = formData?.project?.trim() || commission.project || "";
