@@ -104,7 +104,7 @@ export const APPS: readonly AppDefinition[] = [
     ],
   },
   {
-    key: "urlaub", title: "Urlaub", enforcement: "intern", live: false,
+    key: "urlaub", title: "Urlaub", enforcement: "intern", live: true,
     href: "/urlaub", group: "buero-personal", icon: "vacation",
     hint: "Urlaub und Abwesenheit beantragen.",
     nav: [

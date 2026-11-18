@@ -1,6 +1,6 @@
 # Urlaub & Abwesenheit (`/urlaub`)
 
-Stand: 18.11.2026 · Branch `feature/urlaub` · Migration `supabase/migrations/20261118_urlaub.sql` (noch nicht ausgeführt) · Kachel `live: false`.
+Stand: 18.11.2026 · Branch `feature/urlaub` · Migration `supabase/migrations/20261118_urlaub.sql` (am 18.11.2026 ausgeführt, Backup `Backup/schlutte_2026-11-18_1112`) · Kachel `live: true`.
 
 ## Rollen
 - **Mitarbeiter** mit Freischaltung „Urlaub“ (`employees.app_access`): eigene Anträge, eigenes Konto, Kalender.
@@ -47,7 +47,7 @@ Dazu: `urlaub_my_employee_id()`, `urlaub_is_admin()` und `urlaub_team_kalender(v
 2. Unter *Admin → Zugänge* „Urlaub“ für die Mitarbeiter freischalten.
 3. *Urlaub → Konten*: je Mitarbeiter Anspruch und Resturlaub 2026 (als Übertrag oder Korrektur mit Notiz) eintragen.
 4. *Einstellungen*: Betriebsferien, Sperren, Konfliktpaare (z. B. Nic + Noah) und abweichende Arbeitsmuster anlegen.
-5. Erst danach `live: true` setzen.
+5. Modul ist live (`live: true` in `lib/apps.ts`).
 
 ## Später
 Krankmeldung (Art `krank` ist in der DB vorgesehen), Resend-Mails, Outlook-Sync, Vertretung, Homeoffice.
