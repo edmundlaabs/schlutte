@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { UebersichtRaster } from "./UebersichtRaster";
 import { MonatsRaster, type RasterEintrag, type RasterZeile } from "./MonatsRaster";
 import { monatsName, zeitraumText } from "@/lib/urlaub/datum";
 import { ART_LABEL, STATUS_LABEL, type Antragsart, type Antragsstatus, type Betriebsferien, type Sperre } from "@/lib/urlaub/types";
@@ -45,11 +46,12 @@ export function JahresKalender({
   const [filter, setFilter] = useState<"alle" | "ich">("alle");
   const heuteMonat = Number(heute.slice(0, 4)) === jahr ? Number(heute.slice(5, 7)) - 1 : 0;
   const [monat, setMonat] = useState(heuteMonat);
+  const [ansicht, setAnsicht] = useState<"uebersicht" | "monate">("uebersicht");
 
   const zeilen = useMemo<RasterZeile[]>(() => {
     const out: RasterZeile[] = [];
     const sichtbar = eigene.filter((e) => ["beantragt", "genehmigt", "storno_beantragt"].includes(e.status));
-    if (filter === "alle") {
+    {
       if (ferien.length) {
         out.push({
           key: "ferien",
@@ -104,26 +106,46 @@ export function JahresKalender({
   return (
     <div>
       <div className="urlaub-steuerung">
+        <div className="aus-filters" aria-label="Ansicht">
+          <button type="button" className={`aus-filter${ansicht === "uebersicht" ? " is-active" : ""}`} onClick={() => setAnsicht("uebersicht")}>Übersicht</button>
+          <button type="button" className={`aus-filter${ansicht === "monate" ? " is-active" : ""}`} onClick={() => setAnsicht("monate")}>Monate</button>
+        </div>
         <div className="aus-filters" aria-label="Anzeige">
           <button type="button" className={`aus-filter${filter === "alle" ? " is-active" : ""}`} onClick={() => setFilter("alle")}>Alle</button>
           <button type="button" className={`aus-filter${filter === "ich" ? " is-active" : ""}`} onClick={() => setFilter("ich")}>Nur ich</button>
         </div>
-        <div className="urlaub-monatswahl nur-mobil">
-          <button type="button" className="aus-btn aus-btn-quiet aus-btn-sm" onClick={() => setMonat((m) => (m + 11) % 12)} aria-label="Vorheriger Monat">‹</button>
-          <strong>{monatsName(monat)}</strong>
-          <button type="button" className="aus-btn aus-btn-quiet aus-btn-sm" onClick={() => setMonat((m) => (m + 1) % 12)} aria-label="Nächster Monat">›</button>
-        </div>
+        {ansicht === "monate" && (
+          <div className="urlaub-monatswahl nur-mobil">
+            <button type="button" className="aus-btn aus-btn-quiet aus-btn-sm" onClick={() => setMonat((m) => (m + 11) % 12)} aria-label="Vorheriger Monat">‹</button>
+            <strong>{monatsName(monat)}</strong>
+            <button type="button" className="aus-btn aus-btn-quiet aus-btn-sm" onClick={() => setMonat((m) => (m + 1) % 12)} aria-label="Nächster Monat">›</button>
+          </div>
+        )}
       </div>
 
       <ul className="urlaub-legende" aria-label="Legende">
-        <li><i /> Genehmigt</li>
-        <li><i className="l-beantragt" /> Beantragt</li>
-        {filter === "alle" && <li><i className="l-kollege" /> Kollegen (abwesend)</li>}
+        <li><i /> Ich (genehmigt)</li>
+        <li><i className="l-beantragt" /> Ich (beantragt)</li>
+        {filter === "alle" && <li><i className="l-kollege" /> Kollegen abwesend</li>}
         <li><i className="l-ferien" /> Betriebsferien</li>
         <li><i className="l-sperre" /> Urlaubssperre</li>
+        <li><i className="l-grau" /> Wochenende/Feiertag</li>
       </ul>
 
-      <div className="urlaub-jahr">
+      {ansicht === "uebersicht" && (
+        <UebersichtRaster
+          jahr={jahr}
+          heute={heute}
+          eigene={eigene}
+          kollegen={kollegen}
+          zeigeKollegen={filter === "alle"}
+          ferien={ferien}
+          sperren={sperren}
+          onMonat={(m) => { setMonat(m); setAnsicht("monate"); }}
+        />
+      )}
+
+      <div className="urlaub-jahr" hidden={ansicht !== "monate"}>
         {Array.from({ length: 12 }, (_, m) => (
           <section key={m} className={`urlaub-monat${m === monat ? " is-aktuell" : ""}`} aria-label={`${monatsName(m)} ${jahr}`}>
             <h3 className="urlaub-monat-titel">{monatsName(m)} <span className="aus-subtle">{jahr}</span></h3>
