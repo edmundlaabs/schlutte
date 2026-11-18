@@ -104,10 +104,16 @@ export const APPS: readonly AppDefinition[] = [
     ],
   },
   {
-    key: "urlaub", title: "Urlaub", enforcement: "intern", live: false,
+    key: "urlaub", title: "Urlaub", enforcement: "intern", live: true,
     href: "/urlaub", group: "buero-personal", icon: "vacation",
     hint: "Urlaub und Abwesenheit beantragen.",
-    nav: [],
+    nav: [
+      { label: "Übersicht", href: "/urlaub", exact: true, icon: "home" },
+      { label: "Eingang", href: "/urlaub/verwaltung", exact: true, finance: true, icon: "mail", match: ["/urlaub/verwaltung/antrag"] },
+      { label: "Team", href: "/urlaub/verwaltung/team", finance: true, icon: "list" },
+      { label: "Konten", href: "/urlaub/verwaltung/konten", finance: true, icon: "user" },
+      { label: "Einstellungen", href: "/urlaub/verwaltung/einstellungen", finance: true, icon: "settings" },
+    ],
   },
   {
     key: "gerda", title: "Gerda", enforcement: "datenbank", live: true,

@@ -12,6 +12,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.5.0",
+    date: "18.11.2026",
+    changes: [
+      "Neues Modul „Urlaub“: Urlaub, Überstundenabbau und Sonderurlaub beantragen, Resturlaub und Kalender mit Feiertagen, Betriebsferien und Urlaubssperren; halbe Tage möglich",
+      "Für CEO und Admin: Eingang mit Genehmigen/Ablehnen (Begründung), Teamkalender mit Konfliktanzeige, Urlaubskonten, Einstellungen und Protokoll",
+      "Startseite zeigt Resturlaub, offene Anträge und die nächste Abwesenheit; Admin/CEO sehen zusätzlich die Zahl offener Anträge",
+    ],
+  },
+  {
     version: "0.4.0",
     date: "17.11.2026",
     changes: [
