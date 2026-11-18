@@ -117,3 +117,28 @@ a.urlaub-balken:hover { opacity: 0.8; }
 @media (max-width: 767px) {
   .urlaub { --u-cell: 26px; --u-name: 84px; }
 }
+
+/* ---------- Gesamtübersicht (12 Monate × 31 Tage) ---------- */
+.urlaub-uebersicht { border: 1px solid var(--border); background: var(--bg); padding: 6px; max-width: 100%; }
+.urlaub-ub-zeile { display: grid; grid-template-columns: 34px repeat(31, minmax(0, 1fr)); gap: 1px; margin-bottom: 1px; }
+.urlaub-ub-kopf { margin-bottom: 2px; }
+.urlaub-ub-tag { font-family: var(--font-mono); font-size: 8px; line-height: 1; text-align: center; color: var(--fg-subtle); overflow: visible; white-space: nowrap; }
+.urlaub-ub-monat { padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-muted); }
+.urlaub-ub-monat:hover { color: var(--accent); }
+.urlaub-ub-zelle { position: relative; height: 20px; min-width: 0; padding: 0; border: 0; background: var(--bg-alt); cursor: pointer; }
+.urlaub-ub-zelle.is-leer { background: transparent; cursor: default; }
+.urlaub-ub-zelle.is-grau { background: var(--u-grau); }
+.urlaub-ub-zelle.is-ferien { background: var(--u-ferien); }
+.urlaub-ub-zelle.is-sperre { background-image: repeating-linear-gradient(135deg, transparent 0 3px, var(--aus-danger) 3px 4px); }
+.urlaub-ub-zelle.is-heute { outline: 1px solid var(--accent); outline-offset: -1px; z-index: 1; }
+.urlaub-ub-zelle::before, .urlaub-ub-zelle::after { content: ""; position: absolute; left: 1px; right: 1px; height: 42%; pointer-events: none; }
+.urlaub-ub-zelle::before { top: 1px; }
+.urlaub-ub-zelle::after { bottom: 1px; }
+.urlaub-ub-zelle.is-kollegen-1::before { background: var(--u-kollege); opacity: 0.35; }
+.urlaub-ub-zelle.is-kollegen-2::before { background: var(--u-kollege); opacity: 0.65; }
+.urlaub-ub-zelle.is-kollegen-3::before { background: var(--u-kollege); opacity: 1; }
+.urlaub-ub-zelle.is-eigen-genehmigt::after { background: var(--u-genehmigt); }
+.urlaub-ub-zelle.is-eigen-beantragt::after { border: 1px dashed var(--fg); }
+.urlaub-legende i.l-grau { background: var(--u-grau); border: 1px solid var(--border); }
+@media (max-width: 767px) { .urlaub-ub-zelle { height: 22px; } .urlaub-ub-zeile { grid-template-columns: 30px repeat(31, minmax(0, 1fr)); } }
+.urlaub-jahr[hidden] { display: none; }
