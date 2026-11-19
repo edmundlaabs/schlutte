@@ -7,7 +7,9 @@ import { usePathname } from "next/navigation";
 import { useShell } from "@/components/shell/ShellProvider";
 import { markReleaseSeenAction } from "@/app/(app)/release-actions";
 import type { ReleasePopupData } from "@/lib/data/release-notes";
+import { InstallInfo } from "@/components/install/InstallInfo";
 import "@/styles/release.css";
+import "@/styles/install-info.css";
 
 const EXCLUDED = ["/app", "/login", "/registrieren", "/passwort-", "/print"];
 
@@ -96,6 +98,7 @@ export function ReleasePopup({ data, isAdmin }: { data: ReleasePopupData; isAdmi
               </li>
             ))}
           </ul>
+          <InstallInfo />
           {isAdmin && data.adminHighlights && (
             <section className="release-admin" aria-label="Für Admin/CEO">
               <h3>Für Admin/CEO</h3>

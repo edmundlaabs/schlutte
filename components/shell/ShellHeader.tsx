@@ -13,6 +13,8 @@ import { InstallAppButton } from "@/components/shell/InstallAppButton";
 import { appForPath, type AppIconName } from "@/lib/apps";
 import { createClient } from "@/lib/supabase/client";
 import { CHANGELOG } from "@/lib/changelog";
+import { InstallInfo } from "@/components/install/InstallInfo";
+import "@/styles/install-info.css";
 
 const NEWS_SEEN_KEY = "schlutte-news-seen";
 const NEWS_LATEST = CHANGELOG[0]?.version ?? "";
@@ -198,12 +200,15 @@ export function ShellHeader({ user, groups }: { user: ShellUser; groups: ShellAp
                     <span>{entry.date}</span>
                   </header>
                   <ul>
-                    {(entry.highlights ? entry.highlights.map((h) => `${h.title}: ${h.text}`) : entry.changes).map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
+                    {entry.highlights
+                      ? entry.highlights.map((h) => (
+                          <li key={h.title}><strong>{h.title}</strong> {h.text}</li>
+                        ))
+                      : entry.changes.map((line) => <li key={line}>{line}</li>)}
                   </ul>
                 </article>
               ))}
+              <InstallInfo />
               <Link href="/feedback" className="shell-menu-item shell-news-all">Alle Änderungen ansehen</Link>
             </div>
           )}
