@@ -44,6 +44,20 @@ export function AbschlussView({
     onAendere((d) => (d.teilnehmer.some((t) => t.name === n) ? d : { ...d, teilnehmer: [...d.teilnehmer, { name: n, rolle, employeeId }] }));
   }
 
+  async function vorschau() {
+    setBusy(true);
+    setFehler("");
+    try {
+      const { erzeugeProtokollPdfLokal } = await import("@/lib/abnahme/pdf/lokal");
+      const bytes = await erzeugeProtokollPdfLokal(doc);
+      window.open(URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" })), "_blank");
+    } catch (e) {
+      setFehler(e instanceof Error ? e.message : "Vorschau fehlgeschlagen.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function abschliessen() {
     if (!pruefung.ok) return;
     if (!window.confirm("Protokoll jetzt abschließen? Danach ist es gesperrt (nur noch Nachtrag).")) return;
@@ -148,6 +162,7 @@ export function AbschlussView({
           )}
           {fehler && <p className="aus-field-error" role="alert">{fehler}</p>}
           <div className="aus-actions">
+            <button type="button" className="aus-btn aus-btn-secondary" disabled={busy} onClick={vorschau}>PDF-Vorschau</button>
             <button type="button" className="aus-btn aus-btn-primary aus-btn-lg" disabled={!pruefung.ok || busy} onClick={abschliessen}>
               {busy ? "Wird abgeschlossen …" : "Protokoll abschließen"}
             </button>

@@ -1,6 +1,55 @@
+import { blobsDesDokuments, holeBlob, speichereBlob } from "../offline/db";
 import type { ProtokollDoc } from "../types";
+import { erzeugeProtokollPdf, type PdfBild } from "./protokoll";
 
-/** Platzhalter bis Schritt 5 (PDF). */
-export async function speicherePdfLokal(_doc: ProtokollDoc): Promise<void> {
-  void _doc;
+/** Rendert das Logo (SVG, aus dem Service-Worker-Cache auch offline) einmal als PNG für pdf-lib. */
+export async function ladeLogoPng(): Promise<Uint8Array | null> {
+  try {
+    const svg = await (await fetch("/brand/grabner-schlutte-logo.svg")).blob();
+    const url = URL.createObjectURL(svg);
+    const img = new Image();
+    await new Promise<void>((res, rej) => {
+      img.onload = () => res();
+      img.onerror = () => rej(new Error("Logo nicht ladbar"));
+      img.src = url;
+    });
+    const w = 1200;
+    const h = Math.round((w * 155.3) / 566.93);
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    c.getContext("2d")!.drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(url);
+    const blob = await new Promise<Blob | null>((r) => c.toBlob(r, "image/png"));
+    return blob ? new Uint8Array(await blob.arrayBuffer()) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fontLoaderBrowser(name: string): Promise<ArrayBuffer> {
+  const r = await fetch(`/fonts/${name}`);
+  if (!r.ok) throw new Error("PDF-Schrift konnte nicht geladen werden.");
+  return r.arrayBuffer();
+}
+
+/** Erzeugt das Protokoll-PDF aus den lokalen Daten (ohne Netz) und gibt die Bytes zurück. */
+export async function erzeugeProtokollPdfLokal(doc: ProtokollDoc): Promise<Uint8Array> {
+  const bilder = new Map<string, PdfBild>();
+  for (const b of await blobsDesDokuments(doc.id)) {
+    if (b.art === "pdf") continue;
+    bilder.set(b.id, { bytes: new Uint8Array(await b.blob.arrayBuffer()), mime: b.mime });
+  }
+  return erzeugeProtokollPdf(doc, { fonts: fontLoaderBrowser, bilder, logoPng: await ladeLogoPng() });
+}
+
+/** Beim Abschluss: PDF erzeugen und als Blob `pdf:<id>` ablegen; der Sync lädt es hoch. */
+export async function speicherePdfLokal(doc: ProtokollDoc): Promise<void> {
+  const bytes = await erzeugeProtokollPdfLokal(doc);
+  const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
+  await speichereBlob({ id: `pdf:${doc.id}`, docId: doc.id, art: "pdf", mime: "application/pdf", blob, hochgeladen: false });
+}
+
+export async function holePdfBlob(docId: string): Promise<Blob | null> {
+  return (await holeBlob(`pdf:${docId}`))?.blob ?? null;
 }
