@@ -52,7 +52,8 @@
 .abn-pos-karte.s-io { border-left-color: #5b9a5b; }
 .abn-pos-karte.s-mangel { border-left-color: #c24141; }
 .abn-pos-karte.s-nicht_pruefbar { border-left-color: #999; }
-.abn-pos-kopf { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.abn-pos-kopf { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.abn-pos-text { flex: 1 1 200px; }
 .abn-pos-titel { font-size: 17px; font-weight: 500; }
 .abn-pre { white-space: pre-wrap; font: inherit; font-size: 14px; margin: 4px 0 8px; }
 .abn-pruef { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }

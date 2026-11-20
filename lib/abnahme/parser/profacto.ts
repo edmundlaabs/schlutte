@@ -153,8 +153,8 @@ export function parseProfactoPages(pages: PdfPage[]): ParsedList {
   const seen = new Map<string, number>();
   for (const p of positionen) seen.set(p.nr, (seen.get(p.nr) ?? 0) + 1);
   for (const [nr, n] of seen) if (n > 1) warnings.push(`Positionsnummer ${nr} kommt ${n}× vor.`);
-  if (positionen.some((p) => p.typ !== "raum" && p.raum === null && positionen.some((q) => q.typ === "raum"))) {
-    warnings.push("Positionen vor der ersten Raum-Überschrift sind noch keinem Raum zugeordnet.");
+  if (positionen.some((p) => p.typ === "abnahme" && p.raum === null)) {
+    warnings.push("Abnahmerelevante Positionen stehen vor der ersten Raum-Überschrift und landen im Raum „Allgemein“.");
   }
 
   return {

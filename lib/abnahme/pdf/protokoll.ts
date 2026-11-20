@@ -203,7 +203,7 @@ export async function erzeugeProtokollPdf(doc: ProtokollDoc, opt: PdfOptionen): 
   }
 
   // ── 4. Mängelliste mit Fotos ──
-  s.neu();
+  s.platz(240);
   ueberschrift(L.maengelliste, 16);
   if (doc.maengel.length === 0) zeilen(L.keineMaengel, f.regular, 10, muted);
   let nr = 0;
