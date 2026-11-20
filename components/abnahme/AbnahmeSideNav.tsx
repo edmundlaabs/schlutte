@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { APPS, isNavItemActive } from "@/lib/apps";
 
 /**
@@ -14,9 +15,37 @@ export function AbnahmeSideNav({ finance }: { finance: boolean }) {
   const app = APPS.find((a) => a.key === "abnahme");
   const items = (app?.nav ?? []).filter((i) => !i.finance || finance);
   const schmal = pathname.startsWith("/abnahme/begehung");
+  // Ein-/ausblendbar, Wahl bleibt pro Gerät erhalten (ohne localStorage: sichtbar).
+  const [aus, setAus] = useState(false);
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        setAus(window.localStorage.getItem("abnahme-nav-aus") === "1");
+      } catch {
+        /* nicht verfügbar */
+      }
+    });
+  }, []);
+  function umschalten(neu: boolean) {
+    setAus(neu);
+    try {
+      window.localStorage.setItem("abnahme-nav-aus", neu ? "1" : "0");
+    } catch {
+      /* nicht verfügbar */
+    }
+  }
 
   return (
-    <aside className={`abn-side${schmal ? " is-rail" : ""}`} aria-label="Abnahme">
+    <>
+    {aus && (
+      <button type="button" className="abn-side-toggle is-offen" onClick={() => umschalten(false)} aria-label="Navigation einblenden" aria-expanded={false} title="Navigation einblenden">
+        <span aria-hidden>☰</span>
+      </button>
+    )}
+    <aside className={`abn-side${schmal ? " is-rail" : ""}${aus ? " is-aus" : ""}`} aria-label="Abnahme">
+      <button type="button" className="abn-side-toggle" onClick={() => umschalten(true)} aria-label="Navigation ausblenden" aria-expanded title="Navigation ausblenden">
+        <span aria-hidden>‹</span>
+      </button>
       <Link href="/abnahme" className="abn-side-brand" aria-label="Abnahme – Ablage">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/grabner-g.svg" alt="" width={40} height={40} className="abn-side-g" />
@@ -43,5 +72,6 @@ export function AbnahmeSideNav({ finance }: { finance: boolean }) {
         })}
       </nav>
     </aside>
+    </>
   );
 }

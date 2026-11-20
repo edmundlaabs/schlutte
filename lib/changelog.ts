@@ -19,6 +19,16 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.1.2",
+    date: "20.11.2026",
+    changes: [
+      "Abnahme: Protokolle löschen (mit Original-PDF, Fotos, Unterschriften und Nachträgen); abgeschlossene Protokolle nur CEO/Admin",
+      "Abnahme-Import: „Import verwerfen“, eigene Prüfpunkte je Position, Link zu den Prüfpunkt-Vorlagen",
+      "Abnahme: Seitenleiste ein- und ausblendbar",
+      "Auf dem Server gelöschte Protokolle werden auf dem Tablet erkannt und lassen sich lokal verwerfen",
+    ],
+  },
+  {
     version: "1.1.1",
     date: "20.11.2026",
     changes: [

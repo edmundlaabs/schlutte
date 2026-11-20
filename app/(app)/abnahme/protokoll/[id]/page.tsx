@@ -64,6 +64,7 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
         kopieEmail={doc.kopieEmail}
         ausgecheckt={Boolean(co.data?.checkout_device) && doc.status !== "abgeschlossen"}
         istAdmin={istAdmin}
+        nachtraege={versionen.filter((v) => v.version > doc.version).length}
         offeneMaengel={offene.map((m) => {
           const pos = doc.positionen.find((p) => p.id === m.positionId);
           const raum = doc.raeume.find((r) => r.id === m.raumId);

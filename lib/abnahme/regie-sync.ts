@@ -13,6 +13,8 @@ export async function syncRegie(supabase: SupabaseClient, ctx: UserContext, body
   const cur = await supabase.from("abnahme_regieberichte").select("id,status,rev,checkout_device").eq("id", doc.id).maybeSingle();
   if (cur.error) return jsonFehler(500, cur.error.message);
   const existiert = Boolean(cur.data);
+  // Schon einmal synchronisiert (rev > 0), aber auf dem Server weg = gelöscht: nicht neu anlegen.
+  if (!existiert && (doc.rev ?? 0) > 0) return jsonFehler(410, "Dieser Regiebericht wurde auf dem Server gelöscht. Lokale Kopie bitte verwerfen.");
   if (existiert) {
     if (cur.data!.status === "abgeschlossen") return jsonFehler(409, "Der Regiebericht ist serverseitig bereits abgeschlossen.");
     if (cur.data!.checkout_device && cur.data!.checkout_device !== body.deviceId) return jsonFehler(409, "Der Regiebericht ist auf einem anderen Gerät ausgecheckt.");
