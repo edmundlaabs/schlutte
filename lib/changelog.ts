@@ -19,6 +19,16 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.1.0",
+    date: "20.11.2026",
+    changes: [
+      "Neues Modul „Abnahme“ (Werkstatt und Lager): Profacto-Positionsliste importieren, Abnahmeprotokoll nach Räumen, Begehung auf dem Tablet auch ohne Internet (Freigaben, Mängel mit Fotos, Unterschriften), PDF in Deutsch oder Englisch",
+      "Ablage mit Suche und Filtern, Download, Versand per E-Mail (Versandprotokoll) und Nachträge zu offenen Mängeln",
+      "Regiebericht (Stundenbericht) digital erfassen: Arbeiten, Stunden je Rolle, Kundenunterschrift, PDF",
+      "Prüfpunkt-Vorlagen je Möbeltyp im Admin pflegbar",
+    ],
+  },
+  {
     version: "1.0.0",
     date: "18.11.2026",
     popupTitle: "Willkommen in der Schlutte 1.0",

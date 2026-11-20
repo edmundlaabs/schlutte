@@ -68,3 +68,8 @@ test("mapping: Dokument → Zeilen → Dokument (Runde)", () => {
   assert.equal(back.raeume[0].name, "Wohnen");
   assert.equal(back.kunde, "Max");
 });
+
+import { parsePunkte } from "./vorlagen.ts";
+test("parsePunkte", () => {
+  assert.deepEqual(parsePunkte("A | a\n\n B \nC|c"), [{ de: "A", en: "a" }, { de: "B", en: "B" }, { de: "C", en: "c" }]);
+});

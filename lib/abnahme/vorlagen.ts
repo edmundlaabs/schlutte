@@ -31,3 +31,15 @@ export function pruefpunkteAusVorlage(vorlage: Vorlage | null): Pruefpunkt[] {
 export function setzeVorlage(pos: Position, vorlage: Vorlage | null): Position {
   return { ...pos, vorlageId: vorlage?.id ?? null, pruefpunkte: pruefpunkteAusVorlage(vorlage) };
 }
+
+/** Punkte als Text: je Zeile „Deutsch | English“ (englischer Teil optional). */
+export function parsePunkte(text: string): { de: string; en: string }[] {
+  return text
+    .split("\n")
+    .map((z) => z.trim())
+    .filter(Boolean)
+    .map((z) => {
+      const [de, en] = z.split("|").map((x) => x.trim());
+      return { de, en: en || de };
+    });
+}
