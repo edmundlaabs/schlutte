@@ -39,3 +39,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+lib/abnahme/parser/__fixtures__/*.pdf
