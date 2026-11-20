@@ -90,8 +90,13 @@ self.addEventListener("message", (event) => {
           if (url.origin !== self.location.origin) continue;
           const res = await fetch(url.pathname + url.search, { credentials: "same-origin" });
           if (!res.ok || res.redirected) continue;
-          if (url.pathname === SHELL_URL) (await caches.open(PAGES)).put(SHELL_URL, res);
-          else if (istStatisch(url)) (await caches.open(STATIC)).put(url.pathname + url.search, res);
+          if (url.pathname === SHELL_URL) {
+            // Shell ablegen und alle darin referenzierten Chunks/Styles gleich mitnehmen (auch wenn der Aufruf
+            // von einer anderen Seite kommt, z. B. direkt nach dem Import).
+            const html = await res.clone().text();
+            (await caches.open(PAGES)).put(SHELL_URL, res);
+            for (const m of html.matchAll(/\/_next\/static\/[^"'\s\\)<>]+/g)) data.urls.push(m[0]);
+          } else if (istStatisch(url)) (await caches.open(STATIC)).put(url.pathname + url.search, res);
         } catch {
           /* offline: später erneut */
         }

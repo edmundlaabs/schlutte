@@ -103,3 +103,8 @@
 .abn-stepper .abn-st { min-width: var(--abn-touch); padding: 0; font-size: 22px; }
 .abn-stepper-wert { min-width: 44px; text-align: center; font-size: 18px; }
 .abn-summen { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+.abn-punkt-neu { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.abn-punkt-neu .aus-input { flex: 1 1 220px; min-height: var(--abn-touch); }
+.abn-punkt-neu .aus-btn { min-height: var(--abn-touch); }
+.abn-weg { margin-left: 8px; min-width: var(--abn-touch); min-height: var(--abn-touch); border: 0; background: transparent; font-size: 20px; color: var(--fg-muted, #6b665c); cursor: pointer; }

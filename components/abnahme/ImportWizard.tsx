@@ -6,6 +6,9 @@ import { createClient } from "@/lib/supabase/client";
 import { buildDocFromParsed } from "@/lib/abnahme/build";
 import { parseProfactoPdf } from "@/lib/abnahme/parser/pdf-text";
 import { setzeVorlage, suggestVorlage } from "@/lib/abnahme/vorlagen";
+import { fuegePositionHinzu } from "@/lib/abnahme/logic";
+import { ladeFuerBaustelle } from "@/lib/abnahme/offline/sync";
+import { registriereAbnahmeSw } from "@/lib/abnahme/offline/sw-register";
 import type { ParsedList } from "@/lib/abnahme/parser/types";
 import type { Position, ProtokollDoc, Raum, Vorlage } from "@/lib/abnahme/types";
 import { findeKommissionAction, legeProtokollAn } from "@/app/(app)/abnahme/actions";
@@ -31,6 +34,9 @@ export function ImportWizard({
   const [busy, setBusy] = useState<"" | "lesen" | "speichern">("");
   const [fehler, setFehler] = useState("");
   const [fertig, setFertig] = useState<string | null>(null);
+  const [offlineSpeichern, setOfflineSpeichern] = useState(true);
+  const [offline, setOffline] = useState<"" | "laeuft" | "ok" | string>("");
+  const [neuTitel, setNeuTitel] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null);
 
   const vorlageById = useMemo(() => new Map(vorlagen.map((v) => [v.id, v])), [vorlagen]);
@@ -168,6 +174,13 @@ export function ImportWizard({
         throw new Error(res.error);
       }
       setFertig(res.data.id);
+      // Sofort auf diesem Gerät offline ablegen (auschecken, Daten und App-Shell lokal speichern).
+      if (offlineSpeichern) {
+        setOffline("laeuft");
+        await registriereAbnahmeSw();
+        const l = await ladeFuerBaustelle("abnahme", res.data.id);
+        setOffline(l.ok ? "ok" : l.error);
+      }
     } catch (e) {
       setFehler(e instanceof Error ? e.message : "Speichern fehlgeschlagen.");
     } finally {
@@ -179,9 +192,13 @@ export function ImportWizard({
     return (
       <div className="aus-card abn-done">
         <h2 className="aus-h2">Protokoll angelegt</h2>
-        <p>
-          Kommission {doc?.kommissionNr} · {doc?.kunde}. Auf dem Tablet unter „Begehung“ mit „Für Baustelle laden“ holen.
-        </p>
+        <p>Kommission {doc?.kommissionNr} · {doc?.kunde}.</p>
+        {offline === "laeuft" && <p className="aus-muted">Wird für die Baustelle auf diesem Gerät gespeichert …</p>}
+        {offline === "ok" && <p className="aus-field-ok" role="status">Auf diesem Gerät offline gespeichert. Die Begehung funktioniert jetzt auch ohne Internet.</p>}
+        {offline !== "" && offline !== "laeuft" && offline !== "ok" && (
+          <p className="aus-field-error" role="alert">Nicht offline gespeichert: {offline} Auf dem Tablet unter „Begehung“ mit „Für Baustelle laden“ holen.</p>
+        )}
+        {offline === "" && <p className="aus-muted">Auf dem Tablet unter „Begehung“ mit „Für Baustelle laden“ holen.</p>}
         <div className="aus-actions">
           <Link className="aus-btn aus-btn-primary" href={`/abnahme/begehung?id=${fertig}`}>Zur Begehung</Link>
           <Link className="aus-btn aus-btn-secondary" href="/abnahme">Zur Ablage</Link>
@@ -333,6 +350,24 @@ export function ImportWizard({
                     </details>
                   )}
                   {sichtbar.length === 0 && <p className="aus-muted abn-leer">Keine Positionen.</p>}
+                  {raum && (
+                    <div className="abn-punkt-neu">
+                      <input className="aus-input" placeholder="Eigene Position hinzufügen …" value={neuTitel[raum.id] ?? ""} onChange={(e) => setNeuTitel({ ...neuTitel, [raum.id]: e.target.value })} />
+                      <button
+                        type="button"
+                        className="aus-btn aus-btn-secondary"
+                        disabled={!(neuTitel[raum.id] ?? "").trim()}
+                        onClick={() => {
+                          const titel = (neuTitel[raum.id] ?? "").trim();
+                          const v = suggestVorlage(titel, vorlagen);
+                          setDoc((d) => (d ? fuegePositionHinzu(d, raum.id, { titel, menge: "1", einheit: "Stk", vorlageId: v?.id ?? null, pruefpunkte: v?.punkte }) : d));
+                          setNeuTitel({ ...neuTitel, [raum.id]: "" });
+                        }}
+                      >
+                        Position hinzufügen
+                      </button>
+                    </div>
+                  )}
                   <ul className="abn-pos-list">
                     {sichtbar.map((p) => (
                       <li key={p.id} className={p.relevant ? "abn-pos" : "abn-pos is-hidden"}>
@@ -384,6 +419,11 @@ export function ImportWizard({
             {probleme.length > 0 && <ul className="aus-field-error">{probleme.map((p) => <li key={p}>{p}</li>)}</ul>}
             {fehler && <p className="aus-field-error" role="alert">{fehler}</p>}
             <p className="aus-muted">Das Original-PDF wird zusätzlich im Protokoll abgelegt.</p>
+            <label className="abn-inline">
+              <input type="checkbox" checked={offlineSpeichern} onChange={(e) => setOfflineSpeichern(e.target.checked)} />
+              Gleich auf diesem Gerät offline speichern (für die Baustelle)
+            </label>
+            <p className="aus-help">Das Protokoll ist dann auf diesem Gerät ausgecheckt. Für ein anderes Tablet bitte abwählen und dort „Für Baustelle laden“ nutzen.</p>
             <div className="aus-actions">
               <button type="button" className="aus-btn aus-btn-primary aus-btn-lg" disabled={busy === "speichern" || probleme.length > 0} onClick={speichern}>
                 {busy === "speichern" ? "Wird angelegt …" : "Abnahmeprotokoll anlegen"}

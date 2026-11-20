@@ -8,6 +8,7 @@ import { komprimiereFoto } from "@/lib/abnahme/offline/images";
 import {
   fortschritt, findeMangel, findeUnterschrift, maengelPositionen, offeneUnterschriften, positionStatus,
   raumAlleIo, relevantePositionen, setzeMangel, setzeMehrere, setzeStatus, setzeUnterschrift, type ItemRef,
+  entfernePosition, entfernePruefpunkt, fuegePositionHinzu, fuegePruefpunktHinzu, istManuell,
 } from "@/lib/abnahme/logic";
 import type { Position, ProtokollDoc, Raum } from "@/lib/abnahme/types";
 import { SignaturePad } from "../SignaturePad";
@@ -15,6 +16,7 @@ import { BlobImg } from "./BlobImg";
 import { MangelDialog, type NeuesFoto } from "./MangelDialog";
 import { SyncBadge, useAutoSync } from "./SyncBadge";
 import { AbschlussView } from "./AbschlussView";
+import { PositionDialog } from "./PositionDialog";
 
 type View = { art: "uebersicht" } | { art: "raum"; index: number } | { art: "abschluss" };
 
@@ -41,6 +43,8 @@ export function Protokollansicht({ id }: { id: string }) {
   const [view, setViewState] = useState<View>({ art: "uebersicht" });
   const [mangelCtx, setMangelCtx] = useState<MangelCtx | null>(null);
   const [sigCtx, setSigCtx] = useState<SigCtx | null>(null);
+  const [posRaum, setPosRaum] = useState<string | null>(null);
+  const [hinweis, setHinweis] = useState("");
   const [auswahl, setAuswahl] = useState<Set<string>>(new Set());
   const gestartet = useRef(false);
   const anzahlRaeume = doc?.raeume.length ?? 0;
@@ -111,6 +115,19 @@ export function Protokollansicht({ id }: { id: string }) {
     setSigCtx(null);
   }
 
+  /** Fachlogik kann ablehnen (z. B. Mangel als Ganzes) – Hinweis zeigen statt Absturz. */
+  function sicher(fn: (d: ProtokollDoc) => ProtokollDoc) {
+    setHinweis("");
+    aendere((d) => {
+      try {
+        return fn(d);
+      } catch (e) {
+        setHinweis(e instanceof Error ? e.message : "Nicht möglich.");
+        return d;
+      }
+    });
+  }
+
   if (laedt) return <p className="aus-muted">Wird geladen …</p>;
   if (!eintrag || !doc) {
     return (
@@ -131,6 +148,16 @@ export function Protokollansicht({ id }: { id: string }) {
       komprimiere={(f) => komprimiereFoto(f)}
       onCancel={() => setMangelCtx(null)}
       onSave={(r) => mangelSpeichern(mangelCtx, r)}
+    />
+  );
+  const posDialog = posRaum && (
+    <PositionDialog
+      raumName={doc.raeume.find((r) => r.id === posRaum)?.name ?? ""}
+      onCancel={() => setPosRaum(null)}
+      onSave={(p) => {
+        sicher((d) => fuegePositionHinzu(d, posRaum, p));
+        setPosRaum(null);
+      }}
     />
   );
   const sigDialog = sigCtx && (
@@ -188,6 +215,23 @@ export function Protokollansicht({ id }: { id: string }) {
           auswahl={auswahl}
           setAuswahl={setAuswahl}
           onItem={setzeItem}
+          onNeuePosition={() => setPosRaum(doc.raeume[view.index].id)}
+          onNeuerPunkt={(pid, text) => sicher((d) => fuegePruefpunktHinzu(d, pid, text))}
+          onPunktWeg={(pid, kid) => {
+            const r = entfernePruefpunkt(doc, pid, kid);
+            r.entfernteFotos.forEach((f) => void loescheBlob(f));
+            aendere(() => r.doc);
+          }}
+          onPositionWeg={(pid) => {
+            if (!window.confirm("Diese selbst angelegte Position entfernen?")) return;
+            try {
+              const r = entfernePosition(doc, pid);
+              r.entfernteBilder.forEach((f) => void loescheBlob(f));
+              aendere(() => r.doc);
+            } catch (e) {
+              setHinweis(e instanceof Error ? e.message : "Nicht möglich.");
+            }
+          }}
           onMangel={(ref, titel) => setMangelCtx({ ref, titel })}
           onAlleIo={() => aendere((d) => raumAlleIo(d, doc.raeume[view.index].id))}
           onMehrere={(status) => {
@@ -212,7 +256,9 @@ export function Protokollansicht({ id }: { id: string }) {
         />
       )}
 
+      {hinweis && <p className="aus-field-error" role="alert">{hinweis}</p>}
       {mangelDialog}
+      {posDialog}
       {sigDialog}
     </div>
   );
@@ -290,7 +336,12 @@ function StatusKnoepfe({
 
 function RaumSeite({
   doc, raum, index, gesperrt, auswahl, setAuswahl, onItem, onMangel, onAlleIo, onMehrere, onBemerkung, onSign, onNavigiere,
+  onNeuePosition, onNeuerPunkt, onPunktWeg, onPositionWeg,
 }: {
+  onNeuePosition: () => void;
+  onNeuerPunkt: (positionId: string, text: string) => void;
+  onPunktWeg: (positionId: string, pruefpunktId: string) => void;
+  onPositionWeg: (positionId: string) => void;
   doc: ProtokollDoc;
   raum: Raum;
   index: number;
@@ -370,9 +421,17 @@ function RaumSeite({
             onItem={onItem}
             onMangel={onMangel}
             onSign={() => onSign("position", p.id, `Mangel: ${p.titel}`)}
+            onNeuerPunkt={(text) => onNeuerPunkt(p.id, text)}
+            onPunktWeg={(kid) => onPunktWeg(p.id, kid)}
+            onPositionWeg={() => onPositionWeg(p.id)}
           />
         ))}
       </ul>
+      {!gesperrt && (
+        <div className="aus-actions">
+          <button type="button" className="aus-btn aus-btn-secondary" onClick={onNeuePosition}>+ Eigene Position hinzufügen</button>
+        </div>
+      )}
 
       <label className="aus-field">
         <span className="aus-label">Bemerkung zum Raum</span>
@@ -404,8 +463,11 @@ function RaumSeite({
 }
 
 function PositionKarte({
-  doc, pos, gesperrt, gewaehlt, onToggle, onItem, onMangel, onSign,
+  doc, pos, gesperrt, gewaehlt, onToggle, onItem, onMangel, onSign, onNeuerPunkt, onPunktWeg, onPositionWeg,
 }: {
+  onNeuerPunkt: (text: string) => void;
+  onPunktWeg: (pruefpunktId: string) => void;
+  onPositionWeg: () => void;
   doc: ProtokollDoc;
   pos: Position;
   gesperrt: boolean;
@@ -420,6 +482,7 @@ function PositionKarte({
   const posSig = findeUnterschrift(doc, "position", pos.id);
   const mitMangel = maengelPositionen(doc).some((p) => p.id === pos.id);
   const mangelListe = doc.maengel.filter((m) => m.positionId === pos.id);
+  const [neuerPunkt, setNeuerPunkt] = useState("");
 
   return (
     <li className={`abn-pos-karte s-${status}`}>
@@ -456,7 +519,12 @@ function PositionKarte({
             const ref: ItemRef = { positionId: pos.id, pruefpunktId: k.id };
             return (
               <li key={k.id}>
-                <span className="abn-pruef-text">{k.textDe}</span>
+                <span className="abn-pruef-text">
+                  {k.textDe}
+                  {!gesperrt && (
+                    <button type="button" className="abn-weg" aria-label={`Prüfpunkt „${k.textDe}“ entfernen`} onClick={() => onPunktWeg(k.id)}>×</button>
+                  )}
+                </span>
                 <StatusKnoepfe
                   status={k.status}
                   gesperrt={gesperrt}
@@ -468,6 +536,15 @@ function PositionKarte({
             );
           })}
         </ul>
+      )}
+
+      {!gesperrt && (
+        <div className="abn-punkt-neu">
+          <input className="aus-input" placeholder="Prüfpunkt hinzufügen …" value={neuerPunkt} onChange={(e) => setNeuerPunkt(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && neuerPunkt.trim()) { onNeuerPunkt(neuerPunkt); setNeuerPunkt(""); } }} />
+          <button type="button" className="aus-btn aus-btn-secondary" disabled={!neuerPunkt.trim()} onClick={() => { onNeuerPunkt(neuerPunkt); setNeuerPunkt(""); }}>Hinzufügen</button>
+          {istManuell(pos) && <button type="button" className="aus-btn aus-btn-quiet" onClick={onPositionWeg}>Position entfernen</button>}
+        </div>
       )}
 
       {mangelListe.map((m) => (

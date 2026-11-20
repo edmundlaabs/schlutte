@@ -109,3 +109,32 @@ test("Nachtrag: neue Version, Mangel erledigt, Position i. O., Alt unverändert"
   assert.equal(alt.maengel[0].erledigtAt, null);
   assert.equal(alt.positionen.find((p) => p.nr === "b")!.status, "mangel");
 });
+
+import { entfernePosition, entfernePruefpunkt, fuegePositionHinzu, fuegePruefpunktHinzu, istManuell } from "./logic.ts";
+test("Eigene Position und Prüfpunkte hinzufügen/entfernen", () => {
+  assert.throws(() => fuegePositionHinzu(doc(), "r1", { titel: " " }));
+  let d = fuegePositionHinzu(doc(), "r1", { titel: "Zusatzregal Flur", menge: "1", einheit: "Stk", pruefpunkte: [{ de: "Oberfläche", en: "Surface" }, { de: "  " }] });
+  const neu = d.positionen.at(-1)!;
+  assert.equal(neu.nr, "N1");
+  assert.ok(istManuell(neu));
+  assert.equal(neu.pruefpunkte.length, 1);
+  assert.equal(positionStatus(neu), "offen");
+  d = fuegePruefpunktHinzu(d, neu.id, "Fachböden stabil");
+  assert.equal(d.positionen.at(-1)!.pruefpunkte.length, 2);
+  // Zusätzlicher Punkt an bestehender, bereits i. O. gesetzter Position → Position wieder offen
+  let e = raumAlleIo(doc(), "r1");
+  e = fuegePruefpunktHinzu(e, "a", "Neuer Punkt");
+  assert.equal(positionStatus(e.positionen[0]), "offen");
+  // Mangel als Ganzes blockiert das Anlegen von Prüfpunkten
+  const m = setzeMangel(doc(), { positionId: "b", pruefpunktId: null }, { text: "x", frist: "" });
+  assert.throws(() => fuegePruefpunktHinzu(m, "b", "Y"));
+  // Prüfpunkt mit Mangel entfernen
+  const mk = setzeMangel(doc(), { positionId: "a", pruefpunktId: "ak0" }, { text: "Kratzer", frist: "" });
+  const r = entfernePruefpunkt(mk, "a", "ak0");
+  assert.equal(r.doc.maengel.length, 0);
+  assert.equal(r.doc.positionen[0].pruefpunkte.length, 1);
+  // Nur eigene Positionen entfernen
+  assert.throws(() => entfernePosition(doc(), "a"));
+  const ent = entfernePosition(d, neu.id);
+  assert.equal(ent.doc.positionen.some((p) => p.id === neu.id), false);
+});

@@ -166,3 +166,77 @@ export const STATUS_LABEL: Record<"de" | "en", Record<PruefStatus, string>> = {
   de: { offen: "offen", io: "i. O.", mangel: "Mangel", nicht_pruefbar: "nicht prüfbar" },
   en: { offen: "open", io: "OK", mangel: "Defect", nicht_pruefbar: "not testable" },
 };
+
+// ─── Eigene Positionen und Prüfpunkte (nachträglich, auch auf der Baustelle) ────
+
+/** Kennzeichen selbst angelegter Positionen (Profacto-Positionen haben ein anderes Artikelkürzel). */
+export const MANUELL = "manuell";
+export const istManuell = (p: Position) => p.artikel === MANUELL;
+
+export function fuegePositionHinzu(
+  doc: ProtokollDoc,
+  raumId: string,
+  eingabe: { titel: string; menge?: string; einheit?: string; langtext?: string; vorlageId?: string | null; pruefpunkte?: { de: string; en?: string }[] }
+): ProtokollDoc {
+  const titel = eingabe.titel.trim();
+  if (!titel) throw new Error("Bitte einen Titel eingeben.");
+  if (!doc.raeume.some((r) => r.id === raumId)) throw new Error("Raum nicht gefunden.");
+  const nr = `N${doc.positionen.filter(istManuell).length + 1}`;
+  const pos: Position = {
+    id: crypto.randomUUID(), raumId, sort: doc.positionen.reduce((n, p) => Math.max(n, p.sort), -1) + 1, nr,
+    menge: (eingabe.menge ?? "").trim(), einheit: (eingabe.einheit ?? "").trim(), artikel: MANUELL, titel,
+    langtext: (eingabe.langtext ?? "").trim(), relevant: true, vorlageId: eingabe.vorlageId ?? null, status: "offen", bemerkung: "",
+    pruefpunkte: (eingabe.pruefpunkte ?? [])
+      .filter((k) => k.de.trim())
+      .map((k, i) => ({ id: crypto.randomUUID(), sort: i, textDe: k.de.trim(), textEn: (k.en ?? "").trim() || k.de.trim(), status: "offen" as const, bemerkung: "" })),
+  };
+  return { ...doc, positionen: [...doc.positionen, mitStatus(pos)] };
+}
+
+/** Zusätzlicher Prüfpunkt an einer Position. Hat die Position schon einen Mangel als Ganzes, wird abgelehnt. */
+export function fuegePruefpunktHinzu(doc: ProtokollDoc, positionId: string, textDe: string, textEn = ""): ProtokollDoc {
+  const text = textDe.trim();
+  if (!text) throw new Error("Bitte einen Text für den Prüfpunkt eingeben.");
+  const pos = doc.positionen.find((p) => p.id === positionId);
+  if (!pos) throw new Error("Position nicht gefunden.");
+  if (pos.pruefpunkte.length === 0 && findeMangel(doc, { positionId, pruefpunktId: null })) {
+    throw new Error("Diese Position hat schon einen Mangel als Ganzes. Bitte zuerst den Mangel zurücksetzen.");
+  }
+  // Eine bisher als Ganzes geprüfte Position (i. O./nicht prüfbar) behält diesen Status für den neuen Punkt nicht:
+  // der neue Prüfpunkt ist „offen“.
+  const k = { id: crypto.randomUUID(), sort: pos.pruefpunkte.reduce((n, x) => Math.max(n, x.sort), -1) + 1, textDe: text, textEn: textEn.trim() || text, status: "offen" as const, bemerkung: "" };
+  return { ...doc, positionen: doc.positionen.map((p) => (p.id === positionId ? mitStatus({ ...p, pruefpunkte: [...p.pruefpunkte, k] }) : p)) };
+}
+
+export function entfernePruefpunkt(doc: ProtokollDoc, positionId: string, pruefpunktId: string): { doc: ProtokollDoc; entfernteFotos: string[] } {
+  const mangel = findeMangel(doc, { positionId, pruefpunktId });
+  const entfernte = mangel ? doc.fotos.filter((f) => f.mangelId === mangel.id).map((f) => f.id) : [];
+  return {
+    entfernteFotos: entfernte,
+    doc: {
+      ...doc,
+      maengel: mangel ? doc.maengel.filter((m) => m.id !== mangel.id) : doc.maengel,
+      fotos: mangel ? doc.fotos.filter((f) => f.mangelId !== mangel.id) : doc.fotos,
+      positionen: doc.positionen.map((p) => (p.id === positionId ? mitStatus({ ...p, pruefpunkte: p.pruefpunkte.filter((k) => k.id !== pruefpunktId) }) : p)),
+    },
+  };
+}
+
+/** Entfernt eine selbst angelegte Position samt Mängeln, Fotos und Unterschriften. Profacto-Positionen bleiben (nur ausblenden). */
+export function entfernePosition(doc: ProtokollDoc, positionId: string): { doc: ProtokollDoc; entfernteBilder: string[] } {
+  const pos = doc.positionen.find((p) => p.id === positionId);
+  if (!pos || !istManuell(pos)) throw new Error("Nur selbst angelegte Positionen lassen sich entfernen.");
+  const mangelIds = new Set(doc.maengel.filter((m) => m.positionId === positionId).map((m) => m.id));
+  const fotos = doc.fotos.filter((f) => mangelIds.has(f.mangelId)).map((f) => f.id);
+  const sigs = doc.unterschriften.filter((u) => u.bezug === "position" && u.bezugId === positionId).map((u) => u.id);
+  return {
+    entfernteBilder: [...fotos, ...sigs],
+    doc: {
+      ...doc,
+      positionen: doc.positionen.filter((p) => p.id !== positionId),
+      maengel: doc.maengel.filter((m) => !mangelIds.has(m.id)),
+      fotos: doc.fotos.filter((f) => !mangelIds.has(f.mangelId)),
+      unterschriften: doc.unterschriften.filter((u) => !sigs.includes(u.id)),
+    },
+  };
+}
