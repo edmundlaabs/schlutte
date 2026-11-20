@@ -59,11 +59,11 @@ export function useLokalesProtokoll(id: string | null) {
     kette.current = kette.current.then(() => speichereDokument(next));
   }, []);
 
-  /** Ändert den Eintrag selbst (z. B. Versand-Vormerkung), ohne das Dokument zu sperren. */
+  /** Ändert nur lokale Zusatzdaten (z. B. Versand-Vormerkung): kein Sync des Dokuments nötig. */
   const aendereEintrag = useCallback((fn: (e: Abnahme) => Abnahme) => {
     const cur = ref.current;
     if (!cur) return;
-    const next = { ...fn(cur), editSeq: cur.editSeq + 1, dirty: true } as Abnahme;
+    const next = fn(cur);
     ref.current = next;
     setEintrag(next);
     kette.current = kette.current.then(() => speichereDokument(next));

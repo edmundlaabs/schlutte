@@ -90,3 +90,7 @@
 .abn-dok-side { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .abn-dok-side .aus-btn { min-height: var(--abn-touch); display: inline-flex; align-items: center; }
 .abn-liste { display: grid; gap: 16px; }
+
+.abn-filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.abn-filter .aus-input, .abn-filter .aus-select { min-height: var(--abn-touch); }
+.abn-ablage .aus-item-side { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }

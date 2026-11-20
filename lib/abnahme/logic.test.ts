@@ -90,3 +90,22 @@ test("Abschluss: Gründe", () => {
   f = setzeUnterschrift(f, { id: "s2", bezug: "schluss_mitarbeiter", bezugId: null, name: "M", rolle: "Mitarbeiter" }).doc;
   assert.equal(kannAbschliessen(f).ok, true);
 });
+
+import { erzeugeNachtrag } from "./nachtrag.ts";
+test("Nachtrag: neue Version, Mangel erledigt, Position i. O., Alt unverändert", () => {
+  const alt0 = setzeMangel(doc(), { positionId: "b", pruefpunktId: null }, { text: "Delle", frist: "" });
+  const alt = { ...alt0, status: "abgeschlossen" as const, fotos: [{ id: "f1", mangelId: alt0.maengel[0].id, path: "p/f1.jpg", breite: 1, hoehe: 1, aufgenommenAt: "" }] };
+  const neu = erzeugeNachtrag(alt, [alt.maengel[0].id], "n1", "2026-12-01T10:00:00Z");
+  assert.equal(neu.version, 2);
+  assert.equal(neu.parentId, alt.id);
+  assert.equal(neu.status, "bereit");
+  assert.equal(neu.maengel[0].erledigtAt, "2026-12-01T10:00:00Z");
+  assert.notEqual(neu.maengel[0].id, alt.maengel[0].id);
+  assert.equal(neu.positionen.find((p) => p.nr === "b")!.status, "io");
+  assert.equal(neu.fotos[0].path, "p/f1.jpg");
+  assert.equal(neu.fotos[0].mangelId, neu.maengel[0].id);
+  assert.equal(neu.unterschriften.length, 0);
+  // Alt bleibt unverändert
+  assert.equal(alt.maengel[0].erledigtAt, null);
+  assert.equal(alt.positionen.find((p) => p.nr === "b")!.status, "mangel");
+});
