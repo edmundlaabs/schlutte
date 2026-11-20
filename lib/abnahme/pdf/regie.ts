@@ -2,13 +2,13 @@ import { PDFDocument, type PDFImage, type PDFPage } from "pdf-lib";
 import { formatDatum, t } from "../i18n.ts";
 import { ROLLEN, STD_KEYS, summen } from "../regie-logic.ts";
 import type { RegieDoc } from "../types.ts";
-import { A4_QUER, bettePng, brass, kuerzen, ladeFonts, ink, muted, Seiten, umbrechen, faint } from "./common.ts";
+import { A4_QUER, bettePng, brass, kuerzen, ladeFonts, ink, muted, Seiten, umbrechen, line as faint } from "./common.ts";
+import { zeichneLogo } from "./logo.ts";
 import type { PdfOptionen } from "./protokoll.ts";
 
 const M = 36;
 const BOTTOM = 52;
 const TOP = 54;
-const LOGO_RATIO = 566.93 / 155.3;
 const stdFormat = (n: number) => (n === 0 ? "" : String(n).replace(".", ","));
 
 /** Regiebericht (Stundenbericht) als A4 quer – wie die Papiervorlage, mit Summen je Rolle. */
@@ -19,7 +19,6 @@ export async function erzeugeRegiePdf(doc: RegieDoc, opt: PdfOptionen): Promise<
   pdf.setTitle(`${L.regieKurz} ${doc.kommissionNr} ${doc.kunde}`);
   pdf.setAuthor(doc.mitarbeiterName || "Grabner Design GmbH");
   pdf.setCreator("Schlutte");
-  const logo = opt.logoPng ? await bettePng(pdf, opt.logoPng) : null;
   const W = A4_QUER.w;
 
   const cols: { key: string; titel: string; w: number; align?: "right" }[] = [
@@ -43,8 +42,7 @@ export async function erzeugeRegiePdf(doc: RegieDoc, opt: PdfOptionen): Promise<
   let tabellenKopfY = 0;
   const kopfErste = (page: PDFPage): number => {
     const top = A4_QUER.h - M;
-    if (logo) page.drawImage(logo, { x: M, y: top - 100 / LOGO_RATIO, width: 100, height: 100 / LOGO_RATIO });
-    else page.drawText("Grabner Design", { x: M, y: top - 14, font: f.medium, size: 13, color: ink });
+    zeichneLogo(page, M, top, 100, ink, brass);
     const firma = ["Grabner Design GmbH", "Tüchlinger Weg 1", "79400 Kandern", "Tel. +49(0)7626-977210", "Mail: info@grabner-design.de"];
     firma.forEach((z, i) => page.drawText(z, { x: W - M - f.regular.widthOfTextAtSize(z, 8), y: top - 8 - i * 10.5, font: f.regular, size: 8, color: muted }));
     page.drawText(`SCHLUTTE / ${L.regieKurz.toUpperCase()}`, { x: M, y: top - 44, font: f.regular, size: 8, color: brass });

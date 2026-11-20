@@ -1,15 +1,18 @@
 import { PDFDocument, rgb, type PDFFont, type PDFImage, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 
-/** Farben wie in den bestehenden Schlutte-PDFs (lib/auslagen/pdf) und styles/tokens.css. */
-export const ink = rgb(0.055, 0.055, 0.051);
-export const muted = rgb(0.42, 0.42, 0.4);
-export const brass = rgb(0.65, 0.51, 0.29);
-export const red = rgb(0.69, 0.18, 0.18);
-export const green = rgb(0.25, 0.5, 0.25);
-export const faint = rgb(0.93, 0.92, 0.9);
+/** Farben aus styles/tokens.css (Grabner Design „Architectural Luxury“). */
+const hex = (h: string) => rgb(parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255);
+export const ink = hex("#0E0E0D"); // --gd-ink
+export const muted = hex("#5C5852"); // --gd-stone-700
+export const brass = hex("#A6824A"); // --gd-brass
+export const red = hex("#8C3A2E"); // --gd-danger (Ochsenblut)
+export const green = hex("#55613F"); // dunkles Moos (--gd-success, für Text abgedunkelt)
+export const line = hex("#D9D2C5"); // --gd-sand, Haarlinien
+export const faint = hex("#EFEAE0"); // --gd-cream
+export const white = rgb(1, 1, 1);
 
-export type Fonts = { regular: PDFFont; light: PDFFont; medium: PDFFont };
+export type Fonts = { regular: PDFFont; light: PDFFont; medium: PDFFont; mono: PDFFont };
 export type FontLoader = (name: string) => Promise<ArrayBuffer | Uint8Array>;
 
 export async function ladeFonts(pdf: PDFDocument, loader: FontLoader): Promise<Fonts> {
@@ -19,7 +22,9 @@ export async function ladeFonts(pdf: PDFDocument, loader: FontLoader): Promise<F
       pdf.embedFont(await loader(n), { subset: true })
     )
   );
-  return { regular, light, medium };
+  // IBM Plex Mono (TTF in public/fonts) lässt sich mit fontkit nicht einbetten („beyond buffer length“);
+  // Zahlen daher in Plex Sans Regular. `mono` bleibt als Rolle, falls später eine taugliche Datei kommt.
+  return { regular, light, medium, mono: regular };
 }
 
 export const A4 = { w: 595.28, h: 841.89 };

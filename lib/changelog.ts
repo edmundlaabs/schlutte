@@ -19,6 +19,16 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.1.1",
+    date: "20.11.2026",
+    changes: [
+      "Abnahme im Grabner-Design-System: Seitenleiste mit g-Signet und nummerierter Navigation (auf dem Tablet schmal), neue Ablage mit Meta-Kopf, Filterzeile und nummerierten Einträgen",
+      "Mangel erfassen: Fotos als Raster mit „Foto aufnehmen“-Kachel und Entfernen-Knopf, Status-Schalter als Segmentgruppe",
+      "Abnahmeprotokoll-PDF neu gestaltet: offizielles Grabner-Design-Logo, nummerierte Abschnitte, Mängel mit Fotos direkt an der Position und groß in der Mängelliste, Schlussunterschriften nebeneinander",
+      "Regiebericht-PDF mit offiziellem Grabner-Design-Logo",
+    ],
+  },
+  {
     version: "1.1.0",
     date: "20.11.2026",
     changes: [

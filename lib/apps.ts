@@ -64,6 +64,8 @@ export type AppDefinition = {
   /** Kurzbeschreibung für die Startseite. */
   hint: string;
   nav: readonly AppNavItem[];
+  /** Unternavigation als Seitenleiste in der App selbst (statt Tabs in Zeile 2 ab 768 px). */
+  sideNav?: boolean;
 };
 
 export const APPS: readonly AppDefinition[] = [
@@ -78,7 +80,7 @@ export const APPS: readonly AppDefinition[] = [
     ],
   },
   {
-    key: "abnahme", title: "Abnahme", enforcement: "intern", live: true,
+    key: "abnahme", title: "Abnahme", enforcement: "intern", live: true, sideNav: true,
     href: "/abnahme", group: "werkstatt-lager", icon: "abnahme",
     hint: "Abnahmeprotokolle und Regieberichte: Begehung auf dem Tablet, auch ohne Internet, mit Unterschrift und PDF.",
     nav: [

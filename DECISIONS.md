@@ -221,3 +221,11 @@ Die Tabellen wurden verifiziert und die Data-Schicht auf das reale Schema angepa
 - **Mail zentral** in `lib/mail/send.ts` (Resend, Env `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_COPY_TO`); `lib/urlaub/notify.ts` kann sie wiederverwenden (noch nicht verdrahtet). Offline ausgelöster Versand wird vorgemerkt und nach dem Sync verschickt; automatischer Versand ist idempotent über einen Schlüssel je Dokumentversion.
 - **Parser-Fixture nur lokal:** Die Beispiel-PDF (Kundendaten) liegt in `lib/abnahme/parser/__fixtures__/` und steht in `.gitignore`; ohne Datei werden diese Tests übersprungen.
 - Details und Betrieb: `docs/ABNAHME.md`.
+
+## Abnahme-Redesign „Dokument“ (Version 1.1.1, 2026-11-20)
+
+- **Seitenleiste statt Tab-Zeile** nur für Apps mit `sideNav: true` in `lib/apps.ts` (bisher nur Abnahme). `SubNav` blendet dort ab 768 px die Tab-Zeile aus; mobil bleibt die Tab-Leiste unten. In `/abnahme/begehung` und unter 1100 px ist die Leiste schmal (nur Nummern).
+- **Logos:** App = g-Signet mit Kreis (`public/brand/grabner-g.svg`, aus `GD/001_Grabner Logo/cleanes logo/cleanes_g_kreis_in_black.ai`). Offizielle PDFs = Grabner-Design-Logo als Vektorpfade (`lib/abnahme/pdf/logo.ts`, Quelle `public/brand/grabner-logo.svg`), kein PNG-Rendering mehr nötig.
+- **IBM Plex Mono nicht im PDF:** Die Mono-TTFs in `public/fonts` lassen sich mit `@pdf-lib/fontkit` nicht einbetten („Trying to access beyond buffer length“, Fehler erst bei `save()`). Zahlen im PDF daher in Plex Sans; `Fonts.mono` zeigt auf Regular.
+- **PDF-Farben** aus `tokens.css` (`lib/abnahme/pdf/common.ts`): Mangel = Ochsenblut `#8C3A2E`, Akzent = Messing, Haarlinien = Sand.
+- Entwurf: Design-Canvas „Schlutte Abnahme – Redesign“ (Zeile „Final“). Backup der vorherigen Dateien: `../Backup/abnahme-redesign-2026-11-20/`.
