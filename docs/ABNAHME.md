@@ -23,10 +23,13 @@ Abnahmeprotokoll und Regiebericht für die Baustelle: Tablet-Begehung auch ohne 
 4. **Abschluss**: Teilnehmer, Ort, Datum/Uhrzeit automatisch, Schlussunterschrift Kunde und Mitarbeiter (angemeldeter Nutzer). Das PDF wird lokal erzeugt, danach ist das Protokoll gesperrt. Kunden-E-Mail angegeben → automatischer Versand nach dem Sync.
 5. **Sync**: automatisch, sobald Internet da ist (Ereignis „online“, App sichtbar, alle 30 s). Status je Protokoll: „lokal gespeichert“ / „synchronisiert“ / „Sync-Fehler“.
 6. **Ablage** `/abnahme` (PC/Tablet): Suche und Filter (Kommission, Kunde, Typ, Status, Mitarbeiter, Datum), offene Mängel markiert, PDF-Download, Versand/Erneut senden, Versandprotokoll.
+6a. **Löschen**: auf der Protokoll-Seite „Protokoll löschen“ (entfernt Räume, Positionen, Mängel, Fotos, Unterschriften, Original-PDF, erzeugtes PDF, Versandprotokoll und alle Nachträge). Nicht abgeschlossene Protokolle (z. B. falscher Import) darf jeder mit Zugang löschen, abgeschlossene nur CEO/Admin. Im Import gibt es „Import verwerfen“ (vor dem Anlegen). Eine ausgecheckte Kopie auf dem Tablet meldet beim nächsten Sync „gelöscht“ und lässt sich über „Lokal verwerfen“ entfernen; sie wird nicht neu angelegt.
 7. **Nachtrag**: im Protokoll offene Mängel als erledigt wählen → neue Version (die alte bleibt unverändert). Der Nachtrag wird wieder auf dem Tablet geladen, unterschrieben und abgeschlossen.
 8. **Regiebericht**: `/abnahme/begehung` → „Neuer Regiebericht“ (Kommission und Kunde Pflicht, Kopf vorbefüllt aus Kommission/letztem Dokument). Zeilen mit Datum, Beschreibung, Menge, Länge, Breite, Stärke, km, Stunden je Rolle (Meister, Monteur, Lehrling, Helfer; 0,5er-Schritte), Summen, „anerkannt, den …“ + Kundenunterschrift. Gleiche Technik: offline, Sync, PDF (A4 quer, DE/EN), Ablage, Versand.
 
 PDF-Dateinamen: `Abnahme_<Kommission>_<Kunde-kurz>_<JJJJ-MM-TT>.pdf`, `Regiebericht_<Kommission>_<Kunde-kurz>_<JJJJ-MM-TT>.pdf`.
+
+**Navigation**: die Seitenleiste lässt sich ab 768 px über ‹ aus- und mit ☰ wieder einblenden (merkt sich das Gerät). **Prüfpunkt-Vorlagen** (CEO/Admin): `/abnahme/vorlagen`, je Möbeltyp eigene Punkte „Deutsch | English“; im Import und in der Begehung lassen sich zusätzlich eigene Prüfpunkte je Position ergänzen.
 
 ## Technik
 

@@ -187,3 +187,9 @@ export async function gibFrei(typ: "abnahme" | "regie", id: string): Promise<{ o
   if (!res.ok) return { ok: false, error: res.error };
   return entferneLokal(id);
 }
+
+/** Lokale Kopie verwerfen, auch wenn nicht synchronisiert (z. B. auf dem Server gelöscht). */
+export async function verwerfeLokal(id: string): Promise<void> {
+  await loescheDokument(id);
+  notify();
+}

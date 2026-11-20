@@ -33,6 +33,8 @@ export async function POST(request: Request) {
     .maybeSingle();
   if (cur.error) return jsonFehler(500, cur.error.message);
   const existiert = Boolean(cur.data);
+  // Protokolle entstehen immer online (Import): fehlt die Zeile, wurde das Protokoll gelöscht – nicht neu anlegen.
+  if (!existiert) return jsonFehler(410, "Dieses Protokoll wurde auf dem Server gelöscht. Lokale Kopie bitte verwerfen.");
   if (existiert) {
     if (cur.data!.status === "abgeschlossen") return jsonFehler(409, "Das Protokoll ist serverseitig bereits abgeschlossen.");
     if (cur.data!.checkout_device !== body.deviceId) return jsonFehler(409, "Das Protokoll ist auf einem anderen Gerät ausgecheckt.");

@@ -5,6 +5,7 @@ import { requireAppAccess } from "@/lib/auth/app-access";
 import { createCommission } from "@/lib/data/commissions";
 import { findKommission, insertProtokoll, ladeProtokollDoc, type KommissionTreffer } from "@/lib/data/abnahme";
 import { createClient } from "@/lib/supabase/server";
+import { ermittleKette, loescheKette } from "@/lib/data/abnahme-loeschen";
 import { versendeDokument } from "@/lib/abnahme/versand-server";
 import { erzeugeNachtrag } from "@/lib/abnahme/nachtrag";
 import type { ProtokollDoc } from "@/lib/abnahme/types";
@@ -123,5 +124,31 @@ export async function gibGeraetFrei(typ: "abnahme" | "regie", id: string): Promi
     return { ok: true, data: undefined };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Nicht möglich." };
+  }
+}
+
+/**
+ * Abnahmeprotokoll löschen (inkl. Nachträge, Original-PDF, Fotos, Unterschriften, PDF, Versandprotokoll).
+ * Nicht abgeschlossene Protokolle (z. B. falscher Import) darf jeder mit Zugang löschen,
+ * abgeschlossene (unterschriebene) nur CEO und Admin.
+ */
+export async function loescheProtokollAction(id: string): Promise<AbnahmeResult<{ geloescht: number }>> {
+  try {
+    const ctx = await requireAppAccess("abnahme");
+    const supabase = await createClient();
+    const sichtbar = await supabase.from("abnahme_protokolle").select("id").eq("id", id).maybeSingle();
+    if (!sichtbar.data) return { ok: false, error: "Protokoll nicht gefunden." };
+    const kette = await ermittleKette(id);
+    if (kette.length === 0) return { ok: false, error: "Protokoll nicht gefunden." };
+    if (kette.some((k) => k.status === "abgeschlossen") && !ctx.isFinance) {
+      return { ok: false, error: "Abgeschlossene (unterschriebene) Protokolle dürfen nur CEO und Administratoren löschen." };
+    }
+    const r = await loescheKette(kette);
+    console.info(`Abnahme: ${r.geloescht} Protokoll(e) gelöscht (Start ${id}) von ${ctx.employee?.id ?? ctx.userId}`);
+    revalidatePath("/abnahme");
+    return { ok: true, data: { geloescht: r.geloescht } };
+  } catch (e) {
+    console.error("Abnahme löschen:", e);
+    return { ok: false, error: e instanceof Error ? e.message : "Löschen fehlgeschlagen." };
   }
 }

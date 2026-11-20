@@ -125,7 +125,7 @@
 .abn-caps { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg); }
 
 /* ── Rahmen: Seitenleiste + Inhalt ── */
-.abn-frame { flex-direction: row; align-items: stretch; }
+.abn-frame { flex-direction: row; align-items: stretch; position: relative; }
 .abn-main { min-width: 0; }
 .abn-side { display: none; }
 @media (min-width: 768px) {
@@ -265,3 +265,17 @@
 .abn-frist { max-width: 280px; }
 
 @media print { .abn-side { display: none !important; } .abn-frame > .abn-main { max-width: none; padding: 0; } }
+
+/* Navigation ein-/ausblendbar (ab 768 px; mobil bleibt die Tab-Leiste der Shell) */
+.abn-side-toggle { display: none; }
+@media (min-width: 768px) {
+  .abn-side .abn-side-toggle { display: inline-flex; position: absolute; top: 8px; right: 8px; }
+  .abn-side-toggle {
+    align-items: center; justify-content: center; min-width: var(--abn-touch); min-height: var(--abn-touch);
+    border: 1px solid var(--abn-linie); background: var(--bg-raised, #fff); color: var(--fg); font-size: 18px; cursor: pointer;
+  }
+  .abn-side-toggle.is-offen { display: inline-flex; position: absolute; top: 8px; left: 8px; z-index: 5; }
+  .abn-side.is-aus { display: none !important; }
+  .abn-frame > .abn-side-toggle.is-offen ~ .abn-main { padding-left: 72px; }
+}
+@media print { .abn-side-toggle { display: none !important; } }

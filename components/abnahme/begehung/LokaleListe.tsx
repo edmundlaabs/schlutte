@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { alleDokumente, geraeteId, type LokalesDokument } from "@/lib/abnahme/offline/db";
-import { SYNC_EVENT, entferneLokal, gibFrei, istOnline, ladeFuerBaustelle } from "@/lib/abnahme/offline/sync";
+import { SYNC_EVENT, entferneLokal, gibFrei, istOnline, ladeFuerBaustelle, verwerfeLokal } from "@/lib/abnahme/offline/sync";
 import { speicherStatus } from "@/lib/abnahme/offline/sw-register";
 import { SyncBadge, useAutoSync } from "./SyncBadge";
 import { legeRegieLokalAn } from "@/lib/abnahme/offline/regie-neu";
@@ -93,6 +93,19 @@ export function LokaleListe() {
               </div>
               <div className="abn-dok-side">
                 <Link className="aus-btn aus-btn-primary" href={`/abnahme/begehung?id=${d.id}`}>Öffnen</Link>
+                {d.zustand === "fehler" && /gelöscht/.test(d.fehler) && (
+                  <button
+                    type="button"
+                    className="aus-btn aus-btn-secondary aus-btn-sm"
+                    onClick={async () => {
+                      if (!window.confirm("Lokale Kopie endgültig verwerfen? Nicht synchronisierte Eingaben gehen verloren.")) return;
+                      await verwerfeLokal(d.id);
+                      await lade();
+                    }}
+                  >
+                    Lokal verwerfen
+                  </button>
+                )}
                 {online && (
                   <button
                     type="button"

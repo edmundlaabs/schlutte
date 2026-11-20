@@ -2,14 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { gibGeraetFrei, legeNachtragAn, sendeAction } from "@/app/(app)/abnahme/actions";
+import { gibGeraetFrei, legeNachtragAn, loescheProtokollAction, sendeAction } from "@/app/(app)/abnahme/actions";
 
 type Mangel = { id: string; text: string; frist: string; wo: string };
 
 /** Senden/Erneut senden, offene Mängel als erledigt markieren (Nachtrag), Gerät freigeben (CEO/Admin). */
 export function DetailAktionen({
-  typ = "abnahme", id, abgeschlossen, hatPdf, kundeEmail, kopieEmail, ausgecheckt, istAdmin, offeneMaengel,
+  typ = "abnahme", id, abgeschlossen, hatPdf, kundeEmail, kopieEmail, ausgecheckt, istAdmin, offeneMaengel, nachtraege = 0,
 }: {
+  nachtraege?: number;
   typ?: "abnahme" | "regie";
   id: string;
   abgeschlossen: boolean;
@@ -40,6 +41,19 @@ export function DetailAktionen({
     start(async () => {
       const r = await legeNachtragAn(id, Array.from(gewaehlt));
       if (r.ok) router.push(`/abnahme/protokoll/${r.data.id}`);
+      else setMeldung({ ok: false, text: r.error });
+    });
+  }
+  function loeschen() {
+    const folge = nachtraege > 0 ? ` Dazu gehören ${nachtraege} Nachtrag${nachtraege === 1 ? "" : "e"}, die ebenfalls gelöscht werden.` : "";
+    const sicher = abgeschlossen
+      ? "Dieses ABGESCHLOSSENE (unterschriebene) Protokoll endgültig löschen?"
+      : "Dieses Protokoll endgültig löschen?";
+    if (!window.confirm(`${sicher}${folge}\n\nGelöscht werden Räume, Positionen, Mängel, Fotos, Unterschriften, das Original-PDF, das erzeugte PDF und das Versandprotokoll. Das lässt sich nicht rückgängig machen.`)) return;
+    setMeldung(null);
+    start(async () => {
+      const r = await loescheProtokollAction(id);
+      if (r.ok) router.push("/abnahme");
       else setMeldung({ ok: false, text: r.error });
     });
   }
@@ -97,6 +111,21 @@ export function DetailAktionen({
             <button type="button" className="aus-btn aus-btn-primary" disabled={pending || gewaehlt.size === 0} onClick={nachtrag}>
               Nachtrag anlegen ({gewaehlt.size} erledigt)
             </button>
+          </div>
+        </div>
+      )}
+
+      {typ === "abnahme" && (!abgeschlossen || istAdmin) && (
+        <div className="aus-card">
+          <h2 className="aus-h2">Protokoll löschen</h2>
+          <p className="aus-muted">
+            {abgeschlossen
+              ? "Abgeschlossene Protokolle dürfen nur CEO und Administratoren löschen."
+              : "Zum Beispiel bei einem falschen Import. Inklusive Original-PDF und aller bisher erfassten Daten."}
+            {ausgecheckt && " Das Protokoll ist auf einem Tablet ausgecheckt; dort erscheint beim nächsten Sync „gelöscht“, die lokale Kopie lässt sich dann verwerfen."}
+          </p>
+          <div className="aus-actions">
+            <button type="button" className="aus-btn aus-btn-danger" disabled={pending} onClick={loeschen}>Protokoll löschen</button>
           </div>
         </div>
       )}

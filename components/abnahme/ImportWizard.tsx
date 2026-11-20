@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { buildDocFromParsed } from "@/lib/abnahme/build";
 import { parseProfactoPdf } from "@/lib/abnahme/parser/pdf-text";
 import { setzeVorlage, suggestVorlage } from "@/lib/abnahme/vorlagen";
-import { fuegePositionHinzu } from "@/lib/abnahme/logic";
+import { fuegePositionHinzu, fuegePruefpunktHinzu } from "@/lib/abnahme/logic";
 import { ladeFuerBaustelle } from "@/lib/abnahme/offline/sync";
 import { registriereAbnahmeSw } from "@/lib/abnahme/offline/sw-register";
 import type { ParsedList } from "@/lib/abnahme/parser/types";
@@ -37,6 +37,7 @@ export function ImportWizard({
   const [offlineSpeichern, setOfflineSpeichern] = useState(true);
   const [offline, setOffline] = useState<"" | "laeuft" | "ok" | string>("");
   const [neuTitel, setNeuTitel] = useState<Record<string, string>>({});
+  const [neuPunkt, setNeuPunkt] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null);
 
   const vorlageById = useMemo(() => new Map(vorlagen.map((v) => [v.id, v])), [vorlagen]);
@@ -222,6 +223,21 @@ export function ImportWizard({
     <div className="abn-import">
       <section className="aus-card abn-drop">
         <h2 className="aus-h2">1 · PDF wählen</h2>
+        {doc && (
+          <div className="aus-actions">
+            <button
+              type="button"
+              className="aus-btn aus-btn-quiet"
+              onClick={() => {
+                if (!window.confirm("Import verwerfen? Es wurde noch nichts angelegt.")) return;
+                setDoc(null); setParsed(null); setFile(null); setTreffer(null); setGeprueft(false); setFehler("");
+                if (inputRef.current) inputRef.current.value = "";
+              }}
+            >
+              Import verwerfen
+            </button>
+          </div>
+        )}
         <input
           ref={inputRef}
           type="file"
@@ -302,6 +318,7 @@ export function ImportWizard({
           <section className="aus-card">
             <div className="aus-card-head">
               <h2 className="aus-h2">3 · Räume und Positionen</h2>
+              <Link className="aus-btn aus-btn-quiet aus-btn-sm" href="/abnahme/vorlagen" target="_blank">Prüfpunkt-Vorlagen pflegen</Link>
               <div className="aus-head-actions">
                 {ausgeblendetAnzahl > 0 && (
                   <label className="abn-inline">
@@ -379,6 +396,31 @@ export function ImportWizard({
                             <span className="aus-mono">{p.nr}</span> {p.titel}
                             {(p.menge || p.einheit) && <span className="aus-muted"> · {p.menge} {p.einheit}</span>}
                           </div>
+                          {p.relevant && (
+                            <>
+                              {p.pruefpunkte.length > 0 && <div className="aus-muted abn-leer">{p.pruefpunkte.map((k) => k.textDe).join(" · ")}</div>}
+                              <div className="abn-punkt-neu">
+                                <input
+                                  className="aus-input"
+                                  placeholder="Eigenen Prüfpunkt hinzufügen …"
+                                  value={neuPunkt[p.id] ?? ""}
+                                  onChange={(e) => setNeuPunkt({ ...neuPunkt, [p.id]: e.target.value })}
+                                />
+                                <button
+                                  type="button"
+                                  className="aus-btn aus-btn-secondary aus-btn-sm"
+                                  disabled={!(neuPunkt[p.id] ?? "").trim()}
+                                  onClick={() => {
+                                    const text = (neuPunkt[p.id] ?? "").trim();
+                                    setDoc((d) => (d ? fuegePruefpunktHinzu(d, p.id, text) : d));
+                                    setNeuPunkt({ ...neuPunkt, [p.id]: "" });
+                                  }}
+                                >
+                                  Hinzufügen
+                                </button>
+                              </div>
+                            </>
+                          )}
                           {p.langtext && (
                             <details className="abn-langtext">
                               <summary>Langtext</summary>
