@@ -22,7 +22,8 @@ export type AppKey =
   | "urlaub"
   | "projekte"
   | "pandacad"
-  | "auslagen";
+  | "auslagen"
+  | "abnahme";
 
 export type AppGroup = "werkstatt-lager" | "buero-personal" | "planung-tools";
 
@@ -34,7 +35,7 @@ export const APP_GROUPS: readonly { key: AppGroup; title: string }[] = [
 
 /** Icon-Namen der App-Kacheln und des App-Wechslers (gerendert in components/ui/AppIcon.tsx). */
 export type AppIconName =
-  | "workshop" | "staff" | "order" | "vacation" | "inventory" | "report" | "receipt" | "cad" | "project";
+  | "workshop" | "staff" | "order" | "vacation" | "inventory" | "report" | "receipt" | "cad" | "project" | "abnahme";
 
 /** Eintrag der Unternavigation (Zeile 2 der Shell, mobil Tab-Leiste unten). */
 export type AppNavItem = {
@@ -74,6 +75,18 @@ export const APPS: readonly AppDefinition[] = [
       { label: "Übersicht", href: "/werkstatt", exact: true, icon: "home" },
       { label: "Kommissionen", href: "/werkstatt/kommissionen", match: ["/werkstatt/dokument-erstellen"], icon: "list" },
       { label: "Archiv", href: "/werkstatt/archiv", icon: "archive" },
+    ],
+  },
+  {
+    key: "abnahme", title: "Abnahme", enforcement: "intern", live: true,
+    href: "/abnahme", group: "werkstatt-lager", icon: "abnahme",
+    hint: "Abnahmeprotokolle und Regieberichte: Begehung auf dem Tablet, auch ohne Internet, mit Unterschrift und PDF.",
+    nav: [
+      { label: "Ablage", href: "/abnahme", exact: true, icon: "archive", match: ["/abnahme/protokoll", "/abnahme/regie/ansicht"] },
+      { label: "Import", href: "/abnahme/import", icon: "doc-stripe" },
+      { label: "Begehung", href: "/abnahme/begehung", icon: "list" },
+      { label: "Regiebericht", href: "/abnahme/regie", icon: "receipt", match: ["/abnahme/regie"] },
+      { label: "Vorlagen", href: "/abnahme/vorlagen", finance: true, icon: "settings" },
     ],
   },
   {

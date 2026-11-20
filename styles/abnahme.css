@@ -1,0 +1,3 @@
+/* Modul Abnahme — Tokens aus tokens.css, Basis aus auslagen.css (.aus). */
+.abn { --abn-touch: 44px; }
+.abn input, .abn textarea, .abn select { font-size: 16px; }
