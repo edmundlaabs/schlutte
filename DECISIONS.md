@@ -208,3 +208,24 @@ Die Tabellen wurden verifiziert und die Data-Schicht auf das reale Schema angepa
 - **Mobil-Layout:** `styles/mobile.css` (unter 768 px) überschreibt Inline-Maße gezielt per `!important`; Hilfsklassen `m-page`, `m-hero`, `m-grid-1`, `m-krow`. Gerda-Anpassungen nur in `gerda.css` unter `.gerda-root`.
 - **Gerda-HTTP-500:** `localStorage` im `useState`-Initialisierer von `TaskBoard` lief beim Server-Rendering; jetzt erst nach dem Mount.
 
+
+
+## Modul Abnahme: Abnahmeprotokoll und Regiebericht (Version 1.1.0, 2026-11-20)
+
+- **Neue App `abnahme`** (Gruppe „Werkstatt und Lager“, Route `/abnahme`, `requireAppAccess("abnahme")`, RLS über `has_app_access('abnahme')`). Migration `20261120_abnahme.sql` wird manuell im SQL-Editor ausgeführt. Bestehende Mitarbeiter bekommen den Zugang nicht automatisch.
+- **Live-Schema statt `schema.sql`:** `commissions` hat live `commission_number`, `customer_name`, `project_name` (die Schema-Datei mit `nr`/`client` ist veraltet). Die Abnahme speichert `commission_id` (FK) plus kopiert `kommission_nr`/`kunde` ins Protokoll; Kunde bleibt editierbar (Profacto schneidet ab).
+- **Neue Libraries:** `pdfjs-dist` (einzige Möglichkeit, Text mit Position und Schrift aus dem PDF zu lesen; nur auf der Import-Seite per dynamischem Import) und `idb` (dünner IndexedDB-Wrapper). Kein Resend-SDK (ein `fetch`), kein Workbox (Service Worker ca. 100 Zeilen), keine Signatur-Library (eigenes Canvas).
+- **Offline nur für `/abnahme`:** Service Worker `public/sw-abnahme.js` mit Scope `/abnahme/`; alles andere bleibt online-only (Entscheidung „Kein Service Worker“ aus Version 0.4.0 gilt für den Rest weiter). Eine einzige Client-Seite `/abnahme/begehung` bedient Begehung **und** Regiebericht (Navigation per URL-Hash, Daten aus IndexedDB); sie enthält keine nutzerbezogenen Props, damit der Cache keine fremden Daten ausliefert.
+- **Sync statt Konfliktauflösung:** ein Dokument ist nur auf einem Gerät „ausgecheckt“ (RPC `abnahme_checkout`), Client-UUIDs, Upsert, `rev`-Prüfung. Abgeschlossene Dokumente sind per Trigger gesperrt; Änderungen nur über einen Nachtrag (neue Version, alte bleibt erhalten).
+- **PDF im Browser** (pdf-lib), damit es offline entsteht; Schlussunterschriften und Statuswechsel werden erst nach dem Hochladen von PDF und Bildern gesetzt.
+- **Mail zentral** in `lib/mail/send.ts` (Resend, Env `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_COPY_TO`); `lib/urlaub/notify.ts` kann sie wiederverwenden (noch nicht verdrahtet). Offline ausgelöster Versand wird vorgemerkt und nach dem Sync verschickt; automatischer Versand ist idempotent über einen Schlüssel je Dokumentversion.
+- **Parser-Fixture nur lokal:** Die Beispiel-PDF (Kundendaten) liegt in `lib/abnahme/parser/__fixtures__/` und steht in `.gitignore`; ohne Datei werden diese Tests übersprungen.
+- Details und Betrieb: `docs/ABNAHME.md`.
+
+## Abnahme-Redesign „Dokument“ (Version 1.1.1, 2026-11-20)
+
+- **Seitenleiste statt Tab-Zeile** nur für Apps mit `sideNav: true` in `lib/apps.ts` (bisher nur Abnahme). `SubNav` blendet dort ab 768 px die Tab-Zeile aus; mobil bleibt die Tab-Leiste unten. In `/abnahme/begehung` und unter 1100 px ist die Leiste schmal (nur Nummern).
+- **Logos:** App = g-Signet mit Kreis (`public/brand/grabner-g.svg`, aus `GD/001_Grabner Logo/cleanes logo/cleanes_g_kreis_in_black.ai`). Offizielle PDFs = Grabner-Design-Logo als Vektorpfade (`lib/abnahme/pdf/logo.ts`, Quelle `public/brand/grabner-logo.svg`), kein PNG-Rendering mehr nötig.
+- **IBM Plex Mono nicht im PDF:** Die Mono-TTFs in `public/fonts` lassen sich mit `@pdf-lib/fontkit` nicht einbetten („Trying to access beyond buffer length“, Fehler erst bei `save()`). Zahlen im PDF daher in Plex Sans; `Fonts.mono` zeigt auf Regular.
+- **PDF-Farben** aus `tokens.css` (`lib/abnahme/pdf/common.ts`): Mangel = Ochsenblut `#8C3A2E`, Akzent = Messing, Haarlinien = Sand.
+- Entwurf: Design-Canvas „Schlutte Abnahme – Redesign“ (Zeile „Final“). Backup der vorherigen Dateien: `../Backup/abnahme-redesign-2026-11-20/`.

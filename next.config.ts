@@ -5,6 +5,19 @@ import type { NextConfig } from "next";
  * Reihenfolge beachten: spezifischere Regeln vor allgemeineren.
  */
 const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      {
+        // Service Worker nur für das Modul /abnahme: Scope-Freigabe, nie aus dem HTTP-Cache.
+        source: "/sw-abnahme.js",
+        headers: [
+          { key: "Service-Worker-Allowed", value: "/abnahme/" },
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       { source: "/start", destination: "/", permanent: true },

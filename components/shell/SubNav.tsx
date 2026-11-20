@@ -21,6 +21,7 @@ export function SubNav({
   const { counts } = useShell();
   let items: readonly AppNavItem[] = [];
   let label = "Bereich";
+  let side = false;
   if (pathname.startsWith("/admin")) {
     if (isAdmin) {
       items = ADMIN_NAV;
@@ -31,12 +32,15 @@ export function SubNav({
     if (app) {
       items = app.nav;
       label = app.title;
+      side = Boolean(app.sideNav);
     }
   }
   const visible = items.filter((item) => !item.finance || finance);
   if (visible.length === 0) return null;
 
   if (variant === "top") {
+    // Apps mit eigener Seitenleiste (z. B. Abnahme) zeigen ab 768 px keine Tab-Zeile.
+    if (side) return null;
     return (
       <nav className="shell-sub" aria-label={label}>
         {visible.map((item) => {

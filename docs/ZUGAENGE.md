@@ -16,6 +16,7 @@ Stand: 17.11.2026. Die Schlutte ist die zentrale Plattform: ein Login, eine Date
   | Druckvorlagen Werkstatt, Bestellliste, Auslagen & Belege | intern | Kachel weg + Seiten serverseitig gesperrt (`requireAppAccess`) |
   | Gerda | intern + Datenbank | Modul unter `/gerda` (Layout-Guard `requireAppAccess('gerda')`), zusätzlich RLS auf den `gerda_*`-Tabellen (`public.has_app_access('gerda')`) |
   | PandaCAD | intern | Kachel weg + `/pandacad` serverseitig gesperrt; Downloads über Signed URLs, Storage-RLS mit `has_app_access('pandacad')` |
+  | Abnahme | intern + Datenbank | `/abnahme` (Layout-Guard `requireAppAccess('abnahme')`), RLS auf allen `abnahme_*`-Tabellen und Storage-Bucket `abnahme` über `has_app_access('abnahme')`; bestehende Mitarbeiter bekommen den Zugang nicht automatisch |
   | Projekte (nic) | intern, noch nicht live | Kachel erst sichtbar, wenn `live: true` in `lib/apps.ts` |
   | Warenbestand WERK 2 | nur Kachel | Kachel weg — die App selbst prüft (noch) nichts, die URL bleibt direkt erreichbar |
   | Druckvorlagen Personal, Urlaubsantrag | folgt | vorab vergebbar |
