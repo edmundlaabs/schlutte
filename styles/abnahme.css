@@ -23,3 +23,70 @@
 .abn-langtext pre { white-space: pre-wrap; font: inherit; font-size: 14px; margin: 0 0 8px; }
 .abn-leer { padding: 4px 0; }
 @media (max-width: 820px) { .abn-pos { grid-template-columns: var(--abn-touch) 1fr; } .abn-pos-side { grid-column: 2; justify-content: flex-start; } }
+
+/* ── Begehung ── */
+.abn-begehung { display: grid; gap: 16px; padding-bottom: 96px; }
+.abn-bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+.abn-bar-title { font-size: 18px; }
+.abn-sync { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.abn-badge { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border: 1px solid var(--border, #d8d2c6); font-size: 13px; }
+.abn-badge.is-local { background: #fff4d6; }
+.abn-badge.is-ok { background: #e4f1e4; }
+.abn-badge.is-error { background: #f8dcdc; }
+.abn-badge.is-offline { background: #e9e6df; }
+.abn-nav { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.abn-nav-btn { min-height: var(--abn-touch); padding: 0 16px; border: 1px solid var(--border, #d8d2c6); background: transparent; white-space: nowrap; font: inherit; cursor: pointer; }
+.abn-nav-btn.is-active { background: #1a1a17; color: #fff; border-color: #1a1a17; }
+.abn-raumliste { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.abn-raumkarte { width: 100%; min-height: 96px; text-align: left; display: grid; gap: 8px; padding: 14px; border: 1px solid var(--border, #d8d2c6); background: transparent; font: inherit; cursor: pointer; }
+.abn-raumname { font-weight: 600; font-size: 18px; }
+.abn-fort { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.abn-chip { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border: 1px solid var(--border, #d8d2c6); font-size: 13px; }
+.abn-chip.is-ok, .abn-chip.s-io { background: #e4f1e4; }
+.abn-chip.is-bad, .abn-chip.s-mangel { background: #f8dcdc; }
+.abn-chip.s-nicht_pruefbar { background: #ececec; }
+.abn-bulk { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0 16px; }
+.abn-bulk .aus-btn, .abn-pager .aus-btn, .abn-sig-zeile .aus-btn { min-height: var(--abn-touch); }
+.abn-pos-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.abn-pos-karte { border: 1px solid var(--border, #d8d2c6); padding: 12px; display: grid; gap: 8px; border-left-width: 6px; }
+.abn-pos-karte.s-io { border-left-color: #5b9a5b; }
+.abn-pos-karte.s-mangel { border-left-color: #c24141; }
+.abn-pos-karte.s-nicht_pruefbar { border-left-color: #999; }
+.abn-pos-kopf { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.abn-pos-titel { font-size: 17px; font-weight: 500; }
+.abn-pre { white-space: pre-wrap; font: inherit; font-size: 14px; margin: 4px 0 8px; }
+.abn-pruef { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.abn-pruef li { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding-top: 8px; border-top: 1px dashed var(--border, #d8d2c6); }
+.abn-pruef-text { font-size: 16px; }
+.abn-status { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.abn-st { min-height: var(--abn-touch); min-width: 76px; padding: 0 14px; border: 1px solid var(--border, #bbb5a8); background: #fff; font: inherit; font-size: 16px; cursor: pointer; }
+.abn-st.is-io.on { background: #5b9a5b; color: #fff; border-color: #5b9a5b; }
+.abn-st.is-mangel.on { background: #c24141; color: #fff; border-color: #c24141; }
+.abn-st.is-nicht.on { background: #777; color: #fff; border-color: #777; }
+.abn-st:disabled { opacity: .55; cursor: default; }
+.abn-mangel { background: #fbf0f0; padding: 8px 12px; }
+.abn-mangel p { margin: 0 0 8px; }
+.abn-fotos { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.abn-fotos figure { margin: 0; display: grid; gap: 4px; }
+.abn-foto { width: 120px; height: 120px; object-fit: cover; border: 1px solid var(--border, #d8d2c6); }
+.abn-img-ph { display: inline-block; width: 120px; height: 120px; background: #e9e6df; }
+.abn-sig-zeile { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.abn-sig-img { height: 56px; width: auto; background: #fff; border: 1px solid var(--border, #d8d2c6); }
+.abn-sig-ok { display: inline-flex; align-items: center; gap: 8px; }
+.abn-pager { position: sticky; bottom: 0; display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; background: var(--bg, #f6f2ea); border-top: 1px solid var(--border, #d8d2c6); margin-top: 16px; }
+.abn-check { display: flex; align-items: center; justify-content: center; width: var(--abn-touch); height: var(--abn-touch); }
+.abn-check input { width: 24px; height: 24px; }
+.abn-raum-seite { touch-action: pan-y; }
+.abn-readonly { min-height: var(--abn-touch); display: flex; align-items: center; }
+.abn-teilnehmer { list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 6px; }
+.abn-teilnehmer-add { display: flex; gap: 8px; flex-wrap: wrap; }
+.abn-teilnehmer-add .aus-select, .abn-teilnehmer-add .aus-input { min-height: var(--abn-touch); }
+.abn-modal { position: fixed; inset: 0; z-index: 1000; background: rgba(20,20,18,.55); display: flex; align-items: center; justify-content: center; padding: 16px; overflow-y: auto; }
+.abn-modal-card { background: var(--bg, #fbf9f4); width: min(720px, 100%); max-height: 100%; overflow-y: auto; padding: 20px; display: grid; gap: 14px; }
+.abn-sig { width: 100%; height: 260px; background: #fff; border: 1px solid #1a1a17; touch-action: none; }
+.abn-modal-actions { justify-content: flex-end; }
+.abn-dok-liste { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.abn-dok { display: flex; gap: 12px; justify-content: space-between; align-items: center; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px dashed var(--border, #d8d2c6); }
+.abn-dok-side { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.abn-dok-side .aus-btn { min-height: var(--abn-touch); display: inline-flex; align-items: center; }
+.abn-liste { display: grid; gap: 16px; }
