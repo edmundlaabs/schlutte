@@ -53,3 +53,22 @@ export async function speicherePdfLokal(doc: ProtokollDoc): Promise<void> {
 export async function holePdfBlob(docId: string): Promise<Blob | null> {
   return (await holeBlob(`pdf:${docId}`))?.blob ?? null;
 }
+
+// ── Regiebericht ──
+import type { RegieDoc } from "../types";
+import { erzeugeRegiePdf } from "./regie";
+
+export async function erzeugeRegiePdfLokal(doc: RegieDoc): Promise<Uint8Array> {
+  const bilder = new Map<string, PdfBild>();
+  for (const b of await blobsDesDokuments(doc.id)) {
+    if (b.art === "pdf") continue;
+    bilder.set(b.id, { bytes: new Uint8Array(await b.blob.arrayBuffer()), mime: b.mime });
+  }
+  return erzeugeRegiePdf(doc, { fonts: fontLoaderBrowser, bilder, logoPng: await ladeLogoPng() });
+}
+
+export async function speichereRegiePdfLokal(doc: RegieDoc): Promise<void> {
+  const bytes = await erzeugeRegiePdfLokal(doc);
+  const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
+  await speichereBlob({ id: `pdf:${doc.id}`, docId: doc.id, art: "pdf", mime: "application/pdf", blob, hochgeladen: false });
+}

@@ -6,6 +6,7 @@ import { alleDokumente, geraeteId, type LokalesDokument } from "@/lib/abnahme/of
 import { SYNC_EVENT, entferneLokal, gibFrei, istOnline, ladeFuerBaustelle } from "@/lib/abnahme/offline/sync";
 import { speicherStatus } from "@/lib/abnahme/offline/sw-register";
 import { SyncBadge, useAutoSync } from "./SyncBadge";
+import { legeRegieLokalAn } from "@/lib/abnahme/offline/regie-neu";
 
 type ServerEintrag = {
   id: string;
@@ -63,6 +64,12 @@ export function LokaleListe() {
     ...(server?.regieberichte ?? []).map((p) => ({ ...p, typ: "regie" as const })),
   ].filter((p) => !lokaleIds.has(p.id));
   const mb = (n: number) => Math.round(n / 1024 / 1024);
+  const [neu, setNeu] = useState<{ nr: string; kunde: string; sprache: "de" | "en" } | null>(null);
+  async function regieAnlegen() {
+    if (!neu || !neu.nr.trim() || !neu.kunde.trim()) return setMeldung("Kommissionsnummer und Kunde sind Pflicht.");
+    const id = await legeRegieLokalAn({ kommissionNr: neu.nr, kunde: neu.kunde, sprache: neu.sprache });
+    window.location.href = `/abnahme/begehung?id=${id}`;
+  }
 
   return (
     <div className="abn-liste">
@@ -85,7 +92,7 @@ export function LokaleListe() {
                 <SyncBadge eintrag={d} online={online} />
               </div>
               <div className="abn-dok-side">
-                <Link className="aus-btn aus-btn-primary" href={d.typ === "abnahme" ? `/abnahme/begehung?id=${d.id}` : `/abnahme/regie/bearbeiten?id=${d.id}`}>Öffnen</Link>
+                <Link className="aus-btn aus-btn-primary" href={`/abnahme/begehung?id=${d.id}`}>Öffnen</Link>
                 {online && (
                   <button
                     type="button"
@@ -110,6 +117,24 @@ export function LokaleListe() {
           <p className="aus-help">
             Speicher: {mb(speicher.belegt)} MB von {mb(speicher.quota)} MB{speicher.persistent ? " · dauerhaft" : " · nicht als dauerhaft bestätigt (Schlutte am besten auf den Home-Bildschirm legen)"}
           </p>
+        )}
+      </section>
+
+      <section className="aus-card">
+        <h2 className="aus-h2">Neuer Regiebericht</h2>
+        {!neu ? (
+          <div className="aus-actions"><button type="button" className="aus-btn aus-btn-secondary" onClick={() => setNeu({ nr: "", kunde: "", sprache: "de" })}>Regiebericht anlegen</button></div>
+        ) : (
+          <div className="aus-grid abn-kopf">
+            <label className="aus-field"><span className="aus-label">Kommission *</span>
+              <input className="aus-input" inputMode="numeric" value={neu.nr} onChange={(e) => setNeu({ ...neu, nr: e.target.value })} /></label>
+            <label className="aus-field"><span className="aus-label">Kunde *</span>
+              <input className="aus-input" value={neu.kunde} onChange={(e) => setNeu({ ...neu, kunde: e.target.value })} /></label>
+            <label className="aus-field"><span className="aus-label">Sprache</span>
+              <select className="aus-select" value={neu.sprache} onChange={(e) => setNeu({ ...neu, sprache: e.target.value === "en" ? "en" : "de" })}><option value="de">Deutsch</option><option value="en">English</option></select></label>
+            <div className="aus-actions"><button type="button" className="aus-btn aus-btn-primary" onClick={regieAnlegen}>Anlegen</button>
+              <button type="button" className="aus-btn aus-btn-quiet" onClick={() => setNeu(null)}>Abbrechen</button></div>
+          </div>
         )}
       </section>
 

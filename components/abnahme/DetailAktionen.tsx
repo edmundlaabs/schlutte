@@ -8,8 +8,9 @@ type Mangel = { id: string; text: string; frist: string; wo: string };
 
 /** Senden/Erneut senden, offene Mängel als erledigt markieren (Nachtrag), Gerät freigeben (CEO/Admin). */
 export function DetailAktionen({
-  id, abgeschlossen, hatPdf, kundeEmail, kopieEmail, ausgecheckt, istAdmin, offeneMaengel,
+  typ = "abnahme", id, abgeschlossen, hatPdf, kundeEmail, kopieEmail, ausgecheckt, istAdmin, offeneMaengel,
 }: {
+  typ?: "abnahme" | "regie";
   id: string;
   abgeschlossen: boolean;
   hatPdf: boolean;
@@ -29,7 +30,7 @@ export function DetailAktionen({
   function senden() {
     setMeldung(null);
     start(async () => {
-      const r = await sendeAction("abnahme", id, an, kopie);
+      const r = await sendeAction(typ, id, an, kopie);
       setMeldung(r.ok ? { ok: true, text: "Gesendet." } : { ok: false, text: r.error });
       router.refresh();
     });
@@ -45,7 +46,7 @@ export function DetailAktionen({
   function freigeben() {
     if (!window.confirm("Gerät freigeben? Nicht synchronisierte Eingaben auf dem Tablet gehen dann nicht verloren, lassen sich aber erst nach erneutem Laden zusammenführen.")) return;
     start(async () => {
-      const r = await gibGeraetFrei("abnahme", id);
+      const r = await gibGeraetFrei(typ, id);
       setMeldung(r.ok ? { ok: true, text: "Gerät freigegeben." } : { ok: false, text: r.error });
       router.refresh();
     });

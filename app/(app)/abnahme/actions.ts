@@ -82,7 +82,7 @@ export async function sendeAction(typ: "abnahme" | "regie", id: string, an: stri
   try {
     const ctx = await requireAppAccess("abnahme");
     const r = await versendeDokument({ typ, id, an, kopie, ausgeloestVon: ctx.employee?.id ?? null });
-    revalidatePath(`/abnahme/protokoll/${id}`);
+    revalidatePath(typ === "abnahme" ? `/abnahme/protokoll/${id}` : `/abnahme/regie/ansicht/${id}`);
     return r.ok ? { ok: true, data: undefined } : { ok: false, error: r.error };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Versand fehlgeschlagen." };
@@ -119,7 +119,7 @@ export async function gibGeraetFrei(typ: "abnahme" | "regie", id: string): Promi
     const supabase = await createClient();
     const r = await supabase.rpc("abnahme_release", { p_typ: typ, p_id: id, p_device: "", p_force: true });
     if (r.error) return { ok: false, error: r.error.message };
-    revalidatePath(`/abnahme/protokoll/${id}`);
+    revalidatePath(typ === "abnahme" ? `/abnahme/protokoll/${id}` : `/abnahme/regie/ansicht/${id}`);
     return { ok: true, data: undefined };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Nicht möglich." };

@@ -94,3 +94,11 @@
 .abn-filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
 .abn-filter .aus-input, .abn-filter .aus-select { min-height: var(--abn-touch); }
 .abn-ablage .aus-item-side { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.abn-maße { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+.abn-rollen { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-top: 8px; }
+.abn-stepper { display: flex; align-items: center; gap: 8px; }
+.abn-stepper-label { min-width: 70px; }
+.abn-stepper .abn-st { min-width: var(--abn-touch); padding: 0; font-size: 22px; }
+.abn-stepper-wert { min-width: 44px; text-align: center; font-size: 18px; }
+.abn-summen { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }

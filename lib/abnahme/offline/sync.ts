@@ -71,7 +71,7 @@ export async function ladeFuerBaustelle(typ: "abnahme" | "regie", id: string, fo
 function pfadFuer(docId: string, art: "foto" | "unterschrift" | "pdf", id: string, typ: "abnahme" | "regie"): string {
   const basis = typ === "abnahme" ? `protokoll/${docId}` : `regie/${docId}`;
   if (art === "foto") return `${basis}/fotos/${id}.jpg`;
-  if (art === "unterschrift") return `${basis}/unterschriften/${id}.png`;
+  if (art === "unterschrift") return typ === "regie" ? `${basis}/unterschrift.png` : `${basis}/unterschriften/${id}.png`;
   return typ === "abnahme" ? `${basis}/abnahme.pdf` : `${basis}/regiebericht.pdf`;
 }
 
@@ -137,6 +137,10 @@ export async function syncDokument(id: string): Promise<{ ok: boolean; error?: s
       unterschriften: merged.doc.unterschriften.map((u) => (gesetzt.has(u.id) ? { ...u, bildPath: gesetzt.get(u.id)! } : u)),
       pdfPath: gesetzt.get(`pdf:${id}`) ?? merged.doc.pdfPath,
     };
+  }
+  if (neu.typ === "regie" && merged.typ === "regie") {
+    const { regiePfadeSetzen } = await import("./regie-laden");
+    merged.doc = regiePfadeSetzen(merged.doc, gesetzt);
   }
   await speichereDokument({
     ...merged,

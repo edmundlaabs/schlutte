@@ -1,11 +1,26 @@
+import { rowsToRegie } from "../regie-logic";
 import type { RegieDoc } from "../types";
+import { holeDokument, speichereDokument } from "./db";
 
-/** Platzhalter bis Schritt 7 (Regiebericht). */
-export async function speichereRegieAusServer(_res: unknown): Promise<void> {
-  void _res;
-  throw new Error("Regiebericht folgt.");
+/** Antwort von /api/abnahme/laden (typ regie) lokal ablegen. */
+export async function speichereRegieAusServer(res: unknown): Promise<void> {
+  const r = res as { row: Record<string, unknown>; zeilen: Record<string, unknown>[] };
+  const doc = rowsToRegie(r.row, r.zeilen);
+  const vorhanden = await holeDokument(doc.id);
+  await speichereDokument({
+    id: doc.id, typ: "regie", doc, dirty: false, zustand: "synchronisiert", fehler: "",
+    geladenAt: new Date().toISOString(), syncedAt: new Date().toISOString(), versand: vorhanden?.versand ?? [],
+    editSeq: (vorhanden?.editSeq ?? 0) + 1,
+  });
 }
-export function regiePfadeSetzen(doc: RegieDoc, _gesetzt: Map<string, string>): RegieDoc {
-  void _gesetzt;
-  return doc;
+
+/** Blob-ID der Kundenunterschrift eines Regieberichts. */
+export const regieSignaturBlobId = (docId: string) => `${docId}-sig`;
+
+export function regiePfadeSetzen(doc: RegieDoc, gesetzt: Map<string, string>): RegieDoc {
+  return {
+    ...doc,
+    unterschriftPath: gesetzt.get(regieSignaturBlobId(doc.id)) ?? doc.unterschriftPath,
+    pdfPath: gesetzt.get(`pdf:${doc.id}`) ?? doc.pdfPath,
+  };
 }
