@@ -19,6 +19,13 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.6.1",
+    date: "26.11.2026",
+    changes: [
+      "Behoben: „Öffnen“ in der Begehungs-Liste (und „Zur Liste“ im Protokoll) reagierte nicht, weil die Seite die Adresse nur beim Zurück-Knopf neu las",
+    ],
+  },
+  {
     version: "1.6.0",
     date: "26.11.2026",
     changes: [
