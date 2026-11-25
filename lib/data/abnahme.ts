@@ -29,6 +29,29 @@ export async function findKommission(nr: string): Promise<KommissionTreffer | nu
   };
 }
 
+/**
+ * Typeahead für die Kommissionsauswahl: Treffer nach Kommissionsnummer, Kundenname und Projekt (nur echte Zeilen,
+ * keine Demo-Daten wie in lib/data/commissions.ts). Neueste Nummern zuerst, höchstens 10.
+ */
+export async function searchKommissionen(q: string): Promise<KommissionTreffer[]> {
+  const clean = q.trim().replace(/[%,()*\\]/g, " ").trim();
+  if (clean.length < 2) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("commissions")
+    .select("id,commission_number,customer_name,project_name")
+    .or(`commission_number.ilike.%${clean}%,customer_name.ilike.%${clean}%,project_name.ilike.%${clean}%`)
+    .order("commission_number", { ascending: false })
+    .limit(10);
+  if (error) throw new Error(`Kommissionen konnten nicht gesucht werden: ${error.message}`);
+  return (data ?? []).map((d) => ({
+    id: d.id,
+    nr: String(d.commission_number).trim(),
+    kunde: d.customer_name ?? "",
+    projekt: d.project_name ?? "",
+  }));
+}
+
 /** Legt Protokoll mit Räumen, Positionen und Prüfpunkten an. Bei Fehler wird das Protokoll wieder entfernt. */
 export async function insertProtokoll(doc: ProtokollDoc): Promise<void> {
   const supabase = await createClient();
