@@ -85,7 +85,7 @@ export const APPS: readonly AppDefinition[] = [
     hint: "Abnahmeprotokolle und Regieberichte: Begehung auf dem Tablet, auch ohne Internet, mit Unterschrift und PDF.",
     nav: [
       { label: "Ablage", href: "/abnahme", exact: true, icon: "archive", match: ["/abnahme/protokoll", "/abnahme/regie/ansicht"] },
-      { label: "Import", href: "/abnahme/import", icon: "doc-stripe" },
+      { label: "Neues Protokoll", href: "/abnahme/neu", icon: "doc-stripe", match: ["/abnahme/import"] },
       { label: "Begehung", href: "/abnahme/begehung", icon: "list" },
       { label: "Regiebericht", href: "/abnahme/regie", icon: "receipt", match: ["/abnahme/regie"] },
       { label: "Vorlagen", href: "/abnahme/vorlagen", finance: true, icon: "settings" },

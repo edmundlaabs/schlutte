@@ -43,7 +43,7 @@ export default async function AblagePage({ searchParams }: { searchParams: Promi
       </header>
 
       <div className="abn-aktionen">
-        <Link className="aus-btn aus-btn-primary" href="/abnahme/import">PDF importieren</Link>
+        <Link className="aus-btn aus-btn-primary" href="/abnahme/neu">Neues Protokoll</Link>
         <Link className="aus-btn aus-btn-secondary" href="/abnahme/begehung">Begehung</Link>
         <Link className="aus-btn aus-btn-secondary" href="/abnahme/regie">Regiebericht</Link>
       </div>
