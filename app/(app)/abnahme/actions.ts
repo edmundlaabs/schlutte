@@ -6,7 +6,7 @@ import { createCommission } from "@/lib/data/commissions";
 import { findKommission, insertProtokoll, ladeProtokollDoc, searchKommissionen, type KommissionTreffer } from "@/lib/data/abnahme";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveEmployees } from "@/lib/data/employees";
-import { ermittleKette, loescheKette } from "@/lib/data/abnahme-loeschen";
+import { ermittleKette, loescheKette, loescheRegiebericht } from "@/lib/data/abnahme-loeschen";
 import { versendeDokument } from "@/lib/abnahme/versand-server";
 import { erzeugeNachtrag } from "@/lib/abnahme/nachtrag";
 import type { ProtokollDoc, Quelle } from "@/lib/abnahme/types";
@@ -211,20 +211,6 @@ export async function legeNachtragAn(id: string, erledigteMangelIds: string[]): 
   }
 }
 
-/** CEO/Admin: Checkout eines Geräts aufheben (z. B. Tablet verloren). */
-export async function gibGeraetFrei(typ: "abnahme" | "regie", id: string): Promise<AbnahmeResult> {
-  try {
-    await requireAppAccess("abnahme");
-    const supabase = await createClient();
-    const r = await supabase.rpc("abnahme_release", { p_typ: typ, p_id: id, p_device: "", p_force: true });
-    if (r.error) return { ok: false, error: r.error.message };
-    revalidatePath(typ === "abnahme" ? `/abnahme/protokoll/${id}` : `/abnahme/regie/ansicht/${id}`);
-    return { ok: true, data: undefined };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Nicht möglich." };
-  }
-}
-
 /**
  * Abnahmeprotokoll löschen (inkl. Nachträge, Original-PDF, Fotos, Unterschriften, PDF, Versandprotokoll).
  * Nicht abgeschlossene Protokolle (z. B. falscher Import) darf jeder mit Zugang löschen,
@@ -247,6 +233,29 @@ export async function loescheProtokollAction(id: string): Promise<AbnahmeResult<
     return { ok: true, data: { geloescht: r.geloescht } };
   } catch (e) {
     console.error("Abnahme löschen:", e);
+    return { ok: false, error: e instanceof Error ? e.message : "Löschen fehlgeschlagen." };
+  }
+}
+
+/**
+ * Regiebericht löschen (inkl. Zeilen, Unterschrift, PDF, Versandprotokoll, archivierte Stände).
+ * Nicht abgeschlossene Berichte darf jeder mit Zugang löschen, abgeschlossene nur CEO und Admin.
+ */
+export async function loescheRegieAction(id: string): Promise<AbnahmeResult> {
+  try {
+    const ctx = await requireAppAccess("abnahme");
+    const supabase = await createClient();
+    const r = await supabase.from("abnahme_regieberichte").select("id,status").eq("id", id).maybeSingle();
+    if (!r.data) return { ok: false, error: "Regiebericht nicht gefunden." };
+    if (r.data.status === "abgeschlossen" && !ctx.isFinance) {
+      return { ok: false, error: "Abgeschlossene Regieberichte dürfen nur CEO und Administratoren löschen." };
+    }
+    await loescheRegiebericht(id);
+    console.info(`Abnahme: Regiebericht ${id} gelöscht von ${ctx.employee?.id ?? ctx.userId}`);
+    revalidatePath("/abnahme");
+    return { ok: true, data: undefined };
+  } catch (e) {
+    console.error("Regiebericht löschen:", e);
     return { ok: false, error: e instanceof Error ? e.message : "Löschen fehlgeschlagen." };
   }
 }

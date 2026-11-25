@@ -253,3 +253,9 @@ Die Tabellen wurden verifiziert und die Data-Schicht auf das reale Schema angepa
 - **Bereits abgeschlossene Tablet-Stände** (PDF schon erzeugt) werden nur als Ganzes übernommen.
 - **Restrisiko:** Zwischen Versionsprüfung und Schreiben im Sync-Endpunkt liegt kein atomarer Schritt; bei exakt gleichzeitigem Sync zweier Geräte gewinnt das spätere (der frühere Stand liegt dann nur im Archiv, wenn vorher abgeglichen wurde).
 
+## Abnahme: überall kein Checkout, Regiebericht löschen (Version 1.4.0, 2026-11-26)
+
+- **Auch der Regiebericht ohne Checkout**, mit demselben Abgleich (`lib/abnahme/regie-abgleich.ts`: Kopffelder, Arbeitszeilen je ID, Kundenunterschrift) und eigenem Archiv `abnahme_regie_staende` (Migration `20261127_abnahme_regie_abgleich.sql`). Der Dialog ist für beide Dokumenttypen derselbe.
+- **Checkout-Reste entfernt:** Route `/api/abnahme/freigeben`, Aktion „Gerät freigeben“ und die Schreibzugriffe auf `checkout_*` im Sync. Die SQL-Funktionen `abnahme_checkout`/`abnahme_release` und die Spalten bleiben (additiv, keine Datenänderung), sind aber ungenutzt.
+- **Regiebericht löschen** über Server Action mit Service-Role-Client (der Trigger sperrt das Löschen abgeschlossener Berichte für normale Nutzer); Berechtigung wie beim Protokoll: nicht abgeschlossen = jeder mit Zugang, abgeschlossen = nur CEO/Admin. Sync legt einen serverseitig gelöschten Bericht nicht neu an (HTTP 410, bestand schon).
+

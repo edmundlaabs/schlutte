@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAppAccess } from "@/lib/auth/app-access";
 import { createClient } from "@/lib/supabase/server";
-import { listVersand } from "@/lib/data/abnahme";
+import { listStaende, listVersand } from "@/lib/data/abnahme";
 import { formatDatum, formatDatumZeit } from "@/lib/abnahme/i18n";
 import { rowsToRegie, summen } from "@/lib/abnahme/regie-logic";
 import { DetailAktionen } from "@/components/abnahme/DetailAktionen";
@@ -18,7 +18,7 @@ export default async function RegieAnsicht({ params }: { params: Promise<{ id: s
   const z = await supabase.from("abnahme_regie_zeilen").select("*").eq("regiebericht_id", id).order("pos");
   const doc = rowsToRegie(r.data, z.data ?? []);
   const sum = summen(doc.zeilen);
-  const versand = await listVersand("regie", id);
+  const [versand, staende] = await Promise.all([listVersand("regie", id), listStaende(id, "regie")]);
 
   return (
     <>
@@ -46,7 +46,24 @@ export default async function RegieAnsicht({ params }: { params: Promise<{ id: s
         )}
         {doc.status !== "abgeschlossen" && <Link className="aus-btn aus-btn-secondary" href={`/abnahme/begehung?id=${id}`}>Auf dem Tablet bearbeiten</Link>}
       </div>
-      <DetailAktionen typ="regie" id={id} abgeschlossen={doc.status === "abgeschlossen"} hatPdf={Boolean(doc.pdfPath)} kundeEmail={doc.kundeEmail} kopieEmail={doc.kopieEmail} ausgecheckt={false} istAdmin={ctx.isFinance} offeneMaengel={[]} />
+      {staende.length > 0 && (
+        <section className="aus-card">
+          <h2 className="aus-h2">Frühere Stände (Abgleich)</h2>
+          <p className="aus-muted">Vor jedem Abgleich zweier Stände werden beide archiviert. Zum Nachsehen als JSON herunterladbar.</p>
+          <ul className="aus-list">
+            {staende.map((s) => (
+              <li key={s.id} className="aus-item">
+                <div className="aus-item-main">
+                  <strong>{s.art === "tablet" ? "Stand des Tablets" : "Stand des Servers"}</strong> · Version {s.rev}
+                  <div className="aus-item-meta">{formatDatumZeit(s.created_at, "de")}{s.von ? ` · ${s.von}` : ""}</div>
+                </div>
+                <div className="aus-item-side"><a href={`/api/abnahme/stand?typ=regie&id=${s.id}`}>JSON</a></div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <DetailAktionen typ="regie" id={id} abgeschlossen={doc.status === "abgeschlossen"} hatPdf={Boolean(doc.pdfPath)} kundeEmail={doc.kundeEmail} kopieEmail={doc.kopieEmail} istAdmin={ctx.isFinance} offeneMaengel={[]} />
       <div className="aus-card">
         <h2 className="aus-h2">Versandprotokoll</h2>
         {versand.length === 0 ? <p className="aus-muted">Noch nicht versendet.</p> : (

@@ -2,13 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { gibGeraetFrei, legeNachtragAn, loescheProtokollAction, sendeAction } from "@/app/(app)/abnahme/actions";
+import { legeNachtragAn, loescheProtokollAction, loescheRegieAction, sendeAction } from "@/app/(app)/abnahme/actions";
 
 type Mangel = { id: string; text: string; frist: string; wo: string };
 
-/** Senden/Erneut senden, offene Mängel als erledigt markieren (Nachtrag), Gerät freigeben (CEO/Admin). */
+/** Senden/Erneut senden, offene Mängel als erledigt markieren (Nachtrag), Protokoll bzw. Regiebericht löschen. */
 export function DetailAktionen({
-  typ = "abnahme", id, abgeschlossen, hatPdf, kundeEmail, kopieEmail, ausgecheckt, istAdmin, offeneMaengel, nachtraege = 0,
+  typ = "abnahme", id, abgeschlossen, hatPdf, kundeEmail, kopieEmail, istAdmin, offeneMaengel, nachtraege = 0,
 }: {
   nachtraege?: number;
   typ?: "abnahme" | "regie";
@@ -17,7 +17,6 @@ export function DetailAktionen({
   hatPdf: boolean;
   kundeEmail: string;
   kopieEmail: string;
-  ausgecheckt: boolean;
   istAdmin: boolean;
   offeneMaengel: Mangel[];
 }) {
@@ -45,24 +44,20 @@ export function DetailAktionen({
     });
   }
   function loeschen() {
+    const regie = typ === "regie";
     const folge = nachtraege > 0 ? ` Dazu gehören ${nachtraege} Nachtrag${nachtraege === 1 ? "" : "e"}, die ebenfalls gelöscht werden.` : "";
     const sicher = abgeschlossen
-      ? "Dieses ABGESCHLOSSENE (unterschriebene) Protokoll endgültig löschen?"
-      : "Dieses Protokoll endgültig löschen?";
-    if (!window.confirm(`${sicher}${folge}\n\nGelöscht werden Räume, Positionen, Mängel, Fotos, Unterschriften, das Original-PDF, das erzeugte PDF und das Versandprotokoll. Das lässt sich nicht rückgängig machen.`)) return;
+      ? `Diesen ABGESCHLOSSENEN (unterschriebenen) ${regie ? "Regiebericht" : "Protokoll"} endgültig löschen?`
+      : `Diesen ${regie ? "Regiebericht" : "Protokoll"} endgültig löschen?`;
+    const inhalt = regie
+      ? "Gelöscht werden die Arbeitszeilen, die Kundenunterschrift, das erzeugte PDF, das Versandprotokoll und archivierte Stände."
+      : "Gelöscht werden Räume, Positionen, Mängel, Fotos, Unterschriften, das Original-PDF, das erzeugte PDF und das Versandprotokoll.";
+    if (!window.confirm(`${sicher}${folge}\n\n${inhalt} Das lässt sich nicht rückgängig machen.`)) return;
     setMeldung(null);
     start(async () => {
-      const r = await loescheProtokollAction(id);
+      const r = regie ? await loescheRegieAction(id) : await loescheProtokollAction(id);
       if (r.ok) router.push("/abnahme");
       else setMeldung({ ok: false, text: r.error });
-    });
-  }
-  function freigeben() {
-    if (!window.confirm("Gerät freigeben? Nicht synchronisierte Eingaben auf dem Tablet gehen dann nicht verloren, lassen sich aber erst nach erneutem Laden zusammenführen.")) return;
-    start(async () => {
-      const r = await gibGeraetFrei(typ, id);
-      setMeldung(r.ok ? { ok: true, text: "Gerät freigegeben." } : { ok: false, text: r.error });
-      router.refresh();
     });
   }
 
@@ -115,27 +110,17 @@ export function DetailAktionen({
         </div>
       )}
 
-      {typ === "abnahme" && (!abgeschlossen || istAdmin) && (
+      {(!abgeschlossen || istAdmin) && (
         <div className="aus-card">
-          <h2 className="aus-h2">Protokoll löschen</h2>
+          <h2 className="aus-h2">{typ === "regie" ? "Regiebericht löschen" : "Protokoll löschen"}</h2>
           <p className="aus-muted">
             {abgeschlossen
-              ? "Abgeschlossene Protokolle dürfen nur CEO und Administratoren löschen."
-              : "Zum Beispiel bei einem falschen Import. Inklusive Original-PDF und aller bisher erfassten Daten."}
-            {ausgecheckt && " Das Protokoll ist auf einem Tablet ausgecheckt; dort erscheint beim nächsten Sync „gelöscht“, die lokale Kopie lässt sich dann verwerfen."}
+              ? `Abgeschlossene ${typ === "regie" ? "Regieberichte" : "Protokolle"} dürfen nur CEO und Administratoren löschen.`
+              : typ === "regie" ? "Zum Beispiel bei einem falsch angelegten Bericht, inklusive aller bisher erfassten Daten." : "Zum Beispiel bei einem falschen Import. Inklusive Original-PDF und aller bisher erfassten Daten."}
+            {" Auf Tablets erscheint beim nächsten Sync „gelöscht“, die lokale Kopie lässt sich dann verwerfen."}
           </p>
           <div className="aus-actions">
-            <button type="button" className="aus-btn aus-btn-danger" disabled={pending} onClick={loeschen}>Protokoll löschen</button>
-          </div>
-        </div>
-      )}
-
-      {ausgecheckt && istAdmin && (
-        <div className="aus-card">
-          <h2 className="aus-h2">Gerät</h2>
-          <p className="aus-muted">Das Protokoll ist auf einem Tablet ausgecheckt. Nur wenn das Gerät nicht mehr verfügbar ist, freigeben.</p>
-          <div className="aus-actions">
-            <button type="button" className="aus-btn aus-btn-secondary" disabled={pending} onClick={freigeben}>Gerät freigeben</button>
+            <button type="button" className="aus-btn aus-btn-danger" disabled={pending} onClick={loeschen}>{typ === "regie" ? "Regiebericht löschen" : "Protokoll löschen"}</button>
           </div>
         </div>
       )}

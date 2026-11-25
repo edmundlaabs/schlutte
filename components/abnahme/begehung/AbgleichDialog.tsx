@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react";
 import { aktion, berechneAenderungen, standardWahl, type Aenderung, type Seite, type Wahlen } from "@/lib/abnahme/abgleich";
 import type { LokalesDokument } from "@/lib/abnahme/offline/db";
+import { berechneRegieAenderungen } from "@/lib/abnahme/regie-abgleich";
+import type { ProtokollDoc, RegieDoc } from "@/lib/abnahme/types";
 import { wendeAbgleichAn } from "@/lib/abnahme/offline/sync";
 
-type Abnahme = Extract<LokalesDokument, { typ: "abnahme" }>;
 
 const AKTION_TEXT = { hinzufuegen: "wird hinzugefügt", ersetzen: "wird ersetzt", loeschen: "wird gelöscht" } as const;
 const VON_TEXT = { lokal: "nur auf diesem Gerät geändert", server: "nur auf dem Server geändert", beide: "auf beiden Seiten geändert (Konflikt)" } as const;
@@ -15,12 +16,17 @@ const VON_TEXT = { lokal: "nur auf diesem Gerät geändert", server: "nur auf de
  * hat parallel geändert). Alle Unterschiede sind aufgelistet; je Eintrag wählt der Nutzer den Stand dieses Geräts oder
  * den Server-Stand – daraus wird zusammengefügt, ersetzt oder gelöscht. Beide Stände werden danach archiviert.
  */
-export function AbgleichDialog({ eintrag, onClose }: { eintrag: Abnahme; onClose: () => void }) {
+export function AbgleichDialog({ eintrag, onClose }: { eintrag: LokalesDokument; onClose: () => void }) {
   const konflikt = eintrag.konflikt;
   const abgeschlossen = eintrag.doc.status === "abgeschlossen";
   const liste = useMemo<Aenderung[]>(
-    () => (konflikt ? berechneAenderungen(eintrag.basis, eintrag.doc, konflikt.server) : []),
-    [eintrag.basis, eintrag.doc, konflikt]
+    () => {
+      if (!konflikt) return [];
+      return eintrag.typ === "abnahme"
+        ? berechneAenderungen(eintrag.basis, eintrag.doc, konflikt.server as ProtokollDoc)
+        : berechneRegieAenderungen(eintrag.basis, eintrag.doc, konflikt.server as RegieDoc);
+    },
+    [eintrag, konflikt]
   );
   const [wahlen, setWahlen] = useState<Wahlen>(() => Object.fromEntries(liste.map((a) => [a.key, standardWahl(a)])));
   const [busy, setBusy] = useState(false);
@@ -50,7 +56,7 @@ export function AbgleichDialog({ eintrag, onClose }: { eintrag: Abnahme; onClose
       <div className="abn-modal-card abn-abgleich">
         <h2 className="aus-h2">Abgleich: zwei verschiedene Stände</h2>
         <p className="aus-muted">
-          Dieses Protokoll wurde seit dem letzten Abgleich auch an anderer Stelle geändert. Wähle je Eintrag, welcher Stand gilt.
+          {eintrag.typ === "abnahme" ? "Dieses Protokoll" : "Dieser Regiebericht"} wurde seit dem letzten Abgleich auch an anderer Stelle geändert. Wähle je Eintrag, welcher Stand gilt.
           Beide Stände werden danach im Protokoll archiviert, nichts geht verloren.
         </p>
         {liste.length === 0 ? (
@@ -103,7 +109,7 @@ export function AbgleichDialog({ eintrag, onClose }: { eintrag: Abnahme; onClose
         )}
         {abgeschlossen && (
           <p className="aus-field-error">
-            Dieses Protokoll ist hier bereits abgeschlossen und das PDF erzeugt. Es kann nur als Ganzes übernommen werden; der Server-Stand
+            {eintrag.typ === "abnahme" ? "Dieses Protokoll" : "Dieser Regiebericht"} ist hier bereits abgeschlossen und das PDF erzeugt. Es kann nur als Ganzes übernommen werden; der Server-Stand
             bleibt archiviert.
           </p>
         )}

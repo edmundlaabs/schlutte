@@ -84,7 +84,6 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
         hatPdf={Boolean(doc.pdfPath)}
         kundeEmail={doc.kundeEmail}
         kopieEmail={doc.kopieEmail}
-        ausgecheckt={false}
         istAdmin={istAdmin}
         nachtraege={versionen.filter((v) => v.version > doc.version).length}
         offeneMaengel={offene.map((m) => {

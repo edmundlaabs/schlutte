@@ -72,3 +72,24 @@ export async function loescheKette(kette: KettenEintrag[]): Promise<{ geloescht:
   }
   return { geloescht: ids.length, dateien };
 }
+
+/**
+ * Löscht einen Regiebericht samt Zeilen (Cascade), Versandprotokoll, archivierten Ständen (Cascade) und Dateien
+ * (Kundenunterschrift, PDF). Service-Role-Client wegen der Sperre abgeschlossener Berichte für normale Nutzer;
+ * die Berechtigung prüft die aufrufende Server Action.
+ */
+export async function loescheRegiebericht(id: string): Promise<{ dateien: number }> {
+  const admin = createAdminClient();
+  const r = await admin.from("abnahme_regieberichte").select("id,unterschrift_path,pdf_path").eq("id", id).maybeSingle();
+  if (!r.data) throw new Error("Regiebericht nicht gefunden.");
+  const pfade = [r.data.unterschrift_path, r.data.pdf_path].filter((x): x is string => Boolean(x));
+  await admin.from("abnahme_versand").delete().eq("dokument_typ", "regie").eq("dokument_id", id);
+  const d = await admin.from("abnahme_regieberichte").delete().eq("id", id);
+  if (d.error) throw new Error(`Regiebericht konnte nicht gelöscht werden: ${d.error.message}`);
+  let dateien = 0;
+  if (pfade.length) {
+    const rm = await admin.storage.from("abnahme").remove(pfade);
+    if (!rm.error) dateien = pfade.length;
+  }
+  return { dateien };
+}

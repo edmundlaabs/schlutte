@@ -12,7 +12,7 @@ import type { Foto, Mangel, Position, ProtokollDoc, PruefStatus, Pruefpunkt, Rau
  */
 
 export type Seite = "lokal" | "server";
-export type Gruppe = "Kopf" | "Raum" | "Position" | "Prüfpunkt" | "Mangel" | "Foto" | "Unterschrift";
+export type Gruppe = "Kopf" | "Raum" | "Position" | "Prüfpunkt" | "Mangel" | "Foto" | "Unterschrift" | "Arbeitszeile";
 
 export type Aenderung = {
   /** Stabiler Schlüssel (z. B. „pos:<id>“, „kopf:ort“). */
@@ -161,7 +161,7 @@ export function berechneAenderungen(basis: ProtokollDoc | null | undefined, loka
     const ref = l ?? s!;
     out.push({ key, gruppe: ref.gruppe, titel: ref.titel, von, lokal: l ? l.anzeige : null, server: s ? s.anzeige : null });
   }
-  const reihenfolge: Record<Gruppe, number> = { Kopf: 0, Raum: 1, Position: 2, "Prüfpunkt": 3, Mangel: 4, Foto: 5, Unterschrift: 6 };
+  const reihenfolge: Record<Gruppe, number> = { Kopf: 0, Raum: 1, Position: 2, "Prüfpunkt": 3, Mangel: 4, Foto: 5, Unterschrift: 6, Arbeitszeile: 7 };
   return out.sort((a, b) => reihenfolge[a.gruppe] - reihenfolge[b.gruppe]);
 }
 

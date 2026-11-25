@@ -4,11 +4,11 @@ import { docToRows } from "@/lib/abnahme/mapping";
 import type { ProtokollDoc } from "@/lib/abnahme/types";
 import { syncRegie } from "@/lib/abnahme/regie-sync";
 import { ladeProtokollDoc } from "@/lib/data/abnahme";
-import type { StandArchiv } from "@/lib/abnahme/staende";
+import type { RegieStandArchiv, StandArchiv } from "@/lib/abnahme/staende";
 
 export const dynamic = "force-dynamic";
 
-type Body = { typ?: string; deviceId?: string; baseRev?: number; doc?: ProtokollDoc; regie?: unknown; archiv?: StandArchiv };
+type Body = { typ?: string; deviceId?: string; baseRev?: number; doc?: ProtokollDoc; regie?: unknown; archiv?: StandArchiv | RegieStandArchiv };
 
 /**
  * Sync eines Dokuments vom Tablet. Reihenfolge: Protokollzeile (nie direkt „abgeschlossen“) →

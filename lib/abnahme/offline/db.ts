@@ -1,6 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { ProtokollDoc, RegieDoc } from "../types.ts";
-import type { StandArchiv } from "../staende.ts";
+import type { RegieStandArchiv, StandArchiv } from "../staende.ts";
 
 /**
  * Lokaler Speicher der Begehung (IndexedDB). Jede Eingabe wird sofort geschrieben.
@@ -45,6 +45,9 @@ export type LokalesDokument =
       versand: VersandVormerkung[];
       /** Zähler jeder lokalen Änderung (erkennt Änderungen während eines laufenden Syncs). */
       editSeq: number;
+      basis?: RegieDoc | null;
+      konflikt?: { server: RegieDoc; signed: Record<string, string>; erkanntAt: string } | null;
+      archiv?: RegieStandArchiv | null;
     };
 
 export type LokalerBlob = { id: string; docId: string; art: "foto" | "unterschrift" | "pdf"; mime: string; blob: Blob; hochgeladen: boolean };
