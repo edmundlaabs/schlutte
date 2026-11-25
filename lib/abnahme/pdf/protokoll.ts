@@ -1,5 +1,6 @@
 import { PDFDocument, type PDFFont, type PDFImage, type PDFPage, type RGB } from "pdf-lib";
 import { formatDatum, formatDatumZeit, t } from "../i18n.ts";
+import { hatKommission, kommissionAnzeige } from "../kommission.ts";
 import { fortschritt, findeUnterschrift, maengelPositionen, positionStatus, relevantePositionen } from "../logic.ts";
 import type { Mangel, Position, ProtokollDoc, PruefStatus, Raum, Unterschrift } from "../types.ts";
 import { A4, bettePng, betteJpg, brass, green, ink, kuerzen, ladeFonts, line, muted, red, Seiten, umbrechen, white, type FontLoader, type Fonts } from "./common.ts";
@@ -30,9 +31,12 @@ const statusFarbe = (s: PruefStatus): RGB => (s === "io" ? ink : s === "mangel" 
 
 export async function erzeugeProtokollPdf(doc: ProtokollDoc, opt: PdfOptionen): Promise<Uint8Array> {
   const L = t(doc.sprache);
+  // Ohne Kommission (Kleinauftrag): statt der Nummer „ohne Kommission“ / „no commission“.
+  const hatKomm = hatKommission(doc);
+  const kommissionText = kommissionAnzeige(doc.kommissionNr, doc.sprache);
   const pdf = await PDFDocument.create();
   const f: Fonts = await ladeFonts(pdf, opt.fonts);
-  pdf.setTitle(`${L.protokoll} ${doc.kommissionNr} ${doc.kunde}`);
+  pdf.setTitle(`${L.protokoll} ${kommissionText} ${doc.kunde}`);
   pdf.setAuthor(doc.mitarbeiterName || "Grabner Design GmbH");
   pdf.setCreator("Schlutte");
   const bildCache = new Map<string, PDFImage | null>();
@@ -62,14 +66,14 @@ export async function erzeugeProtokollPdf(doc: ProtokollDoc, opt: PdfOptionen): 
   const kopfErste = (page: PDFPage): number => {
     const top = A4.h - M;
     zeichneLogo(page, M, top, 112, ink, brass);
-    metaPaar(page, top, [formatDatum(datumDok, doc.sprache), formatDatumZeit(datumDok, doc.sprache).split(", ")[1] ?? ""], [L.kommission, doc.kommissionNr]);
+    metaPaar(page, top, [formatDatum(datumDok, doc.sprache), formatDatumZeit(datumDok, doc.sprache).split(", ")[1] ?? ""], [L.kommission, kommissionText]);
     page.drawText(L.protokoll, { x: M, y: top - 102, font: f.light, size: 21, color: ink });
     return top - 118;
   };
   const kopfFolge = (page: PDFPage): number => {
     const top = A4.h - 36;
     zeichneLogo(page, M, top, 78, ink, brass);
-    metaPaar(page, top, [L.protokoll, doc.sprache === "en" ? "" : ""], [L.kommission, doc.kommissionNr]);
+    metaPaar(page, top, [L.protokoll, doc.sprache === "en" ? "" : ""], [L.kommission, kommissionText]);
     return top - 50;
   };
   const s = new Seiten(pdf, A4, M, 86, BOTTOM, (page, nr) => (nr === 1 ? kopfErste(page) : kopfFolge(page)));
@@ -454,7 +458,7 @@ export async function erzeugeProtokollPdf(doc: ProtokollDoc, opt: PdfOptionen): 
   const n = s.pages.length;
   s.pages.forEach((page, i) => {
     page.drawLine({ start: { x: M, y: 48 }, end: { x: R, y: 48 }, thickness: 0.75, color: ink });
-    page.drawText(kuerzen(`${L.kommission} ${doc.kommissionNr} · ${doc.kunde}`, f.regular, 8, A4.w - 2 * M - 90), { x: M, y: 34, font: f.regular, size: 8, color: muted });
+    page.drawText(kuerzen(`${hatKomm ? `${L.kommission} ` : ""}${kommissionText} · ${doc.kunde}`, f.regular, 8, A4.w - 2 * M - 90), { x: M, y: 34, font: f.regular, size: 8, color: muted });
     const seite = `${L.seite} ${i + 1} ${L.von} ${n}`;
     page.drawText(seite, { x: R - f.regular.widthOfTextAtSize(seite, 8), y: 34, font: f.regular, size: 8, color: muted });
   });

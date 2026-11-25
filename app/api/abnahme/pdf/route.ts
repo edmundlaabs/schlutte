@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   if (dl.error || !dl.data) return jsonFehler(404, "PDF konnte nicht gelesen werden.");
   const datum = String(typ === "abnahme" ? (d.abgeschlossen_at ?? d.created_at) : d.datum).slice(0, 10);
   const name = original
-    ? `Positionsliste_${String(d.kommission_nr).trim()}.pdf`
+    ? `Positionsliste_${String(d.kommission_nr ?? "").trim() || "ohne-Kommission"}.pdf`
     : typ === "abnahme" ? abnahmeDateiname(d.kommission_nr, d.kunde, datum) : regieDateiname(d.kommission_nr, d.kunde, datum);
   return new Response(dl.data, {
     headers: { "Content-Type": "application/pdf", "Content-Disposition": `${u.searchParams.get("inline") ? "inline" : "attachment"}; filename="${name}"` },

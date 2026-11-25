@@ -1,5 +1,6 @@
 "use client";
 
+import { kommissionAnzeige } from "@/lib/abnahme/kommission";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLokalesProtokoll } from "@/lib/abnahme/offline/store";
@@ -173,7 +174,7 @@ export function Protokollansicht({ id }: { id: string }) {
   const kopf = (
     <header className="abn-bar">
       <div className="abn-bar-title">
-        <span className="aus-mono">{doc.kommissionNr}</span> · {doc.kunde}
+        <span className="aus-mono">{kommissionAnzeige(doc.kommissionNr, "de")}</span> · {doc.kunde}
         {doc.titel && <span className="aus-muted"> · {doc.titel}</span>}
       </div>
       <SyncBadge eintrag={eintrag} online={online} />
@@ -276,7 +277,7 @@ function Uebersicht({ doc, onRaum, onAbschluss }: { doc: ProtokollDoc; onRaum: (
     <section className="abn-uebersicht">
       <div className="aus-card">
         <dl className="aus-kv">
-          <dt>Kommission</dt><dd>{doc.kommissionNr}</dd>
+          <dt>Kommission</dt><dd>{kommissionAnzeige(doc.kommissionNr, "de")}</dd>
           <dt>Kunde</dt><dd>{doc.kunde}</dd>
           {doc.projekt && (<><dt>Projekt</dt><dd>{doc.projekt}</dd></>)}
           {doc.ort && (<><dt>Ort</dt><dd>{doc.ort}</dd></>)}

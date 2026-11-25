@@ -20,6 +20,8 @@ export function KundeKommissionAuswahl({
   onChange,
   hinweisKunde,
   suchvorschlag,
+  modi = ["bestehend", "neu", "ohne"],
+  mitKunde = true,
 }: {
   value: KundeKommission;
   onChange: (v: KundeKommission) => void;
@@ -27,6 +29,10 @@ export function KundeKommissionAuswahl({
   hinweisKunde?: string;
   /** Vorbelegung der Suche (z. B. Nummer aus der Profacto-PDF). */
   suchvorschlag?: string;
+  /** Angebotene Wege (Zuordnung zu einem bestehenden Protokoll: ohne „ohne“). */
+  modi?: KommissionModus[];
+  /** false: Kunde und Projekt nicht anzeigen (bleiben am Protokoll unverändert). */
+  mitKunde?: boolean;
 }) {
   const [q, setQ] = useState(suchvorschlag ?? "");
   const [treffer, setTreffer] = useState<KommissionTreffer[]>([]);
@@ -85,7 +91,7 @@ export function KundeKommissionAuswahl({
   return (
     <div className="abn-kk">
       <div className="abn-seg" role="radiogroup" aria-label="Kommission">
-        {MODI.map((m) => (
+        {MODI.filter((m) => modi.includes(m.modus)).map((m) => (
           <button
             key={m.modus}
             type="button"
@@ -189,7 +195,7 @@ export function KundeKommissionAuswahl({
         </p>
       )}
 
-      <div className="aus-grid abn-kopf">
+      {mitKunde && <div className="aus-grid abn-kopf">
         <label className="aus-field">
           <span className="aus-label">Kunde <span className="aus-req">*</span></span>
           <input className="aus-input" value={value.kunde} onChange={(e) => setze({ kunde: e.target.value })} />
@@ -199,7 +205,7 @@ export function KundeKommissionAuswahl({
           <span className="aus-label">Projekt{value.modus === "ohne" ? " (optional)" : ""}</span>
           <input className="aus-input" value={value.projekt} onChange={(e) => setze({ projekt: e.target.value })} />
         </label>
-      </div>
+      </div>}
     </div>
   );
 }

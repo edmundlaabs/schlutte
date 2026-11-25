@@ -114,7 +114,8 @@ export async function ladeProtokollDoc(id: string): Promise<ProtokollDoc | null>
 export type AblageEintrag = {
   typ: "abnahme" | "regie";
   id: string;
-  kommission_nr: string;
+  /** null = Protokoll ohne Kommission */
+  kommission_nr: string | null;
   kunde: string;
   projekt: string | null;
   titel: string | null;
@@ -126,7 +127,7 @@ export type AblageEintrag = {
   offeneMaengel: number;
 };
 
-export type AblageFilter = { q?: string; typ?: string; status?: string; mitarbeiter?: string; von?: string; bis?: string };
+export type AblageFilter = { q?: string; typ?: string; status?: string; mitarbeiter?: string; von?: string; bis?: string; kommission?: string };
 
 export async function listAblage(filter: AblageFilter): Promise<AblageEintrag[]> {
   const supabase = await createClient();
@@ -140,6 +141,7 @@ export async function listAblage(filter: AblageFilter): Promise<AblageEintrag[]>
       .order("created_at", { ascending: false })
       .limit(300);
     if (q) qb = qb.or(`kommission_nr.ilike.%${q}%,kunde.ilike.%${q}%`);
+    if (filter.kommission === "ohne") qb = qb.is("kommission_nr", null);
     if (filter.status) qb = qb.eq("status", filter.status);
     if (filter.mitarbeiter) qb = qb.ilike("mitarbeiter_name", `%${filter.mitarbeiter}%`);
     if (filter.von) qb = qb.gte("created_at", filter.von);
@@ -161,7 +163,8 @@ export async function listAblage(filter: AblageFilter): Promise<AblageEintrag[]>
     }
   }
 
-  if (!filter.typ || filter.typ === "regie") {
+  // Regieberichte haben immer eine Kommission: bei „nur ohne Kommission“ entfallen sie.
+  if ((!filter.typ || filter.typ === "regie") && filter.kommission !== "ohne") {
     let qb = supabase
       .from("abnahme_regieberichte")
       .select("id,kommission_nr,kunde,status,mitarbeiter_name,datum,created_at,pdf_path")

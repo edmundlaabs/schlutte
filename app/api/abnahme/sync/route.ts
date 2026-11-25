@@ -24,7 +24,8 @@ export async function POST(request: Request) {
   const doc = body.doc;
   if (body.typ !== "abnahme" || !doc?.id) return jsonFehler(400, "Ungültige Anfrage.");
 
-  if (!doc.kommissionNr?.trim() || !doc.kunde?.trim()) return jsonFehler(422, "Kommissionsnummer und Kunde sind Pflicht.");
+  // Die Kommissionsnummer darf leer sein (Protokoll ohne Kommission); der Kunde ist immer Pflicht.
+  if (!doc.kunde?.trim()) return jsonFehler(422, "Der Kundenname ist Pflicht.");
 
   const cur = await supabase
     .from("abnahme_protokolle")
@@ -45,6 +46,9 @@ export async function POST(request: Request) {
   const nextRev = (cur.data?.rev ?? 0) + 1;
   const abschluss = doc.status === "abgeschlossen";
   const rows = docToRows({ ...doc, mitarbeiterId: doc.mitarbeiterId ?? ctx.employee?.id ?? null });
+  // Die Herkunft legt allein der Server fest (beim Anlegen): ein älteres Tablet-Dokument ohne „quelle“
+  // würde sonst „manuell“/„vorlage“ auf „profacto“ zurücksetzen.
+  delete (rows.protokoll as Record<string, unknown>).quelle;
 
   const fail = (what: string, message: string) => jsonFehler(500, `${what}: ${message}`);
 
