@@ -81,7 +81,7 @@ export async function insertProtokoll(doc: ProtokollDoc): Promise<void> {
     const r = await supabase.from("abnahme_pruefpunkte").insert(rows.pruefpunkte);
     if (r.error) await fail("Prüfpunkte", r.error.message);
   }
-  for (const [table, list] of [["abnahme_maengel", rows.maengel], ["abnahme_fotos", rows.fotos], ["abnahme_unterschriften", rows.unterschriften]] as const) {
+  for (const [table, list] of [["abnahme_maengel", rows.maengel], ["abnahme_fotos", rows.fotos], ["abnahme_objektfotos", rows.objektfotos ?? []], ["abnahme_unterschriften", rows.unterschriften]] as const) {
     if (list.length) {
       const r = await supabase.from(table).insert(list);
       if (r.error) await fail(table, r.error.message);
@@ -95,19 +95,20 @@ import { rowsToDoc } from "@/lib/abnahme/mapping";
 
 export async function ladeProtokollDoc(id: string): Promise<ProtokollDoc | null> {
   const supabase = await createClient();
-  const [p, ra, po, pr, ma, fo, un] = await Promise.all([
+  const [p, ra, po, pr, ma, fo, of, un] = await Promise.all([
     supabase.from("abnahme_protokolle").select("*").eq("id", id).maybeSingle(),
     supabase.from("abnahme_raeume").select("*").eq("protokoll_id", id),
     supabase.from("abnahme_positionen").select("*").eq("protokoll_id", id),
     supabase.from("abnahme_pruefpunkte").select("*").eq("protokoll_id", id),
     supabase.from("abnahme_maengel").select("*").eq("protokoll_id", id),
     supabase.from("abnahme_fotos").select("*").eq("protokoll_id", id),
+    supabase.from("abnahme_objektfotos").select("*").eq("protokoll_id", id),
     supabase.from("abnahme_unterschriften").select("*").eq("protokoll_id", id),
   ]);
   if (p.error || !p.data) return null;
   return rowsToDoc({
     protokoll: p.data, raeume: ra.data ?? [], positionen: po.data ?? [], pruefpunkte: pr.data ?? [],
-    maengel: ma.data ?? [], fotos: fo.data ?? [], unterschriften: un.data ?? [],
+    maengel: ma.data ?? [], fotos: fo.data ?? [], objektfotos: of.data ?? [], unterschriften: un.data ?? [],
   });
 }
 

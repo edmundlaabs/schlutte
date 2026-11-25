@@ -33,13 +33,15 @@ export async function loescheKette(kette: KettenEintrag[]): Promise<{ geloescht:
   const admin = createAdminClient();
   const ids = kette.map((k) => k.id);
   const pfade = new Set<string>();
-  const [p, f, u] = await Promise.all([
+  const [p, f, of, u] = await Promise.all([
     admin.from("abnahme_protokolle").select("original_path,pdf_path").in("id", ids),
     admin.from("abnahme_fotos").select("path").in("protokoll_id", ids),
+    admin.from("abnahme_objektfotos").select("path").in("protokoll_id", ids),
     admin.from("abnahme_unterschriften").select("bild_path").in("protokoll_id", ids),
   ]);
   for (const r of p.data ?? []) for (const x of [r.original_path, r.pdf_path]) if (x) pfade.add(x as string);
   for (const r of f.data ?? []) if (r.path) pfade.add(r.path as string);
+  for (const r of of.data ?? []) if (r.path) pfade.add(r.path as string);
   for (const r of u.data ?? []) if (r.bild_path) pfade.add(r.bild_path as string);
 
   // Kinder zuerst (parent_id ist „restrict“).
@@ -52,14 +54,16 @@ export async function loescheKette(kette: KettenEintrag[]): Promise<{ geloescht:
   let dateien = 0;
   if (pfade.size) {
     const liste = Array.from(pfade);
-    const [rf, ru, rp1, rp2] = await Promise.all([
+    const [rf, rof, ru, rp1, rp2] = await Promise.all([
       admin.from("abnahme_fotos").select("path").in("path", liste),
+      admin.from("abnahme_objektfotos").select("path").in("path", liste),
       admin.from("abnahme_unterschriften").select("bild_path").in("bild_path", liste),
       admin.from("abnahme_protokolle").select("original_path").in("original_path", liste),
       admin.from("abnahme_protokolle").select("pdf_path").in("pdf_path", liste),
     ]);
     const noch = new Set<string>([
       ...(rf.data ?? []).map((r) => r.path as string),
+      ...(rof.data ?? []).map((r) => r.path as string),
       ...(ru.data ?? []).map((r) => r.bild_path as string),
       ...(rp1.data ?? []).map((r) => r.original_path as string),
       ...(rp2.data ?? []).map((r) => r.pdf_path as string),

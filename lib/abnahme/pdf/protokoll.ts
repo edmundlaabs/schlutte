@@ -310,6 +310,34 @@ export async function erzeugeProtokollPdf(doc: ProtokollDoc, opt: PdfOptionen): 
     }, () => unterschrift(findeUnterschrift(doc, "raum", r.id), RX, Math.min(200, RW), r.name).then(() => s.nachUnten(68)));
   }
 
+  /** Fotos des Objekts (Position), auch bei „i. O.“: in Dreierreihen unter den Prüfpunkten. */
+  async function objektFotosBlock(p: Position, x: number, w: number) {
+    const liste = (doc.objektFotos ?? []).filter((ff) => ff.positionId === p.id);
+    if (!liste.length) return;
+    const gap = 6;
+    const zelle = (w - 2 * gap) / 3;
+    const h = zelle * 0.75;
+    s.nachUnten(6);
+    for (let i = 0; i < liste.length; i += 3) {
+      s.platz(h + 14);
+      const yOben = s.y;
+      for (let k = 0; k < 3 && i + k < liste.length; k++) {
+        const bx = x + k * (zelle + gap);
+        const img = await bild(liste[i + k].id);
+        if (img) {
+          const sc = Math.min(zelle / img.width, h / img.height);
+          const iw = img.width * sc;
+          const ih = img.height * sc;
+          s.page.drawImage(img, { x: bx + (zelle - iw) / 2, y: yOben - h + (h - ih) / 2, width: iw, height: ih });
+        } else {
+          s.page.drawRectangle({ x: bx, y: yOben - h, width: zelle, height: h, color: line });
+        }
+        s.page.drawText(`${p.nr} · ${doc.sprache === "en" ? "Photo" : "Foto"} ${i + k + 1}`, { x: bx, y: yOben - h - 9, font: f.mono, size: 6.8, color: muted });
+      }
+      s.nachUnten(h + 14);
+    }
+  }
+
   async function positionBlock(p: Position) {
     const st = positionStatus(p);
     s.nachUnten(8);
@@ -339,6 +367,7 @@ export async function erzeugeProtokollPdf(doc: ProtokollDoc, opt: PdfOptionen): 
           hairline(RX, R);
         }
       }
+      await objektFotosBlock(p, RX, RW);
       for (const m of maengelSortiert.filter((x) => x.positionId === p.id)) {
         s.nachUnten(10);
         s.platz(50);

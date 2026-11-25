@@ -137,3 +137,22 @@ test("Fotos/Unterschriften: Pfad bleibt erhalten, Waisen entfallen", () => {
   const ohneRaum = fuehreZusammen(b, { ...l, raeume: l.raeume }, { ...s, raeume: s.raeume.filter((r) => r.id !== l.raeume[0].id) }, { [`raum:${l.raeume[0].id}`]: "server" });
   assert.equal(ohneRaum.unterschriften.length, 0);
 });
+
+test("Objektfotos: Abgleich hinzufügen/verwerfen, Waisen entfallen", () => {
+  const b = basisDoc();
+  const pid = b.positionen[0].id;
+  const l = klon(b);
+  l.objektFotos = [{ id: "of1", positionId: pid, path: null, breite: 1, hoehe: 1, aufgenommenAt: "" }];
+  const s = klon(b);
+  s.rev = 4;
+  const a = berechneAenderungen(b, l, s);
+  const f = a.find((x) => x.key === "objfoto:of1")!;
+  assert.equal(f.gruppe, "Objektfoto");
+  assert.equal(f.von, "lokal");
+  assert.equal(fuehreZusammen(b, l, s, {}).objektFotos?.length, 1);
+  assert.equal(fuehreZusammen(b, l, s, { [f.key]: "server" }).objektFotos?.length, 0);
+  // Position auf dem Server gelöscht, Tablet behält sie nicht → Foto entfällt mit
+  const s2 = klon(s);
+  s2.positionen = s2.positionen.filter((p) => p.id !== pid);
+  assert.equal(fuehreZusammen(b, l, s2, { [`pos:${pid}`]: "server" }).objektFotos?.length, 0);
+});

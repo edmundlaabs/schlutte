@@ -34,6 +34,7 @@ async function holeBilder(doc: ProtokollDoc, signed: Record<string, string>): Pr
   const vorhanden = new Set((await blobsDesDokuments(doc.id)).map((b) => b.id));
   const holen: { id: string; art: "foto" | "unterschrift"; path: string }[] = [
     ...doc.fotos.filter((f) => f.path).map((f) => ({ id: f.id, art: "foto" as const, path: f.path! })),
+    ...(doc.objektFotos ?? []).filter((f) => f.path).map((f) => ({ id: f.id, art: "foto" as const, path: f.path! })),
     ...doc.unterschriften.filter((u) => u.bildPath).map((u) => ({ id: u.id, art: "unterschrift" as const, path: u.bildPath! })),
   ].filter((h) => !vorhanden.has(h.id));
   for (const h of holen) {
@@ -126,6 +127,7 @@ export async function syncDokument(id: string): Promise<{ ok: boolean; error?: s
     payloadDoc = {
       ...doc,
       fotos: doc.fotos.map((f) => (gesetzt.has(f.id) ? { ...f, path: gesetzt.get(f.id)! } : f)),
+      objektFotos: (doc.objektFotos ?? []).map((f) => (gesetzt.has(f.id) ? { ...f, path: gesetzt.get(f.id)! } : f)),
       unterschriften: doc.unterschriften.map((u) => (gesetzt.has(u.id) ? { ...u, bildPath: gesetzt.get(u.id)! } : u)),
       pdfPath: gesetzt.get(`pdf:${id}`) ?? doc.pdfPath,
     };
@@ -157,6 +159,7 @@ export async function syncDokument(id: string): Promise<{ ok: boolean; error?: s
     merged.doc = {
       ...merged.doc,
       fotos: merged.doc.fotos.map((f) => (gesetzt.has(f.id) ? { ...f, path: gesetzt.get(f.id)! } : f)),
+      objektFotos: (merged.doc.objektFotos ?? []).map((f) => (gesetzt.has(f.id) ? { ...f, path: gesetzt.get(f.id)! } : f)),
       unterschriften: merged.doc.unterschriften.map((u) => (gesetzt.has(u.id) ? { ...u, bildPath: gesetzt.get(u.id)! } : u)),
       pdfPath: gesetzt.get(`pdf:${id}`) ?? merged.doc.pdfPath,
     };

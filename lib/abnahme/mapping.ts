@@ -1,5 +1,5 @@
 import type {
-  Foto, Mangel, Position, ProtokollDoc, ProtokollVorlage, Pruefpunkt, Quelle, Raum, Unterschrift, Teilnehmer, Vorlage,
+  Foto, Mangel, ObjektFoto, Position, ProtokollDoc, ProtokollVorlage, Pruefpunkt, Quelle, Raum, Unterschrift, Teilnehmer, Vorlage,
   VorlagePosition, VorlageRaum,
 } from "./types.ts";
 
@@ -13,6 +13,7 @@ export type ProtokollRows = {
   pruefpunkte: Row[];
   maengel: Row[];
   fotos: Row[];
+  objektfotos?: Row[];
   unterschriften: Row[];
 };
 
@@ -70,6 +71,12 @@ export function docToRows(doc: ProtokollDoc): ProtokollRows {
         id: f.id, protokoll_id: pid, mangel_id: f.mangelId, path: f.path, breite: f.breite,
         hoehe: f.hoehe, aufgenommen_at: f.aufgenommenAt,
       })),
+    objektfotos: (doc.objektFotos ?? [])
+      .filter((f) => f.path && doc.positionen.some((p) => p.id === f.positionId))
+      .map((f) => ({
+        id: f.id, protokoll_id: pid, position_id: f.positionId, path: f.path, breite: f.breite,
+        hoehe: f.hoehe, aufgenommen_at: f.aufgenommenAt,
+      })),
     unterschriften: doc.unterschriften
       .filter((u) => u.bildPath)
       .map((u) => ({
@@ -123,6 +130,10 @@ export function rowsToDoc(rows: ProtokollRows): ProtokollDoc {
     id: s(r.id), mangelId: s(r.mangel_id), path: sn(r.path), breite: Number(r.breite ?? 0),
     hoehe: Number(r.hoehe ?? 0), aufgenommenAt: s(r.aufgenommen_at),
   }));
+  const objektFotos: ObjektFoto[] = (rows.objektfotos ?? []).map((r) => ({
+    id: s(r.id), positionId: s(r.position_id), path: sn(r.path), breite: Number(r.breite ?? 0),
+    hoehe: Number(r.hoehe ?? 0), aufgenommenAt: s(r.aufgenommen_at),
+  }));
   const unterschriften: Unterschrift[] = rows.unterschriften.map((r) => ({
     id: s(r.id), bezug: r.bezug as Unterschrift["bezug"], bezugId: sn(r.bezug_id), name: s(r.name),
     rolle: s(r.rolle), bildPath: sn(r.bild_path), zeitpunkt: s(r.zeitpunkt),
@@ -139,7 +150,7 @@ export function rowsToDoc(rows: ProtokollRows): ProtokollDoc {
     parentId: sn(p.parent_id), mitarbeiterId: sn(p.mitarbeiter_id), mitarbeiterName: s(p.mitarbeiter_name),
     teilnehmer, kundeEmail: s(p.kunde_email), kopieEmail: s(p.kopie_email), bemerkung: s(p.bemerkung),
     beginnAt: sn(p.beginn_at), abgeschlossenAt: sn(p.abgeschlossen_at), originalPath: sn(p.original_path),
-    pdfPath: sn(p.pdf_path), rev: Number(p.rev ?? 0), raeume, positionen, maengel, fotos, unterschriften,
+    pdfPath: sn(p.pdf_path), rev: Number(p.rev ?? 0), raeume, positionen, maengel, fotos, objektFotos, unterschriften,
   };
 }
 

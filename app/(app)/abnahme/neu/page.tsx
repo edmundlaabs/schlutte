@@ -14,14 +14,14 @@ export default function NeuesProtokollPage() {
         </p>
       </header>
       <div className="abn-wege">
-        <Link className="abn-weg" href="/abnahme/import">
+        <Link className="abn-weg-karte" href="/abnahme/import">
           <span className="abn-weg-titel">Aus Profacto-PDF</span>
           <span className="abn-weg-text">
             Positionsliste „Einfache Positionsliste“ hochladen, Räume und Prüfpunkte prüfen, Kunde und Kommission wählen.
           </span>
           <span className="abn-weg-go">PDF importieren →</span>
         </Link>
-        <Link className="abn-weg" href="/abnahme/neu/manuell">
+        <Link className="abn-weg-karte" href="/abnahme/neu/manuell">
           <span className="abn-weg-titel">Manuell / aus Vorlage</span>
           <span className="abn-weg-text">
             Kunde und Kommission wählen (oder ohne Kommission), Räume, Positionen und Prüfpunkte selbst eingeben oder

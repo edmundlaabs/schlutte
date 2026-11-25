@@ -4,7 +4,7 @@ Abnahmeprotokoll und Regiebericht für die Baustelle: Tablet-Begehung auch ohne 
 
 ## Einrichtung (einmalig)
 
-1. **Migration** `supabase/migrations/20261120_abnahme.sql` im Supabase SQL-Editor ausführen (vorher Backup nach `../Backup/…`). Sie legt die Tabellen `abnahme_*`, RLS, Sperr-Trigger, die Checkout-Funktionen, den privaten Storage-Bucket `abnahme` und die Startvorlagen an. Danach (ab 1.3.0) `20261126_abnahme_abgleich.sql` (Archiv der Protokoll-Stände für den Abgleich) und (ab 1.4.0) `20261127_abnahme_regie_abgleich.sql` (dasselbe für Regieberichte). Zuvor (ab 1.2.0) `20261125_abnahme_manuell.sql`: Protokolle ohne Kommission, Herkunft `quelle`, Protokoll-Vorlagen (zwei Startvorlagen).
+1. **Migration** `supabase/migrations/20261120_abnahme.sql` im Supabase SQL-Editor ausführen (vorher Backup nach `../Backup/…`). Sie legt die Tabellen `abnahme_*`, RLS, Sperr-Trigger, die Checkout-Funktionen, den privaten Storage-Bucket `abnahme` und die Startvorlagen an. Danach (ab 1.3.0) `20261126_abnahme_abgleich.sql` (Archiv der Protokoll-Stände für den Abgleich) und (ab 1.4.0) `20261127_abnahme_regie_abgleich.sql` (dasselbe für Regieberichte), (ab 1.5.0) `20261128_abnahme_objektfotos.sql` (Fotos vom Objekt auch bei i. O.). Zuvor (ab 1.2.0) `20261125_abnahme_manuell.sql`: Protokolle ohne Kommission, Herkunft `quelle`, Protokoll-Vorlagen (zwei Startvorlagen).
 2. **Zugang**: unter *Admin → Zugänge* den Haken „Abnahme“ pro Mitarbeiter setzen (CEO/Admin haben immer Zugriff). Bestehende Mitarbeiter bekommen ihn nicht automatisch.
 3. **Mailversand (Resend)**, nur als Umgebungsvariablen (nie im Code):
    | Variable | Bedeutung |
@@ -40,6 +40,8 @@ Abnahmeprotokoll und Regiebericht für die Baustelle: Tablet-Begehung auch ohne 
 8. **Regiebericht**: `/abnahme/begehung` → „Neuer Regiebericht“ (Kommission und Kunde Pflicht, Kopf vorbefüllt aus Kommission/letztem Dokument). Zeilen mit Datum, Beschreibung, Menge, Länge, Breite, Stärke, km, Stunden je Rolle (Meister, Monteur, Lehrling, Helfer; 0,5er-Schritte), Summen, „anerkannt, den …“ + Kundenunterschrift. Gleiche Technik: offline, Sync, PDF (A4 quer, DE/EN), Ablage, Versand.
 
 PDF-Dateinamen: `Abnahme_<Kommission>_<Kunde-kurz>_<JJJJ-MM-TT>.pdf`, `Regiebericht_<Kommission>_<Kunde-kurz>_<JJJJ-MM-TT>.pdf`.
+
+**Begehung (ab 1.5.0)**: Statusknöpfe mit Symbolen (Haken, Hammer, X). Jede Position hat „Foto vom Objekt“ (Kamera, mehrere Fotos, lokal komprimiert, im Sync hochgeladen) – gedacht auch für i. O.; das Foto ist optional, die Position zeigt bei i. O. ohne Foto einen Hinweis. Im PDF stehen die Objektfotos unter den Prüfpunkten der Position. Räume lassen sich in der Begehung umbenennen (Name, Etage) und löschen (samt Positionen, Mängeln, Fotos, Unterschriften; mit Rückfrage, auch offline).
 
 **Durchführender Mitarbeiter**: wählbar im manuellen Editor, im Abschluss der Begehung (auch offline, aus der geladenen Mitarbeiterliste) und auf der Protokollseite (online, solange nicht abgeschlossen).
 

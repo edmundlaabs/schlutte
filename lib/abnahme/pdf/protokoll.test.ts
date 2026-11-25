@@ -107,3 +107,12 @@ test("PDF ohne Kommission auf Englisch", async () => {
   assert.ok(alles.includes("no commission"));
   assert.ok(alles.includes("Acceptance record"));
 });
+
+test("PDF: Objektfoto bei einer i. O.-Position wird gezeichnet", async () => {
+  const d = manuellOhneKommission("de");
+  const pid = d.positionen[0].id;
+  const mit: ProtokollDoc = { ...d, objektFotos: [{ id: "of1", positionId: pid, path: null, breite: 1, hoehe: 1, aufgenommenAt: "2026-11-26T10:00:00Z" }] };
+  const bytes = await erzeugeProtokollPdf(mit, { fonts: loader, bilder: new Map([["of1", { bytes: PNG, mime: "image/png" }]]) });
+  const alles = (await textDerSeiten(bytes)).join(" ").replace(/\s+/g, " ");
+  assert.ok(alles.includes("1 · Foto 1"), "Bildunterschrift Position · Foto 1");
+});
