@@ -1,5 +1,6 @@
 import type {
-  Foto, Mangel, Position, ProtokollDoc, Pruefpunkt, Raum, Unterschrift, Teilnehmer, Vorlage,
+  Foto, Mangel, Position, ProtokollDoc, ProtokollVorlage, Pruefpunkt, Quelle, Raum, Unterschrift, Teilnehmer, Vorlage,
+  VorlagePosition, VorlageRaum,
 } from "./types.ts";
 
 /** Zeilen der abnahme_*-Tabellen (snake_case) ⇄ Dokumentmodell. */
@@ -23,13 +24,14 @@ export function docToRows(doc: ProtokollDoc): ProtokollRows {
     protokoll: {
       id: pid,
       commission_id: doc.commissionId,
-      kommission_nr: doc.kommissionNr.trim(),
+      kommission_nr: nn(doc.kommissionNr.trim()),
       kunde: doc.kunde.trim(),
       projekt: nn(doc.projekt),
       titel: nn(doc.titel),
       ort: nn(doc.ort),
       sprache: doc.sprache,
       status: doc.status,
+      quelle: doc.quelle ?? "profacto",
       version: doc.version,
       parent_id: doc.parentId,
       mitarbeiter_id: doc.mitarbeiterId,
@@ -75,6 +77,10 @@ export function docToRows(doc: ProtokollDoc): ProtokollRows {
         rolle: nn(u.rolle), bild_path: u.bildPath, zeitpunkt: u.zeitpunkt,
       })),
   };
+}
+
+export function zuQuelle(v: unknown): Quelle {
+  return v === "manuell" || v === "vorlage" ? v : "profacto";
 }
 
 const s = (v: unknown): string => (typeof v === "string" ? v : "");
@@ -129,7 +135,7 @@ export function rowsToDoc(rows: ProtokollRows): ProtokollDoc {
   return {
     id: s(p.id), commissionId: sn(p.commission_id), kommissionNr: s(p.kommission_nr), kunde: s(p.kunde),
     projekt: s(p.projekt), titel: s(p.titel), ort: s(p.ort), sprache: p.sprache === "en" ? "en" : "de",
-    status: (p.status as ProtokollDoc["status"]) ?? "bereit", version: Number(p.version ?? 1),
+    status: (p.status as ProtokollDoc["status"]) ?? "bereit", quelle: zuQuelle(p.quelle), version: Number(p.version ?? 1),
     parentId: sn(p.parent_id), mitarbeiterId: sn(p.mitarbeiter_id), mitarbeiterName: s(p.mitarbeiter_name),
     teilnehmer, kundeEmail: s(p.kunde_email), kopieEmail: s(p.kopie_email), bemerkung: s(p.bemerkung),
     beginnAt: sn(p.beginn_at), abgeschlossenAt: sn(p.abgeschlossen_at), originalPath: sn(p.original_path),
@@ -142,5 +148,40 @@ export function rowToVorlage(r: Row): Vorlage {
   return {
     id: s(r.id), moebeltyp: s(r.moebeltyp), titelDe: s(r.titel_de), titelEn: s(r.titel_en), punkte,
     aktiv: r.aktiv !== false, sort: Number(r.sort ?? 0),
+  };
+}
+
+const text = (v: unknown): string => (typeof v === "string" ? v : "");
+
+export function rowToProtokollVorlage(r: Row): ProtokollVorlage {
+  const struktur = (r.struktur ?? {}) as Row;
+  const raeume: VorlageRaum[] = Array.isArray(struktur.raeume)
+    ? (struktur.raeume as Row[]).map((ra) => ({
+        name: text(ra.name), etage: text(ra.etage), materialText: text(ra.materialText),
+        positionen: Array.isArray(ra.positionen)
+          ? (ra.positionen as Row[]).map((po): VorlagePosition => ({
+              titel: text(po.titel), einheit: text(po.einheit), beschreibung: text(po.beschreibung),
+              vorlageId: typeof po.vorlageId === "string" ? po.vorlageId : null,
+              pruefpunkte: Array.isArray(po.pruefpunkte)
+                ? (po.pruefpunkte as Row[]).map((k) => ({ de: text(k.de), en: text(k.en) }))
+                : [],
+            }))
+          : [],
+      }))
+    : [];
+  return {
+    id: s(r.id), titelDe: s(r.titel_de), titelEn: s(r.titel_en), beschreibung: s(r.beschreibung), raeume,
+    aktiv: r.aktiv !== false, sort: Number(r.sort ?? 0),
+  };
+}
+
+export function protokollVorlageToRow(v: Pick<ProtokollVorlage, "titelDe" | "titelEn" | "beschreibung" | "raeume" | "aktiv" | "sort">): Row {
+  return {
+    titel_de: v.titelDe.trim(),
+    titel_en: v.titelEn.trim() || v.titelDe.trim(),
+    beschreibung: nn(v.beschreibung),
+    struktur: { raeume: v.raeume },
+    aktiv: v.aktiv,
+    sort: Math.trunc(v.sort) || 0,
   };
 }

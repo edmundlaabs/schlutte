@@ -70,6 +70,7 @@ export function buildDocFromParsed(
     ort: "",
     sprache: "de",
     status: "bereit",
+    quelle: "profacto",
     version: 1,
     parentId: null,
     teilnehmer: [],

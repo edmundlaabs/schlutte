@@ -17,7 +17,7 @@ function pos(id: string, raumId: string, punkte: number, relevant = true): Posit
 function doc(): ProtokollDoc {
   return {
     id: "d", commissionId: null, kommissionNr: "260081", kunde: "K", projekt: "", titel: "", ort: "Basel", sprache: "de",
-    status: "in_arbeit", version: 1, parentId: null, mitarbeiterId: null, mitarbeiterName: "M", teilnehmer: [], kundeEmail: "",
+    status: "in_arbeit", quelle: "profacto", version: 1, parentId: null, mitarbeiterId: null, mitarbeiterName: "M", teilnehmer: [], kundeEmail: "",
     kopieEmail: "", bemerkung: "", beginnAt: null, abgeschlossenAt: null, originalPath: null, pdfPath: null, rev: 0,
     raeume: [
       { id: "r1", sort: 0, name: "Raum 1", etage: "", materialText: "", bemerkung: "" },

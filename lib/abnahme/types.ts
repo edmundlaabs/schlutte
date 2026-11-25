@@ -8,6 +8,8 @@
 export type Sprache = "de" | "en";
 export type PruefStatus = "offen" | "io" | "mangel" | "nicht_pruefbar";
 export type ProtokollStatus = "entwurf" | "bereit" | "in_arbeit" | "abgeschlossen";
+/** Herkunft eines Protokolls: Profacto-Import, von Hand angelegt oder aus einer Protokoll-Vorlage. */
+export type Quelle = "profacto" | "manuell" | "vorlage";
 export type Bezug = "raum" | "position" | "schluss_kunde" | "schluss_mitarbeiter";
 
 export type Teilnehmer = { name: string; rolle?: string; employeeId?: string };
@@ -81,6 +83,7 @@ export type Unterschrift = {
 export type ProtokollDoc = {
   id: string;
   commissionId: string | null;
+  /** Leer = ohne Kommission (Kleinauftrag); in der Datenbank NULL. */
   kommissionNr: string;
   kunde: string;
   projekt: string;
@@ -88,6 +91,7 @@ export type ProtokollDoc = {
   ort: string;
   sprache: Sprache;
   status: ProtokollStatus;
+  quelle: Quelle;
   version: number;
   parentId: string | null;
   mitarbeiterId: string | null;
@@ -114,6 +118,32 @@ export type Vorlage = {
   titelDe: string;
   titelEn: string;
   punkte: { de: string; en: string }[];
+  aktiv: boolean;
+  sort: number;
+};
+
+/** Position einer Protokoll-Vorlage. Prüfpunkte = Möbeltyp-Vorlage (falls vorlageId) plus eigene. */
+export type VorlagePosition = {
+  titel: string;
+  einheit: string;
+  beschreibung: string;
+  vorlageId: string | null;
+  pruefpunkte: { de: string; en: string }[];
+};
+
+export type VorlageRaum = {
+  name: string;
+  etage: string;
+  materialText: string;
+  positionen: VorlagePosition[];
+};
+
+export type ProtokollVorlage = {
+  id: string;
+  titelDe: string;
+  titelEn: string;
+  beschreibung: string;
+  raeume: VorlageRaum[];
   aktiv: boolean;
   sort: number;
 };
