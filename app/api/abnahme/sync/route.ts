@@ -3,10 +3,12 @@ import { abnahmeNutzer, jsonFehler } from "@/lib/abnahme/server-auth";
 import { docToRows } from "@/lib/abnahme/mapping";
 import type { ProtokollDoc } from "@/lib/abnahme/types";
 import { syncRegie } from "@/lib/abnahme/regie-sync";
+import { ladeProtokollDoc } from "@/lib/data/abnahme";
+import type { StandArchiv } from "@/lib/abnahme/staende";
 
 export const dynamic = "force-dynamic";
 
-type Body = { typ?: string; deviceId?: string; baseRev?: number; doc?: ProtokollDoc; regie?: unknown };
+type Body = { typ?: string; deviceId?: string; baseRev?: number; doc?: ProtokollDoc; regie?: unknown; archiv?: StandArchiv };
 
 /**
  * Sync eines Dokuments vom Tablet. Reihenfolge: Protokollzeile (nie direkt „abgeschlossen“) →
@@ -29,19 +31,35 @@ export async function POST(request: Request) {
 
   const cur = await supabase
     .from("abnahme_protokolle")
-    .select("id,status,rev,checkout_device")
+    .select("id,status,rev")
     .eq("id", doc.id)
     .maybeSingle();
   if (cur.error) return jsonFehler(500, cur.error.message);
   const existiert = Boolean(cur.data);
-  // Protokolle entstehen immer online (Import): fehlt die Zeile, wurde das Protokoll gelöscht – nicht neu anlegen.
+  // Protokolle entstehen immer online (Import/manuell): fehlt die Zeile, wurde das Protokoll gelöscht – nicht neu anlegen.
   if (!existiert) return jsonFehler(410, "Dieses Protokoll wurde auf dem Server gelöscht. Lokale Kopie bitte verwerfen.");
-  if (existiert) {
-    if (cur.data!.status === "abgeschlossen") return jsonFehler(409, "Das Protokoll ist serverseitig bereits abgeschlossen.");
-    if (cur.data!.checkout_device !== body.deviceId) return jsonFehler(409, "Das Protokoll ist auf einem anderen Gerät ausgecheckt.");
-    if (typeof body.baseRev === "number" && cur.data!.rev !== body.baseRev) {
-      return jsonFehler(409, "Das Protokoll wurde zwischenzeitlich geändert (Versionskonflikt).");
+  if (cur.data!.status === "abgeschlossen") return jsonFehler(409, "Das Protokoll ist serverseitig bereits abgeschlossen.");
+  // Kein Auschecken: Hat sich der Server-Stand seit dem letzten Abgleich verändert (anderes Gerät, Büro), wird nichts
+  // überschrieben, sondern der Server-Stand zurückgegeben – das Gerät gleicht ihn mit dem Nutzer ab.
+  if (typeof body.baseRev === "number" && cur.data!.rev !== body.baseRev) {
+    const serverDoc = await ladeProtokollDoc(doc.id);
+    if (!serverDoc) return jsonFehler(500, "Server-Stand konnte nicht gelesen werden.");
+    const paths = [...serverDoc.fotos.map((f) => f.path), ...serverDoc.unterschriften.map((u) => u.bildPath)].filter((x): x is string => Boolean(x));
+    const signed: Record<string, string> = {};
+    if (paths.length) {
+      const res = await supabase.storage.from("abnahme").createSignedUrls(paths, 3600);
+      for (const e of res.data ?? []) if (e.path && e.signedUrl) signed[e.path] = e.signedUrl;
     }
+    return Response.json({ ok: false, konflikt: true, error: "Das Protokoll wurde zwischenzeitlich geändert (Abgleich nötig).", serverDoc, signed }, { status: 409 });
+  }
+  // Nach einem Abgleich: beide Stände archivieren (Tablet-Stand vor dem Abgleich, Server-Stand vor dem Abgleich).
+  if (body.archiv?.tablet && body.archiv?.server) {
+    const jetzt = new Date().toISOString();
+    const a = await supabase.from("abnahme_staende").insert([
+      { protokoll_id: doc.id, art: "tablet", rev: body.baseRev ?? 0, geraet: body.deviceId, erstellt_von: ctx.employee?.id ?? null, doc: body.archiv.tablet, created_at: jetzt },
+      { protokoll_id: doc.id, art: "server", rev: cur.data!.rev, geraet: body.deviceId, erstellt_von: ctx.employee?.id ?? null, doc: body.archiv.server, created_at: jetzt },
+    ]);
+    if (a.error) return jsonFehler(500, `Archiv: ${a.error.message}`);
   }
   const nextRev = (cur.data?.rev ?? 0) + 1;
   const abschluss = doc.status === "abgeschlossen";
@@ -57,9 +75,6 @@ export async function POST(request: Request) {
     status: abschluss ? "in_arbeit" : doc.status,
     abgeschlossen_at: null,
     rev: nextRev,
-    checkout_device: body.deviceId,
-    checkout_user: ctx.employee?.id ?? null,
-    checkout_at: new Date().toISOString(),
     created_by: existiert ? undefined : (ctx.employee?.id ?? null),
   });
   if (p.error) return fail("Protokoll", p.error.message);
@@ -90,7 +105,7 @@ export async function POST(request: Request) {
   if (abschluss) {
     const f = await supabase
       .from("abnahme_protokolle")
-      .update({ status: "abgeschlossen", abgeschlossen_at: doc.abgeschlossenAt ?? new Date().toISOString(), pdf_path: doc.pdfPath, checkout_device: null, checkout_user: null, checkout_at: null })
+      .update({ status: "abgeschlossen", abgeschlossen_at: doc.abgeschlossenAt ?? new Date().toISOString(), pdf_path: doc.pdfPath })
       .eq("id", doc.id);
     if (f.error) return fail("Abschluss", f.error.message);
   }

@@ -5,18 +5,19 @@ import {
 } from "./db";
 import { fordereDauerhaftenSpeicher, precacheShell } from "./sw-register";
 import type { ProtokollDoc } from "../types";
+import { berechneAenderungen, fuehreZusammen, type Wahlen } from "../abgleich";
 
 export const SYNC_EVENT = "abnahme-sync";
 const notify = () => typeof window !== "undefined" && window.dispatchEvent(new Event(SYNC_EVENT));
 
-type ApiFehler = { ok: false; error: string };
+type ApiFehler = { ok: false; error: string; daten?: Record<string, unknown> };
 
 async function post<T>(url: string, body: unknown): Promise<(T & { ok: true }) | (ApiFehler & { status: number })> {
   try {
     const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     if (res.redirected || res.status === 401) return { ok: false, error: "Bitte erneut anmelden.", status: 401 };
     const json = await res.json().catch(() => null);
-    if (!res.ok || !json?.ok) return { ok: false, error: json?.error ?? `Fehler ${res.status}`, status: res.status };
+    if (!res.ok || !json?.ok) return { ok: false, error: json?.error ?? `Fehler ${res.status}`, status: res.status, daten: json ?? undefined };
     return json as T & { ok: true };
   } catch {
     return { ok: false, error: "Keine Verbindung.", status: 0 };
@@ -25,7 +26,28 @@ async function post<T>(url: string, body: unknown): Promise<(T & { ok: true }) |
 
 export const istOnline = () => typeof navigator === "undefined" || navigator.onLine;
 
-/** „Für Baustelle laden“: Dokument auschecken und samt Bildern, Vorlagen und Mitarbeiterliste lokal speichern. */
+const klon = <T,>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
+
+/** Bilder und Unterschriften eines Stands, die lokal noch fehlen, über signierte URLs holen (Offline-Nutzung, PDF). */
+async function holeBilder(doc: ProtokollDoc, signed: Record<string, string>): Promise<void> {
+  const vorhanden = new Set((await blobsDesDokuments(doc.id)).map((b) => b.id));
+  const holen: { id: string; art: "foto" | "unterschrift"; path: string }[] = [
+    ...doc.fotos.filter((f) => f.path).map((f) => ({ id: f.id, art: "foto" as const, path: f.path! })),
+    ...doc.unterschriften.filter((u) => u.bildPath).map((u) => ({ id: u.id, art: "unterschrift" as const, path: u.bildPath! })),
+  ].filter((h) => !vorhanden.has(h.id));
+  for (const h of holen) {
+    const url = signed[h.path];
+    if (!url) continue;
+    try {
+      const blob = await (await fetch(url)).blob();
+      await speichereBlob({ id: h.id, docId: doc.id, art: h.art, mime: blob.type, blob, hochgeladen: true });
+    } catch {
+      /* Bild fehlt lokal; PDF nutzt dann den Platzhalter */
+    }
+  }
+}
+
+/** „Für Baustelle laden“: Dokument samt Bildern, Vorlagen und Mitarbeiterliste lokal speichern (Regiebericht: auschecken). */
 export async function ladeFuerBaustelle(typ: "abnahme" | "regie", id: string, force = false): Promise<{ ok: true } | { ok: false; error: string; konflikt?: boolean }> {
   const deviceId = await geraeteId();
   const res = await post<Record<string, unknown>>("/api/abnahme/laden", { typ, id, deviceId, force });
@@ -36,27 +58,14 @@ export async function ladeFuerBaustelle(typ: "abnahme" | "regie", id: string, fo
 
   if (typ === "abnahme") {
     const doc = res.doc as ProtokollDoc;
-    const signed = (res.signed ?? {}) as Record<string, string>;
     // Bereits hochgeladene Bilder für die Offline-Nutzung holen.
-    const holen: { id: string; art: "foto" | "unterschrift"; path: string }[] = [
-      ...doc.fotos.filter((f) => f.path).map((f) => ({ id: f.id, art: "foto" as const, path: f.path! })),
-      ...doc.unterschriften.filter((u) => u.bildPath).map((u) => ({ id: u.id, art: "unterschrift" as const, path: u.bildPath! })),
-    ];
-    for (const h of holen) {
-      const url = signed[h.path];
-      if (!url) continue;
-      try {
-        const blob = await (await fetch(url)).blob();
-        await speichereBlob({ id: h.id, docId: doc.id, art: h.art, mime: blob.type, blob, hochgeladen: true });
-      } catch {
-        /* Bild fehlt lokal; PDF nutzt dann den Platzhalter */
-      }
-    }
+    await holeBilder(doc, (res.signed ?? {}) as Record<string, string>);
     const vorhanden = await holeDokument(doc.id);
     await speichereDokument({
       id: doc.id, typ: "abnahme", doc, dirty: false, zustand: "synchronisiert", fehler: "",
       geladenAt: new Date().toISOString(), syncedAt: new Date().toISOString(),
       versand: vorhanden?.versand ?? [], editSeq: (vorhanden?.editSeq ?? 0) + 1,
+      basis: klon(doc), konflikt: null, archiv: null,
     });
   } else {
     const { speichereRegieAusServer } = await import("./regie-laden");
@@ -78,11 +87,13 @@ function pfadFuer(docId: string, art: "foto" | "unterschrift" | "pdf", id: strin
 let laeuft = false;
 
 /** Sync eines Dokuments: Bilder hochladen → Daten senden → Versand ausführen. */
-export async function syncDokument(id: string): Promise<{ ok: boolean; error?: string }> {
+export async function syncDokument(id: string): Promise<{ ok: boolean; error?: string; konflikt?: boolean }> {
   const start = await holeDokument(id);
   if (!start) return { ok: false, error: "Nicht lokal vorhanden." };
   if (!start.dirty && start.zustand === "synchronisiert") return { ok: true };
   if (!istOnline()) return { ok: false, error: "Keine Verbindung." };
+  // Steht ein Abgleich aus, wird erst nach der Auswahl des Nutzers weiter synchronisiert.
+  if (start.typ === "abnahme" && start.konflikt && !start.archiv) return { ok: false, error: "Abgleich nötig.", konflikt: true };
 
   const supabase = createClient();
   const deviceId = await geraeteId();
@@ -123,8 +134,23 @@ export async function syncDokument(id: string): Promise<{ ok: boolean; error?: s
   }
   const res = await post<{ rev: number }>("/api/abnahme/sync", {
     typ: cur.typ, deviceId, baseRev: payloadDoc.rev, doc: cur.typ === "abnahme" ? payloadDoc : undefined, regie: cur.typ === "regie" ? payloadDoc : undefined,
+    archiv: cur.typ === "abnahme" ? cur.archiv ?? undefined : undefined,
   });
-  if (!res.ok) return fehler(res.error);
+  if (!res.ok) {
+    // Der Server-Stand weicht vom letzten gemeinsamen Stand ab: nichts überschreiben, Abgleich anbieten.
+    if (res.status === 409 && res.daten?.konflikt && cur.typ === "abnahme") {
+      const d = (await holeDokument(id)) ?? cur;
+      if (d.typ === "abnahme") {
+        await speichereDokument({
+          ...d, zustand: "konflikt", fehler: "Abgleich nötig: das Protokoll wurde zwischenzeitlich geändert.",
+          konflikt: { server: res.daten.serverDoc as ProtokollDoc, signed: (res.daten.signed ?? {}) as Record<string, string>, erkanntAt: new Date().toISOString() },
+        });
+        notify();
+      }
+      return { ok: false, error: "Abgleich nötig.", konflikt: true };
+    }
+    return fehler(res.error);
+  }
 
   // 3. Lokal übernehmen; bei Änderungen während des Syncs bleibt das Dokument „dirty“
   const neu = (await holeDokument(id)) ?? cur;
@@ -144,6 +170,7 @@ export async function syncDokument(id: string): Promise<{ ok: boolean; error?: s
   }
   await speichereDokument({
     ...merged,
+    ...(merged.typ === "abnahme" ? { basis: klon({ ...(payloadDoc as ProtokollDoc), rev: res.rev }), konflikt: null, archiv: null } : {}),
     dirty: !unveraendert,
     zustand: unveraendert ? "synchronisiert" : "lokal",
     fehler: "",
@@ -163,6 +190,7 @@ export async function syncAlle(): Promise<void> {
   laeuft = true;
   try {
     for (const d of await alleDokumente()) {
+      if (d.typ === "abnahme" && d.konflikt && !d.archiv) continue; // wartet auf den Abgleich
       if (d.dirty || d.zustand !== "synchronisiert") await syncDokument(d.id);
     }
   } finally {
@@ -179,12 +207,15 @@ export async function entferneLokal(id: string): Promise<{ ok: boolean; error?: 
   return { ok: true };
 }
 
-/** Gibt den Checkout am Server frei und entfernt die lokale Kopie (Gerätewechsel). */
+/** Synchronisiert, gibt beim Regiebericht den Checkout frei und entfernt die lokale Kopie (Gerätewechsel). */
 export async function gibFrei(typ: "abnahme" | "regie", id: string): Promise<{ ok: boolean; error?: string }> {
   const sync = await syncDokument(id);
   if (!sync.ok) return sync;
-  const res = await post("/api/abnahme/freigeben", { typ, id, deviceId: await geraeteId() });
-  if (!res.ok) return { ok: false, error: res.error };
+  // Protokolle werden nicht mehr ausgecheckt: nach dem Sync genügt es, die lokale Kopie zu entfernen.
+  if (typ === "regie") {
+    const res = await post("/api/abnahme/freigeben", { typ, id, deviceId: await geraeteId() });
+    if (!res.ok) return { ok: false, error: res.error };
+  }
   return entferneLokal(id);
 }
 
@@ -192,4 +223,35 @@ export async function gibFrei(typ: "abnahme" | "regie", id: string): Promise<{ o
 export async function verwerfeLokal(id: string): Promise<void> {
   await loescheDokument(id);
   notify();
+}
+
+/**
+ * Wendet die Auswahl des Nutzers an: Tablet- und Server-Stand werden zusammengeführt, beide Stände für das Archiv
+ * vorgemerkt, danach wird synchronisiert. `ganzerTabletStand`: den Tablet-Stand unverändert übernehmen
+ * (bei bereits abgeschlossenem Protokoll, dessen PDF schon aus dem Tablet-Stand entstand).
+ */
+export async function wendeAbgleichAn(id: string, wahlen: Wahlen, ganzerTabletStand = false): Promise<{ ok: boolean; error?: string }> {
+  const d = await holeDokument(id);
+  if (!d || d.typ !== "abnahme" || !d.konflikt) return { ok: false, error: "Kein Abgleich offen." };
+  const lokal = d.doc;
+  const server = d.konflikt.server;
+  let w = wahlen;
+  if (ganzerTabletStand) {
+    w = Object.fromEntries(berechneAenderungen(d.basis, lokal, server).map((a) => [a.key, "lokal" as const]));
+  }
+  const merged = fuehreZusammen(d.basis, lokal, server, w);
+  await holeBilder(merged, d.konflikt.signed);
+  await speichereDokument({
+    ...d,
+    doc: merged,
+    basis: klon(server),
+    konflikt: null,
+    archiv: { tablet: klon(lokal), server: klon(server) },
+    dirty: true,
+    zustand: "lokal",
+    fehler: "",
+    editSeq: d.editSeq + 1,
+  });
+  notify();
+  return syncDokument(id);
 }

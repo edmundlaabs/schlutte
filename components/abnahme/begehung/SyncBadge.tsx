@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { alleDokumente, type LokalesDokument } from "@/lib/abnahme/offline/db";
 import { SYNC_EVENT, istOnline, syncAlle, syncDokument } from "@/lib/abnahme/offline/sync";
+import { AbgleichDialog } from "./AbgleichDialog";
 
 /** Startet den Sync automatisch, sobald Internet da ist (online-Ereignis, Sichtbarwerden, Intervall). */
 export function useAutoSync() {
@@ -29,15 +30,24 @@ export function useAutoSync() {
 
 export function SyncBadge({ eintrag, online }: { eintrag: LokalesDokument | null; online: boolean }) {
   const [busy, setBusy] = useState(false);
+  const [abgleich, setAbgleich] = useState(false);
   if (!eintrag) return null;
-  const text =
-    eintrag.zustand === "fehler" ? "Sync-Fehler" : eintrag.dirty || eintrag.zustand === "lokal" ? "lokal gespeichert" : "synchronisiert";
-  const klasse = eintrag.zustand === "fehler" ? "is-error" : eintrag.dirty ? "is-local" : "is-ok";
+  const konflikt = eintrag.typ === "abnahme" && Boolean(eintrag.konflikt) && !eintrag.archiv;
+  const text = konflikt
+    ? "Abgleich nötig"
+    : eintrag.zustand === "fehler" ? "Sync-Fehler" : eintrag.dirty || eintrag.zustand === "lokal" ? "lokal gespeichert" : "synchronisiert";
+  const klasse = konflikt || eintrag.zustand === "fehler" ? "is-error" : eintrag.dirty ? "is-local" : "is-ok";
   return (
     <span className="abn-sync">
+      {konflikt && eintrag.typ === "abnahme" && (
+        <>
+          <button type="button" className="aus-btn aus-btn-primary aus-btn-sm" onClick={() => setAbgleich(true)}>Abgleichen</button>
+          {abgleich && <AbgleichDialog eintrag={eintrag} onClose={() => setAbgleich(false)} />}
+        </>
+      )}
       <span className={`abn-badge ${klasse}`} title={eintrag.fehler || undefined}>{text}</span>
       {!online && <span className="abn-badge is-offline">offline</span>}
-      {online && (eintrag.dirty || eintrag.zustand !== "synchronisiert") && (
+      {online && !konflikt && (eintrag.dirty || eintrag.zustand !== "synchronisiert") && (
         <button
           type="button"
           className="aus-btn aus-btn-quiet aus-btn-sm"

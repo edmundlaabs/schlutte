@@ -19,6 +19,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.3.0",
+    date: "26.11.2026",
+    changes: [
+      "Abnahme: Kein Auschecken mehr bei Protokollen – mehrere Geräte und das Büro dürfen dasselbe Protokoll bearbeiten",
+      "Beim Sync wird der Server-Stand geprüft. Weicht er ab, öffnet „Abgleichen“ eine Liste aller Unterschiede; je Eintrag wählst du Stand dieses Geräts oder Server (hinzufügen, ersetzen, löschen). Beide Stände werden im Protokoll archiviert",
+      "Durchführenden Mitarbeiter ändern: im manuellen Editor, im Abschluss der Begehung und auf der Protokollseite",
+    ],
+  },
+  {
     version: "1.2.0",
     date: "25.11.2026",
     changes: [

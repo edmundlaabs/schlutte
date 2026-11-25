@@ -57,3 +57,13 @@
 .abn-import .aus-item-meta { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
 .abn-import .aus-item-side { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; text-align: left; }
 .abn-import .aus-item-side .aus-btn { min-height: var(--abn-touch, 44px); }
+
+/* Abgleich zweier Stände */
+.abn-abgleich { width: min(860px, 100%); }
+.abn-abgleich-kopf { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.abn-abgleich-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.abn-abgleich-liste li { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--border, #d8d2c6); background: var(--bg-raised, #fff); }
+.abn-abgleich-liste li.is-konflikt { border-left: 6px solid var(--gd-danger, #8C3A2E); }
+.abn-abgleich-werte { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.abn-abgleich-werte > div { padding: 8px 10px; border: 1px dashed var(--border, #d8d2c6); overflow-wrap: anywhere; }
+.abn-abgleich-werte > div.is-gewaehlt { border: 1px solid var(--fg, #1a1a17); background: color-mix(in srgb, var(--gd-success) 10%, var(--bg-raised, #fff)); }

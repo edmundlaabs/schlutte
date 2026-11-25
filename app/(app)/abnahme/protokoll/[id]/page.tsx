@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ladeProtokollDoc, listVersand, listVersionen } from "@/lib/data/abnahme";
+import { ladeProtokollDoc, listStaende, listVersand, listVersionen } from "@/lib/data/abnahme";
 import { requireAppAccess } from "@/lib/auth/app-access";
 import { formatDatum, formatDatumZeit } from "@/lib/abnahme/i18n";
 import { fortschritt, relevantePositionen } from "@/lib/abnahme/logic";
-import { createClient } from "@/lib/supabase/server";
 import { DetailAktionen } from "@/components/abnahme/DetailAktionen";
 import { KommissionZuordnen } from "@/components/abnahme/KommissionZuordnen";
+import { MitarbeiterAendern } from "@/components/abnahme/MitarbeiterAendern";
+import { getActiveEmployees } from "@/lib/data/employees";
 import { hatKommission, kommissionAnzeige } from "@/lib/abnahme/kommission";
 
 export const metadata = { title: "Protokoll" };
@@ -16,12 +17,11 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
   const { id } = await params;
   const doc = await ladeProtokollDoc(id);
   if (!doc) notFound();
-  const supabase = await createClient();
-  const co = await supabase.from("abnahme_protokolle").select("checkout_device,checkout_at").eq("id", id).maybeSingle();
-  const [versand, versionen] = await Promise.all([listVersand("abnahme", id), listVersionen(id)]);
+  const [versand, versionen, staende] = await Promise.all([listVersand("abnahme", id), listVersionen(id), listStaende(id)]);
   const f = fortschritt(relevantePositionen(doc));
   const offene = doc.maengel.filter((m) => !m.erledigtAt);
   const istAdmin = ctx.isFinance;
+  const mitarbeiterListe = (await getActiveEmployees().catch(() => [])).filter((e) => e.id && e.is_active !== false).map((e) => ({ id: e.id as string, name: e.name }));
 
   return (
     <>
@@ -38,7 +38,7 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
           {doc.projekt && (<><dt>Projekt</dt><dd>{doc.projekt}</dd></>)}
           {doc.ort && (<><dt>Ort</dt><dd>{doc.ort}</dd></>)}
           <dt>Herkunft</dt><dd>{doc.quelle === "manuell" ? "manuell angelegt" : doc.quelle === "vorlage" ? "aus Protokoll-Vorlage" : "Profacto-Import"}</dd>
-          <dt>Mitarbeiter</dt><dd>{doc.mitarbeiterName || "—"}</dd>
+          <dt>Mitarbeiter</dt><dd>{doc.mitarbeiterName || "—"} {doc.status !== "abgeschlossen" && <MitarbeiterAendern id={id} aktuell={doc.mitarbeiterName} mitarbeiter={mitarbeiterListe} />}</dd>
           {doc.teilnehmer.length > 0 && (<><dt>Teilnehmer</dt><dd>{doc.teilnehmer.map((t) => t.name).join(", ")}</dd></>)}
           <dt>Datum</dt><dd>{formatDatumZeit(doc.abgeschlossenAt ?? doc.beginnAt, "de") || "—"}</dd>
           <dt>Sprache</dt><dd>{doc.sprache === "en" ? "English" : "Deutsch"}</dd>
@@ -54,13 +54,28 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
           {doc.originalPath && <a className="aus-btn aus-btn-quiet" href={`/api/abnahme/pdf?typ=abnahme&id=${id}&art=original`}>Original-Positionsliste</a>}
           {doc.status !== "abgeschlossen" && <Link className="aus-btn aus-btn-secondary" href={`/abnahme/begehung?id=${id}`}>Zur Begehung (Tablet)</Link>}
         </div>
-        {doc.status !== "abgeschlossen" && co.data?.checkout_device && (
-          <p className="aus-muted">Auf einem Gerät ausgecheckt seit {formatDatumZeit(co.data.checkout_at, "de")}.</p>
-        )}
       </div>
 
       {!hatKommission(doc) && doc.status !== "abgeschlossen" && (
-        <KommissionZuordnen id={id} ausgecheckt={Boolean(co.data?.checkout_device)} />
+        <KommissionZuordnen id={id} />
+      )}
+
+      {staende.length > 0 && (
+        <section className="aus-card">
+          <h2 className="aus-h2">Frühere Stände (Abgleich)</h2>
+          <p className="aus-muted">Vor jedem Abgleich zweier Stände werden beide archiviert. Zum Nachsehen als JSON herunterladbar.</p>
+          <ul className="aus-list">
+            {staende.map((s) => (
+              <li key={s.id} className="aus-item">
+                <div className="aus-item-main">
+                  <strong>{s.art === "tablet" ? "Stand des Tablets" : "Stand des Servers"}</strong> · Version {s.rev}
+                  <div className="aus-item-meta">{formatDatumZeit(s.created_at, "de")}{s.von ? ` · ${s.von}` : ""}</div>
+                </div>
+                <div className="aus-item-side"><a href={`/api/abnahme/stand?id=${s.id}`}>JSON</a></div>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       <DetailAktionen
@@ -69,7 +84,7 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
         hatPdf={Boolean(doc.pdfPath)}
         kundeEmail={doc.kundeEmail}
         kopieEmail={doc.kopieEmail}
-        ausgecheckt={Boolean(co.data?.checkout_device) && doc.status !== "abgeschlossen"}
+        ausgecheckt={false}
         istAdmin={istAdmin}
         nachtraege={versionen.filter((v) => v.version > doc.version).length}
         offeneMaengel={offene.map((m) => {

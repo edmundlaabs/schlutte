@@ -7,7 +7,7 @@ import { KundeKommissionAuswahl } from "@/components/abnahme/KundeKommissionAusw
 import { LEERE_AUSWAHL, validiereKundeKommission, type KundeKommission } from "@/lib/abnahme/kommission";
 
 /** Protokoll ohne Kommission: Kommission nachträglich zuordnen (bestehend oder neu anlegen). */
-export function KommissionZuordnen({ id, ausgecheckt }: { id: string; ausgecheckt: boolean }) {
+export function KommissionZuordnen({ id }: { id: string }) {
   const router = useRouter();
   const [offen, setOffen] = useState(false);
   const [kk, setKk] = useState<KundeKommission>(LEERE_AUSWAHL);
@@ -33,10 +33,9 @@ export function KommissionZuordnen({ id, ausgecheckt }: { id: string; ausgecheck
     <section className="aus-card">
       <h2 className="aus-h2">Ohne Kommission</h2>
       <p className="aus-muted">Dieses Protokoll gehört zu keiner Kommission. Eine Kommission lässt sich zuordnen, solange es nicht abgeschlossen ist.</p>
-      {ausgecheckt && <p className="aus-field-error">Auf einem Gerät ausgecheckt: Bitte zuerst dort synchronisieren und das Gerät freigeben.</p>}
       {!offen && (
         <div className="aus-actions">
-          <button type="button" className="aus-btn aus-btn-secondary" disabled={ausgecheckt} onClick={() => { setKk({ ...LEERE_AUSWAHL }); setOffen(true); }}>
+          <button type="button" className="aus-btn aus-btn-secondary" onClick={() => { setKk({ ...LEERE_AUSWAHL }); setOffen(true); }}>
             Kommission zuordnen
           </button>
         </div>

@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { ProtokollDoc, RegieDoc } from "../types.ts";
+import type { StandArchiv } from "../staende.ts";
 
 /**
  * Lokaler Speicher der Begehung (IndexedDB). Jede Eingabe wird sofort geschrieben.
@@ -8,7 +9,7 @@ import type { ProtokollDoc, RegieDoc } from "../types.ts";
  * - meta:  Gerät-ID, angemeldeter Nutzer, Vorlagen, Mitarbeiterliste
  */
 
-export type SyncZustand = "lokal" | "synchronisiert" | "fehler";
+export type SyncZustand = "lokal" | "synchronisiert" | "fehler" | "konflikt";
 
 export type VersandVormerkung = { an: string; kopie: string; schluessel: string };
 
@@ -25,6 +26,12 @@ export type LokalesDokument =
       versand: VersandVormerkung[];
       /** Zähler jeder lokalen Änderung (erkennt Änderungen während eines laufenden Syncs). */
       editSeq: number;
+      /** Letzter gemeinsamer Stand mit dem Server (beim Laden/Sync). Grundlage des Abgleichs; fehlt bei älteren Kopien. */
+      basis?: ProtokollDoc | null;
+      /** Server-Stand, der beim Sync von der Basis abwich: Abgleich steht aus. */
+      konflikt?: { server: ProtokollDoc; signed: Record<string, string>; erkanntAt: string } | null;
+      /** Beide Stände vor dem Abgleich; wird mit dem nächsten Sync archiviert. */
+      archiv?: StandArchiv | null;
     }
   | {
       id: string;

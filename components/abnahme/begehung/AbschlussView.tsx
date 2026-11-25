@@ -89,7 +89,21 @@ export function AbschlussView({
           </div>
           <div className="aus-field">
             <span className="aus-label">Durchführender Mitarbeiter</span>
-            <div className="abn-readonly">{doc.mitarbeiterName || "—"}</div>
+            <select
+              className="aus-select"
+              aria-label="Durchführender Mitarbeiter"
+              disabled={gesperrt}
+              value={doc.mitarbeiterId && mitarbeiter.some((m) => m.id === doc.mitarbeiterId) ? doc.mitarbeiterId : "__aktuell"}
+              onChange={(e) => {
+                const m = mitarbeiter.find((x) => x.id === e.target.value);
+                if (m) onAendere((d) => ({ ...d, mitarbeiterId: m.id, mitarbeiterName: m.name }));
+              }}
+            >
+              {!(doc.mitarbeiterId && mitarbeiter.some((m) => m.id === doc.mitarbeiterId)) && (
+                <option value="__aktuell">{doc.mitarbeiterName || "— bitte wählen —"}</option>
+              )}
+              {mitarbeiter.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
           </div>
           <label className="aus-field">
             <span className="aus-label">Kunden-E-Mail (für Versand)</span>
