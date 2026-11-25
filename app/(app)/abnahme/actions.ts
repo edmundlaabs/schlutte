@@ -93,6 +93,56 @@ export async function legeProtokollAn(
   }
 }
 
+/**
+ * Einem Protokoll ohne Kommission nachträglich eine Kommission zuordnen (bestehend oder neu anlegen).
+ * Nur online, nur solange das Protokoll nicht abgeschlossen ist und auf keinem Gerät ausgecheckt ist
+ * (sonst würde der nächste Tablet-Sync die Zuordnung überschreiben). Kunde und Projekt des Protokolls bleiben.
+ */
+export async function ordneKommissionZu(
+  id: string,
+  auswahl: { modus: "bestehend" | "neu"; nr: string }
+): Promise<AbnahmeResult<{ nr: string }>> {
+  try {
+    const ctx = await requireAppAccess("abnahme");
+    const supabase = await createClient();
+    const cur = await supabase
+      .from("abnahme_protokolle")
+      .select("id,status,kommission_nr,kunde,projekt,checkout_device")
+      .eq("id", id)
+      .maybeSingle();
+    if (cur.error || !cur.data) return { ok: false, error: "Protokoll nicht gefunden." };
+    if (cur.data.status === "abgeschlossen") return { ok: false, error: "Abgeschlossene Protokolle lassen sich nicht mehr ändern. Nachtrag nutzen." };
+    if (cur.data.kommission_nr) return { ok: false, error: "Das Protokoll hat bereits eine Kommission." };
+    if (cur.data.checkout_device) return { ok: false, error: "Das Protokoll ist auf einem Gerät ausgecheckt. Bitte zuerst synchronisieren und das Gerät freigeben." };
+    const nr = auswahl.nr.trim();
+    if (!nr) return { ok: false, error: "Kommissionsnummer fehlt." };
+
+    let commissionId: string | null = null;
+    if (auswahl.modus === "bestehend") {
+      const t = await findKommission(nr);
+      if (!t) return { ok: false, error: `Kommission ${nr} existiert nicht.` };
+      commissionId = t.id;
+    } else {
+      if (await findKommission(nr)) return { ok: false, error: `Kommission ${nr} gibt es schon. Bitte aus der Suche auswählen.` };
+      const angelegt = await createCommission({
+        no: nr,
+        client: String(cur.data.kunde ?? ""),
+        project: String(cur.data.projekt ?? ""),
+        owner: ctx.employee?.initials ?? undefined,
+      });
+      commissionId = (await findKommission(angelegt.no))?.id ?? null;
+    }
+    const up = await supabase.from("abnahme_protokolle").update({ kommission_nr: nr, commission_id: commissionId }).eq("id", id);
+    if (up.error) return { ok: false, error: up.error.message };
+    revalidatePath(`/abnahme/protokoll/${id}`);
+    revalidatePath("/abnahme");
+    return { ok: true, data: { nr } };
+  } catch (e) {
+    console.error("Kommission zuordnen:", e);
+    return { ok: false, error: e instanceof Error ? e.message : "Zuordnen fehlgeschlagen." };
+  }
+}
+
 /** Versand aus der Ablage am PC (das PDF liegt bereits im Storage). */
 export async function sendeAction(typ: "abnahme" | "regie", id: string, an: string, kopie: string): Promise<AbnahmeResult> {
   try {

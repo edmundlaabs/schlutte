@@ -6,6 +6,8 @@ import { formatDatum, formatDatumZeit } from "@/lib/abnahme/i18n";
 import { fortschritt, relevantePositionen } from "@/lib/abnahme/logic";
 import { createClient } from "@/lib/supabase/server";
 import { DetailAktionen } from "@/components/abnahme/DetailAktionen";
+import { KommissionZuordnen } from "@/components/abnahme/KommissionZuordnen";
+import { hatKommission, kommissionAnzeige } from "@/lib/abnahme/kommission";
 
 export const metadata = { title: "Protokoll" };
 
@@ -26,7 +28,7 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
       <header className="aus-head">
         <Link className="aus-back" href="/abnahme">← Ablage</Link>
         <span className="aus-eyebrow">Abnahmeprotokoll{doc.version > 1 ? ` · Version ${doc.version}` : ""}</span>
-        <h1 className="aus-h1">{doc.kommissionNr} · {doc.kunde}</h1>
+        <h1 className="aus-h1">{kommissionAnzeige(doc.kommissionNr, "de")} · {doc.kunde}</h1>
         {doc.titel && <p className="aus-lede">{doc.titel}</p>}
       </header>
 
@@ -35,6 +37,7 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
           <dt>Status</dt><dd>{doc.status === "abgeschlossen" ? "abgeschlossen" : doc.status === "in_arbeit" ? "in Arbeit" : "bereit"}</dd>
           {doc.projekt && (<><dt>Projekt</dt><dd>{doc.projekt}</dd></>)}
           {doc.ort && (<><dt>Ort</dt><dd>{doc.ort}</dd></>)}
+          <dt>Herkunft</dt><dd>{doc.quelle === "manuell" ? "manuell angelegt" : doc.quelle === "vorlage" ? "aus Protokoll-Vorlage" : "Profacto-Import"}</dd>
           <dt>Mitarbeiter</dt><dd>{doc.mitarbeiterName || "—"}</dd>
           {doc.teilnehmer.length > 0 && (<><dt>Teilnehmer</dt><dd>{doc.teilnehmer.map((t) => t.name).join(", ")}</dd></>)}
           <dt>Datum</dt><dd>{formatDatumZeit(doc.abgeschlossenAt ?? doc.beginnAt, "de") || "—"}</dd>
@@ -55,6 +58,10 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
           <p className="aus-muted">Auf einem Gerät ausgecheckt seit {formatDatumZeit(co.data.checkout_at, "de")}.</p>
         )}
       </div>
+
+      {!hatKommission(doc) && doc.status !== "abgeschlossen" && (
+        <KommissionZuordnen id={id} ausgecheckt={Boolean(co.data?.checkout_device)} />
+      )}
 
       <DetailAktionen
         id={id}

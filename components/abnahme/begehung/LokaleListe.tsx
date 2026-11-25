@@ -1,5 +1,6 @@
 "use client";
 
+import { kommissionAnzeige } from "@/lib/abnahme/kommission";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { alleDokumente, geraeteId, type LokalesDokument } from "@/lib/abnahme/offline/db";
@@ -10,7 +11,7 @@ import { legeRegieLokalAn } from "@/lib/abnahme/offline/regie-neu";
 
 type ServerEintrag = {
   id: string;
-  kommission_nr: string;
+  kommission_nr: string | null;
   kunde: string;
   projekt?: string | null;
   titel?: string | null;
@@ -85,7 +86,7 @@ export function LokaleListe() {
           {lokal.map((d) => (
             <li key={d.id} className="abn-dok">
               <div className="abn-dok-main">
-                <strong>{d.typ === "abnahme" ? "Abnahme" : "Regiebericht"} · {d.doc.kommissionNr}</strong> · {d.doc.kunde}
+                <strong>{d.typ === "abnahme" ? "Abnahme" : "Regiebericht"} · {kommissionAnzeige(d.doc.kommissionNr, "de")}</strong> · {d.doc.kunde}
                 <div className="aus-muted">
                   {d.typ === "abnahme" ? (d.doc.status === "abgeschlossen" ? "abgeschlossen" : "in Arbeit") : d.doc.status === "abgeschlossen" ? "abgeschlossen" : "Entwurf"}
                 </div>
@@ -161,7 +162,7 @@ export function LokaleListe() {
             return (
               <li key={p.id} className="abn-dok">
                 <div className="abn-dok-main">
-                  <strong>{p.typ === "abnahme" ? "Abnahme" : "Regiebericht"} · {p.kommission_nr}</strong> · {p.kunde}
+                  <strong>{p.typ === "abnahme" ? "Abnahme" : "Regiebericht"} · {kommissionAnzeige(p.kommission_nr, "de")}</strong> · {p.kunde}
                   {p.titel && <span className="aus-muted"> · {p.titel}</span>}
                   {fremd && <div className="aus-field-error">Auf einem anderen Gerät ausgecheckt{p.mitarbeiter_name ? ` (${p.mitarbeiter_name})` : ""}.</div>}
                 </div>
