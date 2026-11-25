@@ -259,3 +259,54 @@ export async function loescheRegieAction(id: string): Promise<AbnahmeResult> {
     return { ok: false, error: e instanceof Error ? e.message : "Löschen fehlgeschlagen." };
   }
 }
+
+export type ProtokollKopf = { kunde: string; projekt: string; titel: string; ort: string; sprache: "de" | "en"; kundeEmail: string; kopieEmail: string; bemerkung: string };
+export type RegieKopf = { kunde: string; name: string; strasse: string; ort: string; telefon: string; datum: string; beschreibung: string; sprache: "de" | "en"; kundeEmail: string; kopieEmail: string };
+
+const leer = (s: string): string | null => (s.trim() === "" ? null : s.trim());
+
+/** Kopfdaten eines nicht abgeschlossenen Protokolls ändern (online). Erhöht die Version: Tablets gleichen beim nächsten Sync ab. */
+export async function aendereProtokollKopf(id: string, k: ProtokollKopf): Promise<AbnahmeResult> {
+  try {
+    await requireAppAccess("abnahme");
+    if (!k.kunde.trim()) return { ok: false, error: "Der Kundenname ist Pflicht." };
+    const supabase = await createClient();
+    const cur = await supabase.from("abnahme_protokolle").select("id,status,rev").eq("id", id).maybeSingle();
+    if (cur.error || !cur.data) return { ok: false, error: "Protokoll nicht gefunden." };
+    if (cur.data.status === "abgeschlossen") return { ok: false, error: "Abgeschlossene Protokolle lassen sich nicht mehr ändern. Nachtrag nutzen." };
+    const up = await supabase.from("abnahme_protokolle").update({
+      kunde: k.kunde.trim(), projekt: leer(k.projekt), titel: leer(k.titel), ort: leer(k.ort), sprache: k.sprache === "en" ? "en" : "de",
+      kunde_email: leer(k.kundeEmail), kopie_email: leer(k.kopieEmail), bemerkung: leer(k.bemerkung), rev: Number(cur.data.rev ?? 0) + 1,
+    }).eq("id", id);
+    if (up.error) return { ok: false, error: up.error.message };
+    revalidatePath(`/abnahme/protokoll/${id}`);
+    revalidatePath("/abnahme");
+    return { ok: true, data: undefined };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Ändern fehlgeschlagen." };
+  }
+}
+
+/** Kopfdaten eines nicht abgeschlossenen Regieberichts ändern (online). */
+export async function aendereRegieKopf(id: string, k: RegieKopf): Promise<AbnahmeResult> {
+  try {
+    await requireAppAccess("abnahme");
+    if (!k.kunde.trim()) return { ok: false, error: "Der Kundenname ist Pflicht." };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(k.datum)) return { ok: false, error: "Bitte ein gültiges Datum angeben." };
+    const supabase = await createClient();
+    const cur = await supabase.from("abnahme_regieberichte").select("id,status,rev").eq("id", id).maybeSingle();
+    if (cur.error || !cur.data) return { ok: false, error: "Regiebericht nicht gefunden." };
+    if (cur.data.status === "abgeschlossen") return { ok: false, error: "Abgeschlossene Regieberichte lassen sich nicht mehr ändern." };
+    const up = await supabase.from("abnahme_regieberichte").update({
+      kunde: k.kunde.trim(), name: leer(k.name), strasse: leer(k.strasse), ort: leer(k.ort), telefon: leer(k.telefon), datum: k.datum,
+      beschreibung: leer(k.beschreibung), sprache: k.sprache === "en" ? "en" : "de", kunde_email: leer(k.kundeEmail), kopie_email: leer(k.kopieEmail),
+      rev: Number(cur.data.rev ?? 0) + 1,
+    }).eq("id", id);
+    if (up.error) return { ok: false, error: up.error.message };
+    revalidatePath(`/abnahme/regie/ansicht/${id}`);
+    revalidatePath("/abnahme");
+    return { ok: true, data: undefined };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Ändern fehlgeschlagen." };
+  }
+}

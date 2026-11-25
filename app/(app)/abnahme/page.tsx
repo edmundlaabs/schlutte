@@ -2,6 +2,8 @@ import Link from "next/link";
 import { listAblage } from "@/lib/data/abnahme";
 import { formatDatum } from "@/lib/abnahme/i18n";
 import { kommissionAnzeige } from "@/lib/abnahme/kommission";
+import { requireAppAccess } from "@/lib/auth/app-access";
+import { AblageLoeschen } from "@/components/abnahme/AblageLoeschen";
 
 export const metadata = { title: "Ablage" };
 
@@ -12,6 +14,7 @@ const statusText = (s: string) =>
 
 export default async function AblagePage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
+  const ctx = await requireAppAccess("abnahme");
   let eintraege: Awaited<ReturnType<typeof listAblage>> = [];
   let fehler = "";
   try {
@@ -109,6 +112,14 @@ export default async function AblagePage({ searchParams }: { searchParams: Promi
                 <div className="abn-eintrag-links">
                   <Link href={href}>Öffnen</Link>
                   {e.pdf_path && <a href={`/api/abnahme/pdf?typ=${e.typ}&id=${e.id}`}>PDF</a>}
+                  {(e.status !== "abgeschlossen" || ctx.isFinance) && (
+                    <AblageLoeschen
+                      typ={e.typ}
+                      id={e.id}
+                      abgeschlossen={e.status === "abgeschlossen"}
+                      bezeichnung={`${e.typ === "regie" ? "Regiebericht" : "Abnahmeprotokoll"} ${kommissionAnzeige(e.kommission_nr, "de")} · ${e.kunde}`}
+                    />
+                  )}
                 </div>
               </div>
             </li>

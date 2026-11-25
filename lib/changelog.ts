@@ -19,6 +19,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.6.0",
+    date: "26.11.2026",
+    changes: [
+      "Ablage: Protokolle und Regieberichte direkt in der Liste löschen (abgeschlossene nur CEO/Admin)",
+      "Protokoll- und Regiebericht-Seite: „Bearbeiten“ lädt den Stand auf dieses Gerät und öffnet die Bearbeitung (Räume, Positionen, Prüfung bzw. Zeilen und Zeiten) – auch am PC, ohne Auschecken",
+      "„Kopfdaten ändern“ (Kunde, Projekt, Ort, E-Mails, Bemerkung bzw. Auftraggeber, Adresse, Datum …) auf der Protokoll- und Regiebericht-Seite; Tablets gleichen die Änderung beim Sync ab",
+    ],
+  },
+  {
     version: "1.5.1",
     date: "26.11.2026",
     changes: [
