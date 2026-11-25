@@ -41,7 +41,7 @@ Abnahmeprotokoll und Regiebericht für die Baustelle: Tablet-Begehung auch ohne 
 
 PDF-Dateinamen: `Abnahme_<Kommission>_<Kunde-kurz>_<JJJJ-MM-TT>.pdf`, `Regiebericht_<Kommission>_<Kunde-kurz>_<JJJJ-MM-TT>.pdf`.
 
-**Begehung (ab 1.5.0)**: Statusknöpfe mit Symbolen (Haken, Hammer, X). Jede Position hat „Foto vom Objekt“ (Kamera, mehrere Fotos, lokal komprimiert, im Sync hochgeladen) – gedacht auch für i. O.; das Foto ist optional, die Position zeigt bei i. O. ohne Foto einen Hinweis. Im PDF stehen die Objektfotos unter den Prüfpunkten der Position. Räume lassen sich in der Begehung umbenennen (Name, Etage) und löschen (samt Positionen, Mängeln, Fotos, Unterschriften; mit Rückfrage, auch offline).
+**Begehung (ab 1.5.0)**: Statusknöpfe mit Symbolen (Haken, Hammer, X). Jede Position hat „Foto vom Objekt“ (Kamera, mehrere Fotos, lokal komprimiert, im Sync hochgeladen) – gedacht auch für i. O.; das Foto ist optional, die Position zeigt bei i. O. ohne Foto einen Hinweis. Im PDF stehen die Objektfotos unter den Prüfpunkten der Position. Räume lassen sich in der Begehung hinzufügen, umbenennen (Name, Etage) und löschen (in der Übersicht und im Raum) (samt Positionen, Mängeln, Fotos, Unterschriften; mit Rückfrage, auch offline).
 
 **Durchführender Mitarbeiter**: wählbar im manuellen Editor, im Abschluss der Begehung (auch offline, aus der geladenen Mitarbeiterliste) und auf der Protokollseite (online, solange nicht abgeschlossen).
 

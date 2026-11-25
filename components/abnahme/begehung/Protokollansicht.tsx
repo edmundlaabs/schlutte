@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLokalesProtokoll } from "@/lib/abnahme/offline/store";
 import { loescheBlob, speichereBlob } from "@/lib/abnahme/offline/db";
 import { komprimiereFoto } from "@/lib/abnahme/offline/images";
+import { neuerRaum } from "@/lib/abnahme/edit";
 import {
   fortschritt, findeMangel, findeUnterschrift, maengelPositionen, offeneUnterschriften, positionStatus,
   raumAlleIo, relevantePositionen, setzeMangel, setzeMehrere, setzeStatus, setzeUnterschrift, type ItemRef,
@@ -100,6 +101,32 @@ export function Protokollansicht({ id }: { id: string }) {
       };
     });
     setMangelCtx(null);
+  }
+
+  /** Raum samt Positionen, Mängeln, Fotos und Unterschriften löschen (nach Rückfrage). */
+  function raumLoeschen(raumId: string, zurueckZurUebersicht = false) {
+    if (!doc) return;
+    const raum = doc.raeume.find((r) => r.id === raumId);
+    if (!raum) return;
+    const n = doc.positionen.filter((p) => p.raumId === raum.id).length;
+    if (!window.confirm(`Raum „${raum.name}“ mit ${n} Position${n === 1 ? "" : "en"} samt Mängeln, Fotos und Unterschriften löschen? Das lässt sich nicht rückgängig machen.`)) return;
+    try {
+      const r = entferneRaum(doc, raum.id);
+      r.entfernteBilder.forEach((f) => void loescheBlob(f));
+      aendere(() => r.doc);
+      if (zurueckZurUebersicht) setView({ art: "uebersicht" });
+    } catch (e) {
+      setHinweis(e instanceof Error ? e.message : "Nicht möglich.");
+    }
+  }
+  function raumAendern(raumId: string, patch: Partial<Raum>) {
+    aendere((d) => ({ ...d, raeume: d.raeume.map((r) => (r.id === raumId ? { ...r, ...patch } : r)) }));
+  }
+  /** Neuer Raum am Ende; liefert die ID, damit die Übersicht ihn gleich zum Benennen öffnen kann. */
+  function raumNeu(): string {
+    const id = crypto.randomUUID();
+    aendere((d) => neuerRaum(d, "Neuer Raum", { id }).doc);
+    return id;
   }
 
   /** Objektfotos (auch bei „i. O.“): komprimiert lokal speichern, der Sync lädt sie hoch. */
@@ -225,7 +252,7 @@ export function Protokollansicht({ id }: { id: string }) {
       )}
       {navigation}
 
-      {view.art === "uebersicht" && <Uebersicht doc={doc} onRaum={(i) => setView({ art: "raum", index: i })} onAbschluss={() => setView({ art: "abschluss" })} />}
+      {view.art === "uebersicht" && <Uebersicht doc={doc} gesperrt={gesperrt} onRaum={(i) => setView({ art: "raum", index: i })} onAbschluss={() => setView({ art: "abschluss" })} onRaumAendern={raumAendern} onRaumLoeschen={(id) => raumLoeschen(id)} onRaumNeu={raumNeu} />}
 
       {view.art === "raum" && doc.raeume[view.index] && (
         <RaumSeite
@@ -262,19 +289,7 @@ export function Protokollansicht({ id }: { id: string }) {
             setAuswahl(new Set());
           }}
           onRaumAendern={(patch) => aendere((d) => ({ ...d, raeume: d.raeume.map((r) => (r.id === doc.raeume[view.index].id ? { ...r, ...patch } : r)) }))}
-          onRaumLoeschen={() => {
-            const raum = doc.raeume[view.index];
-            const n = doc.positionen.filter((p) => p.raumId === raum.id).length;
-            if (!window.confirm(`Raum „${raum.name}“ mit ${n} Position${n === 1 ? "" : "en"} samt Mängeln, Fotos und Unterschriften löschen? Das lässt sich nicht rückgängig machen.`)) return;
-            try {
-              const r = entferneRaum(doc, raum.id);
-              r.entfernteBilder.forEach((f) => void loescheBlob(f));
-              aendere(() => r.doc);
-              setView({ art: "uebersicht" });
-            } catch (e) {
-              setHinweis(e instanceof Error ? e.message : "Nicht möglich.");
-            }
-          }}
+          onRaumLoeschen={() => raumLoeschen(doc.raeume[view.index].id, true)}
           onBemerkung={(text) => aendere((d) => ({ ...d, raeume: d.raeume.map((r) => (r.id === doc.raeume[view.index].id ? { ...r, bemerkung: text } : r)) }))}
           onSign={(bezug, bezugId, titel) =>
             setSigCtx({ bezug, bezugId, titel, rolle: "Kunde", name: letzterKundenName(doc) })
@@ -306,7 +321,18 @@ function letzterKundenName(doc: ProtokollDoc): string {
   return u?.name ?? "";
 }
 
-function Uebersicht({ doc, onRaum, onAbschluss }: { doc: ProtokollDoc; onRaum: (i: number) => void; onAbschluss: () => void }) {
+function Uebersicht({
+  doc, gesperrt, onRaum, onAbschluss, onRaumAendern, onRaumLoeschen, onRaumNeu,
+}: {
+  doc: ProtokollDoc;
+  gesperrt: boolean;
+  onRaum: (i: number) => void;
+  onAbschluss: () => void;
+  onRaumAendern: (raumId: string, patch: Partial<Raum>) => void;
+  onRaumLoeschen: (raumId: string) => void;
+  onRaumNeu: () => string;
+}) {
+  const [offenId, setOffenId] = useState<string | null>(null);
   const gesamt = fortschritt(relevantePositionen(doc));
   const offeneU = offeneUnterschriften(doc);
   return (
@@ -337,11 +363,32 @@ function Uebersicht({ doc, onRaum, onAbschluss }: { doc: ProtokollDoc; onRaum: (
                 <FortschrittZeile f={f} kompakt />
                 <span className={signiert ? "abn-chip is-ok" : "abn-chip"}>{signiert ? "unterschrieben" : "Unterschrift offen"}</span>
               </button>
+              {!gesperrt && (
+                offenId === r.id ? (
+                  <div className="abn-raum-menue-body abn-raum-inline">
+                    <label className="aus-field">
+                      <span className="aus-label">Raumname</span>
+                      <input className="aus-input" autoFocus value={r.name} onChange={(e) => onRaumAendern(r.id, { name: e.target.value })} />
+                    </label>
+                    <label className="aus-field">
+                      <span className="aus-label">Etage</span>
+                      <input className="aus-input" value={r.etage} placeholder="EG, OG …" onChange={(e) => onRaumAendern(r.id, { etage: e.target.value })} />
+                    </label>
+                    <span className="abn-vorlage-zeile">
+                      <button type="button" className="aus-btn aus-btn-primary aus-btn-sm" onClick={() => setOffenId(null)}>Fertig</button>
+                      <button type="button" className="aus-btn aus-btn-quiet aus-btn-sm abn-raum-loeschen" onClick={() => { setOffenId(null); onRaumLoeschen(r.id); }}>Raum löschen</button>
+                    </span>
+                  </div>
+                ) : (
+                  <button type="button" className="aus-btn aus-btn-quiet aus-btn-sm abn-raum-edit" onClick={() => setOffenId(r.id)}>Name ändern / löschen</button>
+                )
+              )}
             </li>
           );
         })}
       </ul>
       <div className="aus-actions">
+        {!gesperrt && <button type="button" className="aus-btn aus-btn-secondary aus-btn-lg" onClick={() => setOffenId(onRaumNeu())}>+ Raum hinzufügen</button>}
         <button type="button" className="aus-btn aus-btn-primary aus-btn-lg" onClick={onAbschluss}>Zum Abschluss</button>
       </div>
     </section>

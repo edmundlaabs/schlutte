@@ -19,6 +19,13 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.5.1",
+    date: "26.11.2026",
+    changes: [
+      "Begehung: Räume lassen sich direkt in der Übersicht hinzufügen, umbenennen (Name, Etage) und löschen",
+    ],
+  },
+  {
     version: "1.5.0",
     date: "26.11.2026",
     changes: [

@@ -88,3 +88,8 @@
 .abn-objektfoto-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .abn-objektfoto-item { position: relative; display: inline-block; }
 .abn-objektfoto-weg { position: absolute; top: 2px; right: 2px; min-width: 32px; min-height: 32px; border: 0; background: rgba(14, 14, 13, 0.55); color: #fff; font-size: 16px; line-height: 1; cursor: pointer; }
+
+/* Raumverwaltung in der Begehungs-Übersicht */
+.abn-raumliste > li { display: grid; gap: 6px; align-content: start; }
+.abn-raum-edit { justify-self: start; min-height: var(--abn-touch, 44px); color: var(--fg-muted, #6b665c); }
+.abn-raum-inline { grid-template-columns: 1fr; }
