@@ -28,12 +28,15 @@ export function ProtokollEditor({
   mitarbeiter,
   nutzerKey,
   istAdmin,
+  mitarbeiterListe,
 }: {
   vorlagen: Vorlage[];
   protokollVorlagen: ProtokollVorlage[];
   mitarbeiter: Mitarbeiter;
   nutzerKey: string;
   istAdmin: boolean;
+  /** Aktive Mitarbeiter zur Auswahl des durchführenden Mitarbeiters. */
+  mitarbeiterListe: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const [doc, setDoc] = useState<ProtokollDoc>(() => frisch(mitarbeiter));
@@ -216,7 +219,18 @@ export function ProtokollEditor({
           </label>
           <div className="aus-field">
             <span className="aus-label">Durchführender Mitarbeiter</span>
-            <div className="abn-readonly">{mitarbeiter.name || "–"}</div>
+            <select
+              className="aus-select"
+              aria-label="Durchführender Mitarbeiter"
+              value={doc.mitarbeiterId ?? ""}
+              onChange={(e) => {
+                const m = mitarbeiterListe.find((x) => x.id === e.target.value);
+                aendereDoc((d) => ({ ...d, mitarbeiterId: m?.id ?? mitarbeiter.id, mitarbeiterName: m?.name ?? mitarbeiter.name }));
+              }}
+            >
+              {!mitarbeiterListe.some((m) => m.id === doc.mitarbeiterId) && <option value={doc.mitarbeiterId ?? ""}>{doc.mitarbeiterName || "–"}</option>}
+              {mitarbeiterListe.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
           </div>
         </div>
       </section>

@@ -5,6 +5,7 @@ import { requireAppAccess } from "@/lib/auth/app-access";
 import { createCommission } from "@/lib/data/commissions";
 import { findKommission, insertProtokoll, ladeProtokollDoc, searchKommissionen, type KommissionTreffer } from "@/lib/data/abnahme";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveEmployees } from "@/lib/data/employees";
 import { ermittleKette, loescheKette } from "@/lib/data/abnahme-loeschen";
 import { versendeDokument } from "@/lib/abnahme/versand-server";
 import { erzeugeNachtrag } from "@/lib/abnahme/nachtrag";
@@ -18,6 +19,18 @@ export type AbnahmeResult<T = undefined> = { ok: true; data: T } | { ok: false; 
 export async function findeKommissionAction(nr: string): Promise<KommissionTreffer | null> {
   await requireAppAccess("abnahme");
   return findKommission(nr);
+}
+
+/** Durchführender Mitarbeiter: der im Protokoll gewählte (muss ein aktiver Mitarbeiter sein), sonst der angemeldete. */
+async function waehleMitarbeiter(
+  doc: Pick<ProtokollDoc, "mitarbeiterId">,
+  ich: { id?: string | null; name?: string | null } | null | undefined
+): Promise<{ mitarbeiterId: string | null; mitarbeiterName: string }> {
+  if (doc.mitarbeiterId && doc.mitarbeiterId !== ich?.id) {
+    const e = (await getActiveEmployees()).find((x) => x.id === doc.mitarbeiterId && x.is_active !== false);
+    if (e) return { mitarbeiterId: e.id as string, mitarbeiterName: e.name };
+  }
+  return { mitarbeiterId: ich?.id ?? null, mitarbeiterName: ich?.name ?? "" };
 }
 
 export async function sucheKommissionenAction(q: string): Promise<KommissionTreffer[]> {
@@ -75,8 +88,7 @@ export async function legeProtokollAn(
       status: "bereit",
       version: 1,
       parentId: null,
-      mitarbeiterId: ctx.employee?.id ?? null,
-      mitarbeiterName: ctx.employee?.name ?? "",
+      ...(await waehleMitarbeiter(doc, ctx.employee)),
       maengel: [],
       fotos: [],
       unterschriften: [],
@@ -95,8 +107,8 @@ export async function legeProtokollAn(
 
 /**
  * Einem Protokoll ohne Kommission nachträglich eine Kommission zuordnen (bestehend oder neu anlegen).
- * Nur online, nur solange das Protokoll nicht abgeschlossen ist und auf keinem Gerät ausgecheckt ist
- * (sonst würde der nächste Tablet-Sync die Zuordnung überschreiben). Kunde und Projekt des Protokolls bleiben.
+ * Nur online, nur solange das Protokoll nicht abgeschlossen ist. Die Version (rev) wird erhöht: Ein Tablet mit
+ * älterem Stand sieht die Änderung beim nächsten Sync im Abgleich. Kunde und Projekt des Protokolls bleiben.
  */
 export async function ordneKommissionZu(
   id: string,
@@ -107,13 +119,12 @@ export async function ordneKommissionZu(
     const supabase = await createClient();
     const cur = await supabase
       .from("abnahme_protokolle")
-      .select("id,status,kommission_nr,kunde,projekt,checkout_device")
+      .select("id,status,kommission_nr,kunde,projekt,rev")
       .eq("id", id)
       .maybeSingle();
     if (cur.error || !cur.data) return { ok: false, error: "Protokoll nicht gefunden." };
     if (cur.data.status === "abgeschlossen") return { ok: false, error: "Abgeschlossene Protokolle lassen sich nicht mehr ändern. Nachtrag nutzen." };
     if (cur.data.kommission_nr) return { ok: false, error: "Das Protokoll hat bereits eine Kommission." };
-    if (cur.data.checkout_device) return { ok: false, error: "Das Protokoll ist auf einem Gerät ausgecheckt. Bitte zuerst synchronisieren und das Gerät freigeben." };
     const nr = auswahl.nr.trim();
     if (!nr) return { ok: false, error: "Kommissionsnummer fehlt." };
 
@@ -132,7 +143,7 @@ export async function ordneKommissionZu(
       });
       commissionId = (await findKommission(angelegt.no))?.id ?? null;
     }
-    const up = await supabase.from("abnahme_protokolle").update({ kommission_nr: nr, commission_id: commissionId }).eq("id", id);
+    const up = await supabase.from("abnahme_protokolle").update({ kommission_nr: nr, commission_id: commissionId, rev: Number(cur.data.rev ?? 0) + 1 }).eq("id", id);
     if (up.error) return { ok: false, error: up.error.message };
     revalidatePath(`/abnahme/protokoll/${id}`);
     revalidatePath("/abnahme");
@@ -140,6 +151,28 @@ export async function ordneKommissionZu(
   } catch (e) {
     console.error("Kommission zuordnen:", e);
     return { ok: false, error: e instanceof Error ? e.message : "Zuordnen fehlgeschlagen." };
+  }
+}
+
+/** Durchführenden Mitarbeiter eines nicht abgeschlossenen Protokolls ändern (Detailseite, online). */
+export async function aendereMitarbeiterAction(id: string, employeeId: string): Promise<AbnahmeResult<{ name: string }>> {
+  try {
+    await requireAppAccess("abnahme");
+    const e = (await getActiveEmployees()).find((x) => x.id === employeeId && x.is_active !== false);
+    if (!e) return { ok: false, error: "Mitarbeiter nicht gefunden." };
+    const supabase = await createClient();
+    const cur = await supabase.from("abnahme_protokolle").select("id,status,rev").eq("id", id).maybeSingle();
+    if (cur.error || !cur.data) return { ok: false, error: "Protokoll nicht gefunden." };
+    if (cur.data.status === "abgeschlossen") return { ok: false, error: "Abgeschlossene Protokolle lassen sich nicht mehr ändern. Nachtrag nutzen." };
+    const up = await supabase
+      .from("abnahme_protokolle")
+      .update({ mitarbeiter_id: e.id, mitarbeiter_name: e.name, rev: Number(cur.data.rev ?? 0) + 1 })
+      .eq("id", id);
+    if (up.error) return { ok: false, error: up.error.message };
+    revalidatePath(`/abnahme/protokoll/${id}`);
+    return { ok: true, data: { name: e.name } };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Ändern fehlgeschlagen." };
   }
 }
 

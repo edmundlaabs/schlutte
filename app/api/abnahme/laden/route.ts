@@ -6,7 +6,7 @@ import { rowsToDoc, rowToVorlage } from "@/lib/abnahme/mapping";
 export const dynamic = "force-dynamic";
 
 /**
- * „Für Baustelle laden“: checkt das Dokument für dieses Gerät aus und liefert alle Daten
+ * „Für Baustelle laden“: liefert alle Daten
  * (inkl. Vorlagen, Mitarbeiterliste, angemeldeter Nutzer, signierte URLs vorhandener Bilder).
  */
 export async function POST(request: Request) {
@@ -16,9 +16,13 @@ export async function POST(request: Request) {
   if (!body?.id || !body.deviceId || (body.typ !== "abnahme" && body.typ !== "regie")) return jsonFehler(400, "Ungültige Anfrage.");
 
   const supabase = await createClient();
-  const co = await supabase.rpc("abnahme_checkout", { p_typ: body.typ, p_id: body.id, p_device: body.deviceId, p_force: Boolean(body.force) });
-  if (co.error) return jsonFehler(403, co.error.message);
-  if (co.data === false) return jsonFehler(409, "Dieses Dokument ist auf einem anderen Gerät ausgecheckt.");
+  // Abnahmeprotokolle werden nicht mehr ausgecheckt: mehrere Geräte dürfen laden und bearbeiten, der Sync gleicht ab.
+  // Nur der Regiebericht hält noch einen Checkout.
+  if (body.typ === "regie") {
+    const co = await supabase.rpc("abnahme_checkout", { p_typ: body.typ, p_id: body.id, p_device: body.deviceId, p_force: Boolean(body.force) });
+    if (co.error) return jsonFehler(403, co.error.message);
+    if (co.data === false) return jsonFehler(409, "Dieses Dokument ist auf einem anderen Gerät ausgecheckt.");
+  }
 
   const me = { id: ctx.employee?.id ?? null, name: ctx.employee?.name ?? ctx.email ?? "" };
   const employees = (await getActiveEmployees())

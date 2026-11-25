@@ -243,3 +243,13 @@ Die Tabellen wurden verifiziert und die Data-Schicht auf das reale Schema angepa
 - **Entwurf des manuellen Editors in localStorage** (reiner Text, Schlüssel je Mitarbeiter), nicht IndexedDB: keine Blobs, einfacher; die IndexedDB bleibt der Begehung vorbehalten.
 - **`StrukturEditor`** (Räume/Positionen/Prüfpunkte) ist gemeinsam für Import und manuellen Editor; im Import lassen sich Prüfpunkte dadurch jetzt auch umbenennen und löschen.
 - Keine neuen Libraries. Nicht gebaut (Optionen): Anlegen offline auf dem Tablet, Regiebericht mit derselben Auswahl inkl. „ohne Kommission“.
+
+## Abnahme: Abgleich statt Auschecken, Mitarbeiter wählbar (Version 1.3.0, 2026-11-26)
+
+- **Kein Checkout mehr für Abnahmeprotokolle.** Mehrere Geräte und das Büro dürfen parallel arbeiten; der Server prüft beim Sync die Version (`rev`) und gibt bei Abweichung seinen Stand zurück (HTTP 409 mit `konflikt`), statt zu überschreiben. Der Regiebericht behält den Checkout (eigener Aufwand für einen Abgleich seiner Zeilen).
+- **Drei-Wege-Abgleich im Browser** (`lib/abnahme/abgleich.ts`, rein und getestet): Das Gerät speichert beim Laden/Sync den letzten gemeinsamen Stand (`basis`, IndexedDB-Feld, kein Schema-Bump). Unterschiede zwischen Tablet- und Server-Stand werden je Eintrag (Kopffeld, Raum, Position, Prüfpunkt, Mangel, Foto, Unterschrift) aufgelistet und der Herkunft zugeordnet; der Nutzer wählt je Eintrag eine Seite (hinzufügen/ersetzen/löschen ergibt sich daraus). Ohne Basis (ältere Kopie) gilt jeder Unterschied als Konflikt. Bezüge werden bereinigt (Mangel ohne Position entfällt usw.).
+- **Beide Stände archivieren:** Tabelle `abnahme_staende` (Migration `20261126_abnahme_abgleich.sql`) bekommt Tablet- und Server-Stand vor dem Abgleich als `jsonb`, geschrieben vom Sync-Endpunkt zusammen mit dem Ergebnis; Anzeige und JSON-Download auf der Protokollseite.
+- **Serverseitige Änderungen erhöhen `rev`** (Kommission zuordnen, Mitarbeiter ändern), damit ein Tablet sie beim nächsten Sync im Abgleich sieht.
+- **Bereits abgeschlossene Tablet-Stände** (PDF schon erzeugt) werden nur als Ganzes übernommen.
+- **Restrisiko:** Zwischen Versionsprüfung und Schreiben im Sync-Endpunkt liegt kein atomarer Schritt; bei exakt gleichzeitigem Sync zweier Geräte gewinnt das spätere (der frühere Stand liegt dann nur im Archiv, wenn vorher abgeglichen wurde).
+

@@ -79,10 +79,10 @@ export function LokaleListe() {
       const neue = [
         ...liste.protokolle.map((p) => ({ ...p, typ: "abnahme" as const })),
         ...liste.regieberichte.map((p) => ({ ...p, typ: "regie" as const })),
-      ].filter((p) => !vorhanden.has(p.id) && (!p.checkout_device || p.checkout_device === dev));
+      ].filter((p) => !vorhanden.has(p.id) && (p.typ === "abnahme" || !p.checkout_device || p.checkout_device === dev));
       let geladen = 0;
       const fehler: string[] = [];
-      if (neue.length > 0 && window.confirm(`${neue.length} Dokument(e) auf dieses Gerät laden? Sie sind danach nur auf diesem Gerät bearbeitbar.`)) {
+      if (neue.length > 0 && window.confirm(`${neue.length} Dokument(e) auf dieses Gerät laden? Protokolle lassen sich auch auf anderen Geräten bearbeiten (der Sync gleicht ab), Regieberichte nur auf diesem.`)) {
         for (const p of neue) {
           const r = await ladeFuerBaustelle(p.typ, p.id);
           if (r.ok) geladen++;
@@ -207,7 +207,7 @@ export function LokaleListe() {
         {online && ladbar.length === 0 && <p className="aus-muted">Keine weiteren offenen Dokumente.</p>}
         <ul className="abn-dok-liste">
           {ladbar.map((p) => {
-            const fremd = Boolean(p.checkout_device) && p.checkout_device !== geraet;
+            const fremd = p.typ === "regie" && Boolean(p.checkout_device) && p.checkout_device !== geraet;
             return (
               <li key={p.id} className="abn-dok">
                 <div className="abn-dok-main">

@@ -213,6 +213,30 @@ export async function listVersand(typ: "abnahme" | "regie", id: string): Promise
   }));
 }
 
+export type StandEintrag = { id: string; art: "tablet" | "server"; rev: number; geraet: string | null; created_at: string; von: string | null };
+
+/** Archivierte Stände (vor einem Abgleich) eines Protokolls, neueste zuerst. */
+export async function listStaende(id: string): Promise<StandEintrag[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("abnahme_staende")
+    .select("id,art,rev,geraet,created_at,erstellt_von")
+    .eq("protokoll_id", id)
+    .order("created_at", { ascending: false })
+    .order("art");
+  if (error) return []; // Tabelle fehlt vor der Migration 20261126
+  const ids = Array.from(new Set((data ?? []).map((d) => d.erstellt_von).filter(Boolean))) as string[];
+  const names = new Map<string, string>();
+  if (ids.length) {
+    const e = await supabase.from("employees").select("id,name").in("id", ids);
+    for (const r of e.data ?? []) names.set(r.id as string, (r.name as string) ?? "");
+  }
+  return (data ?? []).map((d) => ({
+    id: d.id, art: d.art, rev: d.rev, geraet: d.geraet, created_at: d.created_at,
+    von: d.erstellt_von ? names.get(d.erstellt_von) ?? null : null,
+  }));
+}
+
 /** Alle Versionen eines Protokolls (Kette über parent_id), neueste zuerst. */
 export async function listVersionen(id: string): Promise<{ id: string; version: number; status: string; abgeschlossen_at: string | null }[]> {
   const supabase = await createClient();

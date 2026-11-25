@@ -1,4 +1,5 @@
 import { requireAppAccess } from "@/lib/auth/app-access";
+import { getActiveEmployees } from "@/lib/data/employees";
 import { getProtokollVorlagen, getVorlagen } from "@/lib/data/abnahme";
 import { ProtokollEditor } from "@/components/abnahme/ProtokollEditor";
 import type { ProtokollVorlage, Vorlage } from "@/lib/abnahme/types";
@@ -9,6 +10,12 @@ export default async function ManuellPage() {
   const ctx = await requireAppAccess("abnahme");
   let vorlagen: Vorlage[] = [];
   let protokollVorlagen: ProtokollVorlage[] = [];
+  let mitarbeiterListe: { id: string; name: string }[] = [];
+  try {
+    mitarbeiterListe = (await getActiveEmployees()).filter((e) => e.id && e.is_active !== false).map((e) => ({ id: e.id as string, name: e.name }));
+  } catch {
+    /* Auswahl bleibt dann beim angemeldeten Nutzer */
+  }
   let fehler = "";
   try {
     vorlagen = await getVorlagen();
@@ -42,6 +49,7 @@ export default async function ManuellPage() {
         vorlagen={vorlagen}
         protokollVorlagen={protokollVorlagen}
         istAdmin={ctx.isFinance}
+        mitarbeiterListe={mitarbeiterListe}
         mitarbeiter={{ id: ctx.employee?.id ?? null, name: ctx.employee?.name ?? ctx.email ?? "" }}
         nutzerKey={ctx.employee?.id ?? ctx.userId}
       />
