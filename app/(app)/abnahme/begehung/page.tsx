@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { BegehungApp } from "@/components/abnahme/begehung/BegehungApp";
 
 export const metadata = { title: "Begehung" };
@@ -7,5 +8,9 @@ export const metadata = { title: "Begehung" };
  * zwischengespeichert; alle Daten kommen clientseitig aus IndexedDB.
  */
 export default function BegehungPage() {
-  return <BegehungApp />;
+  return (
+    <Suspense fallback={null}>
+      <BegehungApp />
+    </Suspense>
+  );
 }
