@@ -4,7 +4,7 @@ import { kommissionAnzeige } from "@/lib/abnahme/kommission";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { alleDokumente, geraeteId, type LokalesDokument } from "@/lib/abnahme/offline/db";
-import { SYNC_EVENT, entferneLokal, gibFrei, istOnline, ladeFuerBaustelle, verwerfeLokal } from "@/lib/abnahme/offline/sync";
+import { SYNC_EVENT, entferneLokal, gibFrei, istOnline, ladeFuerBaustelle, syncAlle, verwerfeLokal } from "@/lib/abnahme/offline/sync";
 import { speicherStatus } from "@/lib/abnahme/offline/sw-register";
 import { SyncBadge, useAutoSync } from "./SyncBadge";
 import { legeRegieLokalAn } from "@/lib/abnahme/offline/regie-neu";
@@ -59,6 +59,47 @@ export function LokaleListe() {
     await lade();
   }
 
+  const [info, setInfo] = useState("");
+
+  /**
+   * Allgemeiner Abgleich: erst alle lokalen Änderungen hochladen, dann alle noch nicht geladenen offenen Dokumente
+   * (die nicht auf einem anderen Gerät ausgecheckt sind) für dieses Gerät holen.
+   */
+  async function allesSynchronisieren() {
+    setBusy("alles");
+    setMeldung("");
+    setInfo("");
+    try {
+      await syncAlle();
+      const res = await fetch("/api/abnahme/liste");
+      if (!res.ok || res.redirected) throw new Error("Die Liste konnte nicht geladen werden. Bitte erneut anmelden.");
+      const liste = (await res.json()) as { protokolle: ServerEintrag[]; regieberichte: ServerEintrag[] };
+      const dev = await geraeteId();
+      const vorhanden = new Set((await alleDokumente()).map((d) => d.id));
+      const neue = [
+        ...liste.protokolle.map((p) => ({ ...p, typ: "abnahme" as const })),
+        ...liste.regieberichte.map((p) => ({ ...p, typ: "regie" as const })),
+      ].filter((p) => !vorhanden.has(p.id) && (!p.checkout_device || p.checkout_device === dev));
+      let geladen = 0;
+      const fehler: string[] = [];
+      if (neue.length > 0 && window.confirm(`${neue.length} Dokument(e) auf dieses Gerät laden? Sie sind danach nur auf diesem Gerät bearbeitbar.`)) {
+        for (const p of neue) {
+          const r = await ladeFuerBaustelle(p.typ, p.id);
+          if (r.ok) geladen++;
+          else fehler.push(`${kommissionAnzeige(p.kommission_nr, "de")} · ${p.kunde}: ${r.error}`);
+        }
+      }
+      const rest = (await alleDokumente()).filter((d) => d.dirty || d.zustand === "fehler").length;
+      setInfo(`Synchronisiert: ${geladen} Dokument(e) geladen${neue.length === 0 ? " (nichts Neues auf dem Server)" : ""}${rest > 0 ? `, ${rest} mit offenen Änderungen oder Fehlern` : ", alle Änderungen hochgeladen"}.`);
+      if (fehler.length) setMeldung(fehler.join(" · "));
+    } catch (e) {
+      setMeldung(e instanceof Error ? e.message : "Abgleich fehlgeschlagen.");
+    } finally {
+      setBusy(null);
+      await lade();
+    }
+  }
+
   const lokaleIds = new Set(lokal.map((d) => d.id));
   const ladbar = [
     ...(server?.protokolle ?? []).map((p) => ({ ...p, typ: "abnahme" as const })),
@@ -78,6 +119,14 @@ export function LokaleListe() {
         <div className="aus-note" role="status"><div className="aus-note-body"><p>Kein Internet. Du kannst alle bereits geladenen Dokumente weiter bearbeiten.</p></div></div>
       )}
       {meldung && <div className="aus-note is-danger" role="alert"><div className="aus-note-body"><p>{meldung}</p></div></div>}
+      {info && <div className="aus-note" role="status"><div className="aus-note-body"><p>{info}</p></div></div>}
+
+      <div className="aus-actions">
+        <button type="button" className="aus-btn aus-btn-primary aus-btn-lg" disabled={!online || busy === "alles"} onClick={allesSynchronisieren}>
+          {busy === "alles" ? "Synchronisiere …" : "Alles synchronisieren"}
+        </button>
+        <span className="aus-help">Lädt Änderungen hoch und holt alle offenen Protokolle und Regieberichte auf dieses Gerät.</span>
+      </div>
 
       <section className="aus-card">
         <h2 className="aus-h2">Auf diesem Gerät</h2>
