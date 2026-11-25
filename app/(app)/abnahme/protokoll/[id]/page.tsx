@@ -6,6 +6,8 @@ import { formatDatum, formatDatumZeit } from "@/lib/abnahme/i18n";
 import { fortschritt, relevantePositionen } from "@/lib/abnahme/logic";
 import { DetailAktionen } from "@/components/abnahme/DetailAktionen";
 import { KommissionZuordnen } from "@/components/abnahme/KommissionZuordnen";
+import { BearbeitenButton } from "@/components/abnahme/BearbeitenButton";
+import { KopfBearbeiten } from "@/components/abnahme/KopfBearbeiten";
 import { MitarbeiterAendern } from "@/components/abnahme/MitarbeiterAendern";
 import { getActiveEmployees } from "@/lib/data/employees";
 import { hatKommission, kommissionAnzeige } from "@/lib/abnahme/kommission";
@@ -52,7 +54,14 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
             </>
           )}
           {doc.originalPath && <a className="aus-btn aus-btn-quiet" href={`/api/abnahme/pdf?typ=abnahme&id=${id}&art=original`}>Original-Positionsliste</a>}
-          {doc.status !== "abgeschlossen" && <Link className="aus-btn aus-btn-secondary" href={`/abnahme/begehung?id=${id}`}>Zur Begehung (Tablet)</Link>}
+          {doc.status !== "abgeschlossen" && <BearbeitenButton typ="abnahme" id={id} label="Bearbeiten (Räume, Positionen, Prüfung)" />}
+          {doc.status !== "abgeschlossen" && (
+            <KopfBearbeiten
+              typ="abnahme"
+              id={id}
+              werte={{ kunde: doc.kunde, projekt: doc.projekt, titel: doc.titel, ort: doc.ort, sprache: doc.sprache, kundeEmail: doc.kundeEmail, kopieEmail: doc.kopieEmail, bemerkung: doc.bemerkung }}
+            />
+          )}
         </div>
       </div>
 

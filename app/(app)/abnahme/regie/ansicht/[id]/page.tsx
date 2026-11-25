@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { listStaende, listVersand } from "@/lib/data/abnahme";
 import { formatDatum, formatDatumZeit } from "@/lib/abnahme/i18n";
 import { rowsToRegie, summen } from "@/lib/abnahme/regie-logic";
+import { BearbeitenButton } from "@/components/abnahme/BearbeitenButton";
+import { KopfBearbeiten } from "@/components/abnahme/KopfBearbeiten";
 import { DetailAktionen } from "@/components/abnahme/DetailAktionen";
 
 export const metadata = { title: "Regiebericht" };
@@ -44,7 +46,16 @@ export default async function RegieAnsicht({ params }: { params: Promise<{ id: s
             <a className="aus-btn aus-btn-secondary" href={`/api/abnahme/pdf?typ=regie&id=${id}&inline=1`} target="_blank" rel="noreferrer">PDF ansehen</a>
           </div>
         )}
-        {doc.status !== "abgeschlossen" && <Link className="aus-btn aus-btn-secondary" href={`/abnahme/begehung?id=${id}`}>Auf dem Tablet bearbeiten</Link>}
+        {doc.status !== "abgeschlossen" && (
+          <div className="aus-actions">
+            <BearbeitenButton typ="regie" id={id} label="Bearbeiten (Zeilen, Zeiten, Unterschrift)" />
+            <KopfBearbeiten
+              typ="regie"
+              id={id}
+              werte={{ kunde: doc.kunde, name: doc.name, strasse: doc.strasse, ort: doc.ort, telefon: doc.telefon, datum: doc.datum, sprache: doc.sprache, kundeEmail: doc.kundeEmail, kopieEmail: doc.kopieEmail, beschreibung: doc.beschreibung }}
+            />
+          </div>
+        )}
       </div>
       {staende.length > 0 && (
         <section className="aus-card">

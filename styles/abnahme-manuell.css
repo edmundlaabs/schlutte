@@ -93,3 +93,7 @@
 .abn-raumliste > li { display: grid; gap: 6px; align-content: start; }
 .abn-raum-edit { justify-self: start; min-height: var(--abn-touch, 44px); color: var(--fg-muted, #6b665c); }
 .abn-raum-inline { grid-template-columns: 1fr; }
+
+/* Löschen in der Ablage */
+.abn-eintrag-loeschen { border: 0; background: transparent; padding: 0; min-height: var(--abn-touch, 44px); font: inherit; color: var(--abn-rot, #8C3A2E); text-decoration: underline; cursor: pointer; }
+.abn-eintrag-loeschen:disabled { opacity: 0.5; cursor: default; }
