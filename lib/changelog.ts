@@ -19,6 +19,17 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.2.0",
+    date: "25.11.2026",
+    changes: [
+      "Abnahme: „Neues Protokoll“ mit zwei Wegen – aus Profacto-PDF oder komplett manuell (Kunde und Kommission wählen, Räume, Positionen und Prüfpunkte selbst eingeben)",
+      "Kunde und Kommission per Suche wählen, neu anlegen (wird erst beim Speichern angelegt) oder „ohne Kommission“ für Kleinaufträge; Kommission lässt sich nachträglich zuordnen, solange das Protokoll nicht abgeschlossen ist",
+      "Protokoll-Vorlagen (CEO/Admin unter Abnahme → Vorlagen): komplette Sets aus Räumen, Positionen und Prüfpunkten, im Editor mit „Aus Vorlage einfügen“ übernehmen; „Als Vorlage speichern“ aus dem Editor",
+      "Entwurf im manuellen Editor bleibt auf dem Gerät erhalten, bis das Protokoll angelegt oder verworfen wird",
+      "Protokolle ohne Kommission in Ablage (eigener Filter), PDF, Dateiname, Versand und Sync",
+    ],
+  },
+  {
     version: "1.1.2",
     date: "20.11.2026",
     changes: [

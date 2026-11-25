@@ -231,3 +231,15 @@ Die Tabellen wurden verifiziert und die Data-Schicht auf das reale Schema angepa
 - Entwurf: Design-Canvas „Schlutte Abnahme – Redesign“ (Zeile „Final“). Backup der vorherigen Dateien: `../Backup/abnahme-redesign-2026-11-20/`.
 - **Löschen (Abnahme):** über Server Action mit Service-Role-Client, weil der DB-Trigger das Löschen abgeschlossener Protokolle für normale Nutzer sperrt; die Berechtigung prüft die Action (abgeschlossen = nur CEO/Admin). Nachträge werden mit gelöscht (`parent_id` ist `restrict`). Dateien bleiben erhalten, solange ein verbleibendes Protokoll darauf verweist (Nachträge zeigen auf Bilder der Vorversion). Der Sync legt ein serverseitig gelöschtes Protokoll nicht neu an (HTTP 410).
 - **Navigation der Abnahme** ist ab 768 px ein-/ausblendbar (localStorage `abnahme-nav-aus`).
+
+## Abnahme: manuell anlegen, ohne Kommission, Protokoll-Vorlagen (Version 1.2.0, 2026-11-25)
+
+- **Migration `20261125_abnahme_manuell.sql`** (manuell ausführen): `abnahme_protokolle.kommission_nr` nullable (Check: nicht leer, und ohne Nummer keine `commission_id`), neue Spalte `quelle` (`profacto`/`manuell`/`vorlage`, Bestand = `profacto`), neue Tabelle `abnahme_protokoll_vorlagen` mit RLS wie `abnahme_vorlagen`. Der Regiebericht bleibt bei Pflicht-Kommission.
+- **„Ohne Kommission“ = leerer String im Modell, `NULL` in der DB** (`mapping.ts` bildet beides ab). Dadurch bleiben Typen und IndexedDB-Altbestand gültig; Anzeige über `kommissionAnzeige()`, Dateiname `Abnahme_ohne-Kommission_…`.
+- **Eine Server-Action `legeProtokollAn`** für Import und manuell (Modus bestehend/neu/ohne). Der Server prüft mit derselben Funktion wie der Browser (`validiereNeuesProtokoll`), schlägt „bestehend“ selbst nach und legt „neu“ erst beim Speichern an (Nummer muss frei sein).
+- **`quelle` setzt nur der Server** (beim Anlegen); der Sync verwirft sie, damit ein älteres Tablet-Dokument ohne dieses Feld sie nicht auf `profacto` zurücksetzt.
+- **Nachträgliche Kommissions-Zuordnung** nur online, nicht abgeschlossen und nicht ausgecheckt (sonst überschriebe der nächste Tablet-Sync sie).
+- **Protokoll-Vorlagen als `jsonb`** (immer als Ganzes geladen, nie inhaltlich abgefragt, wie `abnahme_vorlagen.punkte`). Verweis auf die Möbeltyp-Vorlage per ID ohne Fremdschlüssel; beim Einfügen fehlende/inaktive Vorlagen → Hinweis, Position ohne diese Prüfpunkte. Einfügen führt Räume gleichen Namens zusammen, vergibt neue IDs und hängt Positionen an.
+- **Entwurf des manuellen Editors in localStorage** (reiner Text, Schlüssel je Mitarbeiter), nicht IndexedDB: keine Blobs, einfacher; die IndexedDB bleibt der Begehung vorbehalten.
+- **`StrukturEditor`** (Räume/Positionen/Prüfpunkte) ist gemeinsam für Import und manuellen Editor; im Import lassen sich Prüfpunkte dadurch jetzt auch umbenennen und löschen.
+- Keine neuen Libraries. Nicht gebaut (Optionen): Anlegen offline auf dem Tablet, Regiebericht mit derselben Auswahl inkl. „ohne Kommission“.
