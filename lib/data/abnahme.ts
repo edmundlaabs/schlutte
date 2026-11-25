@@ -1,12 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
-import { docToRows, rowToVorlage } from "@/lib/abnahme/mapping";
-import type { ProtokollDoc, Vorlage } from "@/lib/abnahme/types";
+import { docToRows, rowToProtokollVorlage, rowToVorlage } from "@/lib/abnahme/mapping";
+import type { ProtokollDoc, ProtokollVorlage, Vorlage } from "@/lib/abnahme/types";
 
 export async function getVorlagen(): Promise<Vorlage[]> {
   const supabase = await createClient();
   const { data, error } = await supabase.from("abnahme_vorlagen").select("*").order("sort");
   if (error) throw new Error(`Vorlagen konnten nicht geladen werden: ${error.message}`);
   return (data ?? []).map(rowToVorlage);
+}
+
+export async function getProtokollVorlagen(): Promise<ProtokollVorlage[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("abnahme_protokoll_vorlagen").select("*").order("sort");
+  if (error) throw new Error(`Protokoll-Vorlagen konnten nicht geladen werden: ${error.message}`);
+  return (data ?? []).map(rowToProtokollVorlage);
 }
 
 export type KommissionTreffer = { id: string; nr: string; kunde: string; projekt: string };

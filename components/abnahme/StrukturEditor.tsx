@@ -77,7 +77,7 @@ export function StrukturEditor({
   return (
     <section className="aus-card">
       <div className="aus-card-head">
-        <h2 className="aus-h2">Räume und Positionen</h2>
+        <h2 className="aus-h2">{manuell ? "3 · Räume und Positionen" : "Räume und Positionen"}</h2>
         <Link className="aus-btn aus-btn-quiet aus-btn-sm" href="/abnahme/vorlagen" target="_blank">Vorlagen pflegen</Link>
         <div className="aus-head-actions">
           {ausgeblendetAnzahl > 0 && (
