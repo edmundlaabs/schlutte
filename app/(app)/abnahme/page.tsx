@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { listAblage } from "@/lib/data/abnahme";
 import { formatDatum } from "@/lib/abnahme/i18n";
+import { kommissionAnzeige } from "@/lib/abnahme/kommission";
 
 export const metadata = { title: "Ablage" };
 
-type SP = { q?: string; typ?: string; status?: string; mitarbeiter?: string; von?: string; bis?: string };
+type SP = { q?: string; typ?: string; status?: string; mitarbeiter?: string; von?: string; bis?: string; kommission?: string };
 
 const statusText = (s: string) =>
   s === "abgeschlossen" ? "abgeschlossen" : s === "in_arbeit" ? "in Arbeit" : s === "entwurf" ? "Entwurf" : "bereit";
@@ -43,7 +44,8 @@ export default async function AblagePage({ searchParams }: { searchParams: Promi
       </header>
 
       <div className="abn-aktionen">
-        <Link className="aus-btn aus-btn-primary" href="/abnahme/import">PDF importieren</Link>
+        <Link className="aus-btn aus-btn-primary" href="/abnahme/neu/manuell">Abnahme manuell anlegen</Link>
+        <Link className="aus-btn aus-btn-secondary" href="/abnahme/neu">Aus Profacto-PDF</Link>
         <Link className="aus-btn aus-btn-secondary" href="/abnahme/begehung">Begehung</Link>
         <Link className="aus-btn aus-btn-secondary" href="/abnahme/regie">Regiebericht</Link>
       </div>
@@ -54,6 +56,10 @@ export default async function AblagePage({ searchParams }: { searchParams: Promi
           <option value="">Alle Typen</option>
           <option value="abnahme">Abnahmeprotokoll</option>
           <option value="regie">Regiebericht</option>
+        </select>
+        <select className="aus-select" name="kommission" defaultValue={sp.kommission ?? ""} aria-label="Kommission">
+          <option value="">Mit und ohne Kommission</option>
+          <option value="ohne">Nur ohne Kommission</option>
         </select>
         <select className="aus-select" name="status" defaultValue={sp.status ?? ""} aria-label="Status">
           <option value="">Alle Status</option>
@@ -82,7 +88,7 @@ export default async function AblagePage({ searchParams }: { searchParams: Promi
             <li key={`${e.typ}-${e.id}`} className="abn-eintrag">
               <div className="abn-eintrag-kopf">
                 <Link className="abn-eintrag-titel" href={href}>
-                  <span className="abn-nr">{i + 1}.</span> {e.typ === "abnahme" ? "Abnahmeprotokoll" : "Regiebericht"} {e.kommission_nr}
+                  <span className="abn-nr">{i + 1}.</span> {e.typ === "abnahme" ? "Abnahmeprotokoll" : "Regiebericht"} {kommissionAnzeige(e.kommission_nr, "de")}
                 </Link>
                 <div className="abn-eintrag-chips">
                   <span className={e.status === "abgeschlossen" ? "abn-chip is-ok" : "abn-chip"}>{statusText(e.status)}</span>

@@ -1,12 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
-import { docToRows, rowToVorlage } from "@/lib/abnahme/mapping";
-import type { ProtokollDoc, Vorlage } from "@/lib/abnahme/types";
+import { docToRows, rowToProtokollVorlage, rowToVorlage } from "@/lib/abnahme/mapping";
+import type { ProtokollDoc, ProtokollVorlage, Vorlage } from "@/lib/abnahme/types";
 
 export async function getVorlagen(): Promise<Vorlage[]> {
   const supabase = await createClient();
   const { data, error } = await supabase.from("abnahme_vorlagen").select("*").order("sort");
   if (error) throw new Error(`Vorlagen konnten nicht geladen werden: ${error.message}`);
   return (data ?? []).map(rowToVorlage);
+}
+
+export async function getProtokollVorlagen(): Promise<ProtokollVorlage[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("abnahme_protokoll_vorlagen").select("*").order("sort");
+  if (error) throw new Error(`Protokoll-Vorlagen konnten nicht geladen werden: ${error.message}`);
+  return (data ?? []).map(rowToProtokollVorlage);
 }
 
 export type KommissionTreffer = { id: string; nr: string; kunde: string; projekt: string };
@@ -27,6 +34,29 @@ export async function findKommission(nr: string): Promise<KommissionTreffer | nu
     kunde: data.customer_name ?? "",
     projekt: data.project_name ?? "",
   };
+}
+
+/**
+ * Typeahead für die Kommissionsauswahl: Treffer nach Kommissionsnummer, Kundenname und Projekt (nur echte Zeilen,
+ * keine Demo-Daten wie in lib/data/commissions.ts). Neueste Nummern zuerst, höchstens 10.
+ */
+export async function searchKommissionen(q: string): Promise<KommissionTreffer[]> {
+  const clean = q.trim().replace(/[%,()*\\]/g, " ").trim();
+  if (clean.length < 2) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("commissions")
+    .select("id,commission_number,customer_name,project_name")
+    .or(`commission_number.ilike.%${clean}%,customer_name.ilike.%${clean}%,project_name.ilike.%${clean}%`)
+    .order("commission_number", { ascending: false })
+    .limit(10);
+  if (error) throw new Error(`Kommissionen konnten nicht gesucht werden: ${error.message}`);
+  return (data ?? []).map((d) => ({
+    id: d.id,
+    nr: String(d.commission_number).trim(),
+    kunde: d.customer_name ?? "",
+    projekt: d.project_name ?? "",
+  }));
 }
 
 /** Legt Protokoll mit Räumen, Positionen und Prüfpunkten an. Bei Fehler wird das Protokoll wieder entfernt. */
@@ -84,7 +114,8 @@ export async function ladeProtokollDoc(id: string): Promise<ProtokollDoc | null>
 export type AblageEintrag = {
   typ: "abnahme" | "regie";
   id: string;
-  kommission_nr: string;
+  /** null = Protokoll ohne Kommission */
+  kommission_nr: string | null;
   kunde: string;
   projekt: string | null;
   titel: string | null;
@@ -96,7 +127,7 @@ export type AblageEintrag = {
   offeneMaengel: number;
 };
 
-export type AblageFilter = { q?: string; typ?: string; status?: string; mitarbeiter?: string; von?: string; bis?: string };
+export type AblageFilter = { q?: string; typ?: string; status?: string; mitarbeiter?: string; von?: string; bis?: string; kommission?: string };
 
 export async function listAblage(filter: AblageFilter): Promise<AblageEintrag[]> {
   const supabase = await createClient();
@@ -110,6 +141,7 @@ export async function listAblage(filter: AblageFilter): Promise<AblageEintrag[]>
       .order("created_at", { ascending: false })
       .limit(300);
     if (q) qb = qb.or(`kommission_nr.ilike.%${q}%,kunde.ilike.%${q}%`);
+    if (filter.kommission === "ohne") qb = qb.is("kommission_nr", null);
     if (filter.status) qb = qb.eq("status", filter.status);
     if (filter.mitarbeiter) qb = qb.ilike("mitarbeiter_name", `%${filter.mitarbeiter}%`);
     if (filter.von) qb = qb.gte("created_at", filter.von);
@@ -131,7 +163,8 @@ export async function listAblage(filter: AblageFilter): Promise<AblageEintrag[]>
     }
   }
 
-  if (!filter.typ || filter.typ === "regie") {
+  // Regieberichte haben immer eine Kommission: bei „nur ohne Kommission“ entfallen sie.
+  if ((!filter.typ || filter.typ === "regie") && filter.kommission !== "ohne") {
     let qb = supabase
       .from("abnahme_regieberichte")
       .select("id,kommission_nr,kunde,status,mitarbeiter_name,datum,created_at,pdf_path")

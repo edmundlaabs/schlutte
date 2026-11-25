@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "@/styles/auslagen.css";
 import "@/styles/abnahme.css";
+import "@/styles/abnahme-manuell.css";
 import { requireAppAccess } from "@/lib/auth/app-access";
 import { AbnahmeSideNav } from "@/components/abnahme/AbnahmeSideNav";
 

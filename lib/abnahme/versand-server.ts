@@ -72,11 +72,16 @@ export async function versendeDokument(args: {
   const datum = args.typ === "abnahme" ? (d.abgeschlossen_at ?? d.created_at) : d.datum;
   const dateiname = args.typ === "abnahme" ? abnahmeDateiname(d.kommission_nr, d.kunde, String(datum).slice(0, 10)) : regieDateiname(d.kommission_nr, d.kunde, String(datum).slice(0, 10));
   const art = args.typ === "abnahme" ? (sprache === "en" ? "Acceptance record" : "Abnahmeprotokoll") : (sprache === "en" ? "Time sheet" : "Regiebericht");
-  const subject = `${art} – ${sprache === "en" ? "Commission" : "Kommission"} ${d.kommission_nr} – ${d.kunde}`;
+  const nr = String(d.kommission_nr ?? "").trim(); // leer = Protokoll ohne Kommission
+  const subject = nr
+    ? `${art} – ${sprache === "en" ? "Commission" : "Kommission"} ${nr} – ${d.kunde}`
+    : `${art} – ${d.kunde}`;
+  const bezug = (en: boolean) =>
+    nr ? `${en ? " for commission " : " zur Kommission "}${nr}${d.projekt ? ` (${d.projekt})` : ""}` : d.projekt ? `${en ? " for " : " zum Projekt "}${d.projekt}` : "";
   const text =
     sprache === "en"
-      ? `Dear ${d.kunde},\n\nplease find attached the ${art.toLowerCase()} for commission ${d.kommission_nr}${d.projekt ? ` (${d.projekt})` : ""} dated ${formatDatum(String(datum), "en")}.\n\nKind regards\nGrabner Design GmbH\nTüchlinger Weg 1, 79400 Kandern`
-      : `Guten Tag,\n\nanbei erhalten Sie das Dokument „${art}“ zur Kommission ${d.kommission_nr}${d.projekt ? ` (${d.projekt})` : ""} vom ${formatDatum(String(datum), "de")}.\n\nMit freundlichen Grüßen\nGrabner Design GmbH\nTüchlinger Weg 1, 79400 Kandern`;
+      ? `Dear ${d.kunde},\n\nplease find attached the ${art.toLowerCase()}${bezug(true)} dated ${formatDatum(String(datum), "en")}.\n\nKind regards\nGrabner Design GmbH\nTüchlinger Weg 1, 79400 Kandern`
+      : `Guten Tag,\n\nanbei erhalten Sie das Dokument „${art}“${bezug(false)} vom ${formatDatum(String(datum), "de")}.\n\nMit freundlichen Grüßen\nGrabner Design GmbH\nTüchlinger Weg 1, 79400 Kandern`;
 
   const res = await sendeMail({ to: an, bcc, subject, text, attachments: [{ filename: dateiname, content: bytes }] });
   if (!res.ok) {

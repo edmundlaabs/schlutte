@@ -50,6 +50,9 @@ test("Dateiname", () => {
   assert.equal(kundeKurz("Emily Hoon & Stephan Raemy - Uitikon Wal"), "Hoon");
   assert.equal(kundeKurz("Müller GmbH"), "Mueller");
   assert.equal(abnahmeDateiname("260081", "Emily Hoon & Stephan Raemy", d), "Abnahme_260081_Hoon_2026-11-20.pdf");
+  // ohne Kommission (Kleinauftrag)
+  assert.equal(abnahmeDateiname("", "Emily Hoon & Stephan Raemy", d), "Abnahme_ohne-Kommission_Hoon_2026-11-20.pdf");
+  assert.equal(abnahmeDateiname(null, "Müller GmbH", d), "Abnahme_ohne-Kommission_Mueller_2026-11-20.pdf");
   assert.equal(regieDateiname("250210", "Cathy Wei", "2026-02-10"), "Regiebericht_250210_Wei_2026-02-10.pdf");
 });
 

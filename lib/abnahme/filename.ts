@@ -18,9 +18,10 @@ function datumISO(d: Date): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-export function abnahmeDateiname(kommission: string, kunde: string, datum: Date | string = new Date()): string {
+/** Ohne Kommission (Kleinauftrag): „Abnahme_ohne-Kommission_<Kunde>_<Datum>.pdf“. */
+export function abnahmeDateiname(kommission: string | null | undefined, kunde: string, datum: Date | string = new Date()): string {
   const d = typeof datum === "string" ? datum.slice(0, 10) : datumISO(datum);
-  return `Abnahme_${kommission.trim()}_${kundeKurz(kunde)}_${d}.pdf`;
+  return `Abnahme_${(kommission ?? "").trim() || "ohne-Kommission"}_${kundeKurz(kunde)}_${d}.pdf`;
 }
 
 export function regieDateiname(kommission: string, kunde: string, datum: Date | string = new Date()): string {

@@ -4,7 +4,7 @@ Abnahmeprotokoll und Regiebericht für die Baustelle: Tablet-Begehung auch ohne 
 
 ## Einrichtung (einmalig)
 
-1. **Migration** `supabase/migrations/20261120_abnahme.sql` im Supabase SQL-Editor ausführen (vorher Backup nach `../Backup/…`). Sie legt die Tabellen `abnahme_*`, RLS, Sperr-Trigger, die Checkout-Funktionen, den privaten Storage-Bucket `abnahme` und die Startvorlagen an.
+1. **Migration** `supabase/migrations/20261120_abnahme.sql` im Supabase SQL-Editor ausführen (vorher Backup nach `../Backup/…`). Sie legt die Tabellen `abnahme_*`, RLS, Sperr-Trigger, die Checkout-Funktionen, den privaten Storage-Bucket `abnahme` und die Startvorlagen an. Danach (ab 1.2.0) `20261125_abnahme_manuell.sql`: Protokolle ohne Kommission, Herkunft `quelle`, Protokoll-Vorlagen (zwei Startvorlagen).
 2. **Zugang**: unter *Admin → Zugänge* den Haken „Abnahme“ pro Mitarbeiter setzen (CEO/Admin haben immer Zugriff). Bestehende Mitarbeiter bekommen ihn nicht automatisch.
 3. **Mailversand (Resend)**, nur als Umgebungsvariablen (nie im Code):
    | Variable | Bedeutung |
@@ -14,6 +14,16 @@ Abnahmeprotokoll und Regiebericht für die Baustelle: Tablet-Begehung auch ohne 
    | `MAIL_COPY_TO` | optional: interne Kopie (BCC), mehrere durch Komma |
    Ohne Konfiguration wird nichts verschickt; der Versand steht dann als „Fehler: nicht konfiguriert“ im Versandprotokoll und bleibt bei Offline-Vormerkungen erhalten.
 4. Tablets: Schlutte auf den **Home-Bildschirm** legen (iPad Safari → Teilen → „Zum Home-Bildschirm“; Android Chrome → App installieren). Nur so behält iOS die lokalen Daten länger als 7 Tage.
+
+## Neues Protokoll (ab 1.2.0)
+
+`/abnahme/neu` bietet zwei Wege: **Aus Profacto-PDF** (`/abnahme/import`) und **Manuell / aus Vorlage** (`/abnahme/neu/manuell`). Anlegen braucht Internet; danach optional gleich offline auf dem Gerät speichern.
+
+- **Kunde und Kommission** (gemeinsame Komponente `KundeKommissionAuswahl`, in Import und Editor): *Bestehende suchen* (Typeahead über Kommissionsnummer, Kunde, Projekt; Auswahl übernimmt Nummer, Kunde, Projekt; Kunde bleibt editierbar), *Neu anlegen* (6 Ziffern, Duplikatprüfung; die Kommission entsteht erst beim Speichern des Protokolls) oder *Ohne Kommission* (Kleinauftrag, nur Kunde Pflicht, keine Zeile in `commissions`). Im Import wird die Nummer aus der PDF gesucht (gefunden = bestehend, sonst „neu“ vorbelegt).
+- **Manueller Editor**: Kopf (Kunde/Kommission, Ort, Bezeichnung, Sprache, Kunden-E-Mail), Räume (anlegen, umbenennen, Etage, Material, Reihenfolge, löschen), Positionen je Raum (Nr. fortlaufend und änderbar, Titel Pflicht, Menge, Einheit, Beschreibung, Möbeltyp-Vorlage → Prüfpunkte), Prüfpunkte umbenennen/löschen/ergänzen, Positionen zwischen Räumen verschieben. Eingaben werden bis zum Anlegen in localStorage zwischengespeichert (Banner „Entwurf wiederherstellen“, „Verwerfen“).
+- **Protokoll-Vorlagen** (`/abnahme/vorlagen?bereich=protokoll`, CEO/Admin): komplette Sets aus Räumen, Positionen (mit Möbeltyp-Verweis und/oder eigenen Prüfpunkten). Im Editor „Aus Vorlage einfügen“ (mehrfach möglich, gleichnamige Räume werden zusammengeführt, neue IDs, Status offen; fehlt/inaktiv die Möbeltyp-Vorlage: Hinweis). „Als Vorlage speichern“ übernimmt nur die Struktur.
+- **Ohne Kommission** durchgängig: Anzeige „ohne Kommission“, Ablage-Filter „Nur ohne Kommission“, PDF-Kopf und -Fuß, Dateiname `Abnahme_ohne-Kommission_<Kunde-kurz>_<JJJJ-MM-TT>.pdf`, Versand-Text ohne Kommissionsteil, Sync (nur Kunde Pflicht). Eine Kommission lässt sich auf der Protokollseite nachträglich zuordnen (nicht abgeschlossen, nicht ausgecheckt).
+- Herkunft `quelle` (`profacto` / `manuell` / `vorlage`) steht am Protokoll und auf der Detailseite. Ohne Original-PDF entfällt „Original-Positionsliste“; der PDF-Anhang „nicht Gegenstand der Abnahme“ erscheint nur bei ausgeblendeten Positionen.
 
 ## Ablauf
 

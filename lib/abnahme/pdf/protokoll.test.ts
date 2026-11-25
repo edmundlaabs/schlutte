@@ -7,6 +7,7 @@ import { buildDocFromParsed } from "../build.ts";
 import { parseProfactoPdf } from "../parser/pdf-text.ts";
 import { raumAlleIo, setzeMangel, setzeMehrere, setzeUnterschrift } from "../logic.ts";
 import type { ProtokollDoc, Vorlage } from "../types.ts";
+import { leeresProtokoll, neuePosition, neuerRaum } from "../edit.ts";
 
 const fixture = fileURLToPath(new URL("../parser/__fixtures__/Ang0--1731724496.pdf", import.meta.url));
 const fontDir = fileURLToPath(new URL("../../../public/fonts/", import.meta.url));
@@ -78,4 +79,31 @@ test("PDF Englisch + Dateiname", { skip }, async () => {
   assert.ok(alles.includes("Acceptance record"));
   assert.ok(alles.includes("List of defects"));
   assert.ok(alles.includes("Page 1 of"));
+});
+
+/** Manuell angelegtes Protokoll ohne Kommission (braucht keine Profacto-Fixture). */
+function manuellOhneKommission(sprache: "de" | "en"): ProtokollDoc {
+  let d = leeresProtokoll({ id: "m1", mitarbeiterId: "e1", mitarbeiterName: "Eddy Laabs" });
+  d = { ...d, kunde: "Anna Muster", sprache, ort: "Kandern", beginnAt: "2026-11-25T09:00:00Z" };
+  d = neuerRaum(d, "Flur").doc;
+  d = neuePosition(d, d.raeume[0].id, { titel: "Garderobe", menge: "1", einheit: "Stk", vorlageId: "v2", pruefpunkte: vorlagen[1].punkte }).doc;
+  return { ...d, status: "in_arbeit" };
+}
+
+test("PDF ohne Kommission: Kopf und Fuß zeigen „ohne Kommission“, kein Anhang, kein Absturz", async () => {
+  const bytes = await erzeugeProtokollPdf(manuellOhneKommission("de"), { fonts: loader, bilder: new Map() });
+  const seiten = await textDerSeiten(bytes);
+  const alles = seiten.join(" ").replace(/\s+/g, " ");
+  assert.ok(alles.includes("ohne Kommission"));
+  assert.ok(alles.includes("Anna Muster"));
+  assert.ok(alles.includes("Garderobe"));
+  assert.ok(!alles.includes("Anhang: nicht Gegenstand der Abnahme"), "ohne ausgeblendete Positionen kein Anhang");
+  seiten.forEach((txt, i) => assert.ok(txt.includes("ohne Kommission · Anna Muster"), `Fuß Seite ${i + 1}`));
+});
+
+test("PDF ohne Kommission auf Englisch", async () => {
+  const bytes = await erzeugeProtokollPdf(manuellOhneKommission("en"), { fonts: loader, bilder: new Map() });
+  const alles = (await textDerSeiten(bytes)).join(" ");
+  assert.ok(alles.includes("no commission"));
+  assert.ok(alles.includes("Acceptance record"));
 });
