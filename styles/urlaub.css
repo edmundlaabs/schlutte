@@ -85,7 +85,7 @@
 .urlaub-balken.is-beantragt { background: transparent; color: var(--fg); border: 1px dashed var(--fg-muted); opacity: 0.8; }
 .urlaub-balken.is-ferien { background: var(--u-ferien); border-color: transparent; color: var(--fg); }
 .urlaub-balken.is-sperre { background: var(--u-sperre); border-color: transparent; color: var(--fg); }
-.urlaub-balken.is-konflikt { background: var(--aus-danger); border-color: var(--aus-danger); color: #fff; }
+.urlaub-balken.is-konflikt { background: var(--aus-danger); border-color: var(--aus-danger); color: var(--bg); }
 .urlaub-balken.is-konflikt.is-beantragt { background: transparent; color: var(--aus-danger); border: 1px dashed var(--aus-danger); }
 a.urlaub-balken:hover { opacity: 0.8; }
 .urlaub-balken.is-halb-start { margin-left: calc(100% / var(--n) / 2 + 1px); }

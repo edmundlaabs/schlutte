@@ -305,7 +305,7 @@
   transition: background 220ms var(--ease-architect), border-color 220ms var(--ease-architect);
 }
 .grb-action-tile:hover {
-  background: var(--gd-bone);
+  background: var(--bg-alt);
   border-color: var(--border-strong);
 }
 .grb-action-tile .corner {
@@ -449,7 +449,7 @@
   color: var(--accent);
 }
 .sitemap-node.is-print {
-  background: var(--gd-bone);
+  background: var(--bg-alt);
 }
 
 /* Section title within artboard */

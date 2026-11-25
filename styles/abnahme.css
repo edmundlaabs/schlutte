@@ -35,10 +35,10 @@
 .abn-badge.is-error { background: color-mix(in srgb, var(--gd-danger) 14%, var(--bg-raised, #fff)); }
 .abn-badge.is-offline { background: var(--bg-alt, #e9e6df); }
 .abn-nav { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
-.abn-nav-btn { min-height: var(--abn-touch); padding: 0 16px; border: 1px solid var(--border, #d8d2c6); background: transparent; white-space: nowrap; font: inherit; cursor: pointer; }
+.abn-nav-btn { min-height: var(--abn-touch); padding: 0 16px; border: 1px solid var(--border, #d8d2c6); background: transparent; color: var(--fg); white-space: nowrap; font: inherit; cursor: pointer; }
 .abn-nav-btn.is-active { background: var(--fg, #1a1a17); color: var(--bg, #fff); border-color: var(--fg, #1a1a17); }
 .abn-raumliste { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-.abn-raumkarte { width: 100%; min-height: 96px; text-align: left; display: grid; gap: 8px; padding: 14px; border: 1px solid var(--border, #d8d2c6); background: transparent; font: inherit; cursor: pointer; }
+.abn-raumkarte { color: var(--fg); width: 100%; min-height: 96px; text-align: left; display: grid; gap: 8px; padding: 14px; border: 1px solid var(--border, #d8d2c6); background: transparent; font: inherit; cursor: pointer; }
 .abn-raumname { font-weight: 600; font-size: 18px; }
 .abn-fort { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
 .abn-chip { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border: 1px solid var(--border, #d8d2c6); font-size: 13px; }
@@ -60,7 +60,7 @@
 .abn-pruef li { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding-top: 8px; border-top: 1px dashed var(--border, #d8d2c6); }
 .abn-pruef-text { font-size: 16px; }
 .abn-status { display: inline-flex; gap: 6px; flex-wrap: wrap; }
-.abn-st { min-height: var(--abn-touch); min-width: 76px; padding: 0 14px; border: 1px solid var(--border, var(--border, #bbb5a8)); background: #fff; font: inherit; font-size: 16px; cursor: pointer; }
+.abn-st { min-height: var(--abn-touch); min-width: 76px; padding: 0 14px; border: 1px solid var(--border, #bbb5a8); background: var(--bg-raised, #fff); color: var(--fg); font: inherit; font-size: 16px; cursor: pointer; }
 .abn-st.is-io.on { background: var(--gd-success); color: var(--bg-raised, #fff); border-color: var(--gd-success); }
 .abn-st.is-mangel.on { background: var(--gd-danger); color: var(--bg-raised, #fff); border-color: var(--gd-danger); }
 .abn-st.is-nicht.on { background: #777; color: #fff; border-color: #777; }
@@ -118,7 +118,26 @@
   --abn-rot: var(--gd-danger, #8C3A2E);
   --abn-ok: #55613F;
   --abn-linie: rgba(14, 14, 13, 0.14);
+  --abn-local-bg: var(--gd-brass-soft, #E8D5A8);
+  --abn-local-fg: var(--gd-ink, #0E0E0D);
   --abn-side-w: 232px;
+}
+/* Dunkelmodus: aufgehellte Signalfarben, helle Linien, lesbare Schrift */
+:root[data-theme="dark"] .abn {
+  --abn-rot: #E39A8A;
+  --abn-ok: #A4B48E;
+  --abn-linie: rgba(251, 249, 244, 0.18);
+  --abn-local-bg: rgba(201, 168, 106, 0.22);
+  --abn-local-fg: var(--gd-brass-soft);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .abn {
+    --abn-rot: #E39A8A;
+    --abn-ok: #A4B48E;
+    --abn-linie: rgba(251, 249, 244, 0.18);
+    --abn-local-bg: rgba(201, 168, 106, 0.22);
+    --abn-local-fg: var(--gd-brass-soft);
+  }
 }
 .abn-rot { color: var(--abn-rot); }
 .abn-muted { color: var(--fg-muted); font-size: 13px; }
@@ -194,7 +213,7 @@
   border-top: 1px solid var(--abn-linie);
   border-bottom: 1px solid var(--abn-linie);
 }
-.abn .abn-filter .aus-input, .abn .abn-filter .aus-select { min-height: 44px; padding: 8px 12px; background: var(--gd-bone, #FBF9F4); }
+.abn .abn-filter .aus-input, .abn .abn-filter .aus-select { min-height: 44px; padding: 8px 12px; background: var(--bg-raised, #FBF9F4); color: var(--fg); }
 .abn-filter-btns { display: flex; gap: 8px; grid-column: span 2; justify-content: flex-end; }
 .abn-filter-btns .aus-btn { min-height: 44px; }
 @media (max-width: 900px) { .abn .abn-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); } .abn-filter-q { grid-column: 1 / -1; } }
@@ -214,17 +233,17 @@
 .abn-summe { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--fg); font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 
 /* ── Chips und Status in Token-Farben ── */
-.abn .abn-chip { border-color: rgba(14, 14, 13, 0.3); background: transparent; }
+.abn .abn-chip { border-color: var(--border-strong); background: transparent; }
 .abn .abn-chip.is-ok, .abn .abn-chip.s-io { background: transparent; border-color: var(--abn-ok); color: var(--abn-ok); }
 .abn .abn-chip.is-bad, .abn .abn-chip.s-mangel { background: var(--abn-rot); border-color: var(--abn-rot); color: #fff; }
 .abn .abn-chip.s-nicht_pruefbar { background: transparent; color: var(--fg-muted); }
-.abn .abn-badge.is-local { background: var(--gd-brass-soft, #E8D5A8); }
+.abn .abn-badge.is-local { background: var(--abn-local-bg); color: var(--abn-local-fg); }
 .abn .abn-badge.is-ok { background: transparent; border-color: var(--abn-ok); color: var(--abn-ok); }
 .abn .abn-badge.is-error { background: var(--abn-rot); border-color: var(--abn-rot); color: #fff; }
 
 /* Status-Schalter als Segmentgruppe */
-.abn .abn-status { display: inline-grid; grid-auto-flow: column; grid-auto-columns: minmax(96px, 1fr); gap: 0; border: 1px solid rgba(14, 14, 13, 0.3); }
-.abn .abn-st { border: 0; border-left: 1px solid rgba(14, 14, 13, 0.3); background: transparent; font-size: 15px; font-weight: 500; }
+.abn .abn-status { display: inline-grid; grid-auto-flow: column; grid-auto-columns: minmax(96px, 1fr); gap: 0; border: 1px solid var(--border-strong); }
+.abn .abn-st { border: 0; border-left: 1px solid var(--border-strong); color: var(--fg); background: transparent; font-size: 15px; font-weight: 500; }
 .abn .abn-st:first-child { border-left: 0; }
 .abn .abn-st.is-io.on { background: var(--fg); color: var(--bg); }
 .abn .abn-st.is-mangel.on { background: var(--abn-rot); color: #fff; }
@@ -233,13 +252,13 @@
 /* Begehung: Positionen, Navigation */
 .abn .abn-nav-btn { border-color: var(--abn-linie); }
 .abn .abn-nav-btn.is-active { background: var(--fg); border-color: var(--fg); color: var(--bg); }
-.abn .abn-raumkarte { border-color: var(--abn-linie); background: var(--gd-bone, #FBF9F4); }
+.abn .abn-raumkarte { border-color: var(--abn-linie); background: var(--bg-raised, #FBF9F4); color: var(--fg); }
 .abn .abn-pos-karte { border: 0; border-top: 1px solid var(--abn-linie); border-left: 0; padding: 16px 0; }
 .abn .abn-pos-karte.s-mangel { border-top: 3px solid var(--abn-rot); }
 .abn .abn-pos-titel { display: inline-block; padding-bottom: 3px; border-bottom: 2px solid var(--gd-brass, #A6824A); }
 .abn .abn-pos-karte.s-mangel .abn-pos-titel { border-bottom-color: var(--abn-rot); }
 .abn .abn-pruef li { border-top: 1px solid var(--abn-linie); }
-.abn .abn-mangel { background: var(--gd-bone, #FBF9F4); border: 1px solid var(--abn-linie); border-left: 3px solid var(--abn-rot); padding: 12px 16px; }
+.abn .abn-mangel { background: var(--bg-raised, #FBF9F4); color: var(--fg); border: 1px solid var(--abn-linie); border-left: 3px solid var(--abn-rot); padding: 12px 16px; }
 .abn .abn-mangel .abn-fotos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
 .abn .abn-mangel .abn-foto { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
 .abn .abn-pager { border-top: 1px solid var(--fg); }
@@ -250,7 +269,7 @@
 .abn-mangel-titel { margin: 0; font-size: 17px; font-weight: 600; color: var(--abn-rot); }
 .abn-fotos-kopf { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .abn-fotos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 8px; }
-.abn-foto-zelle { position: relative; margin: 0; aspect-ratio: 4 / 3; background: var(--gd-sand, #D9D2C5); }
+.abn-foto-zelle { position: relative; margin: 0; aspect-ratio: 4 / 3; background: var(--surface-sand, #D9D2C5); }
 .abn-foto-zelle .abn-foto { width: 100%; height: 100%; object-fit: cover; border: 0; display: block; }
 .abn-foto-weg {
   position: absolute; top: 4px; right: 4px; width: 36px; height: 36px;
@@ -258,7 +277,7 @@
 }
 .abn-foto-neu {
   aspect-ratio: 4 / 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-  border: 1px dashed rgba(14, 14, 13, 0.45); background: transparent; color: var(--fg);
+  border: 1px dashed var(--border-strong); background: transparent; color: var(--fg);
   font: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
 }
 .abn-foto-neu:disabled { opacity: 0.6; cursor: progress; }
@@ -279,3 +298,13 @@
   .abn-frame > .abn-side-toggle.is-offen ~ .abn-main { padding-left: 72px; }
 }
 @media print { .abn-side-toggle { display: none !important; } }
+
+/* Dunkelmodus: Text auf aufgehelltem Rot/Grau dunkel halten (Kontrast) */
+:root[data-theme="dark"] .abn .abn-chip.is-bad, :root[data-theme="dark"] .abn .abn-chip.s-mangel,
+:root[data-theme="dark"] .abn .abn-badge.is-error, :root[data-theme="dark"] .abn .abn-st.is-mangel.on,
+:root[data-theme="dark"] .abn .abn-st.is-nicht.on { color: var(--gd-ink); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .abn .abn-chip.is-bad, :root:not([data-theme="light"]) .abn .abn-chip.s-mangel,
+  :root:not([data-theme="light"]) .abn .abn-badge.is-error, :root:not([data-theme="light"]) .abn .abn-st.is-mangel.on,
+  :root:not([data-theme="light"]) .abn .abn-st.is-nicht.on { color: var(--gd-ink); }
+}
