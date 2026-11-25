@@ -26,6 +26,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Kunde und Kommission per Suche wählen, neu anlegen (wird erst beim Speichern angelegt) oder „ohne Kommission“ für Kleinaufträge; Kommission lässt sich nachträglich zuordnen, solange das Protokoll nicht abgeschlossen ist",
       "Protokoll-Vorlagen (CEO/Admin unter Abnahme → Vorlagen): komplette Sets aus Räumen, Positionen und Prüfpunkten, im Editor mit „Aus Vorlage einfügen“ übernehmen; „Als Vorlage speichern“ aus dem Editor",
       "Entwurf im manuellen Editor bleibt auf dem Gerät erhalten, bis das Protokoll angelegt oder verworfen wird",
+      "Begehung: Knopf „Alles synchronisieren“ lädt Änderungen hoch und holt alle offenen Protokolle und Regieberichte auf das Gerät",
       "Protokolle ohne Kommission in Ablage (eigener Filter), PDF, Dateiname, Versand und Sync",
     ],
   },
