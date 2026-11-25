@@ -229,14 +229,60 @@ export function entfernePosition(doc: ProtokollDoc, positionId: string): { doc: 
   const mangelIds = new Set(doc.maengel.filter((m) => m.positionId === positionId).map((m) => m.id));
   const fotos = doc.fotos.filter((f) => mangelIds.has(f.mangelId)).map((f) => f.id);
   const sigs = doc.unterschriften.filter((u) => u.bezug === "position" && u.bezugId === positionId).map((u) => u.id);
+  const objekt = (doc.objektFotos ?? []).filter((f) => f.positionId === positionId).map((f) => f.id);
   return {
-    entfernteBilder: [...fotos, ...sigs],
+    entfernteBilder: [...fotos, ...sigs, ...objekt],
     doc: {
       ...doc,
+      objektFotos: (doc.objektFotos ?? []).filter((f) => f.positionId !== positionId),
       positionen: doc.positionen.filter((p) => p.id !== positionId),
       maengel: doc.maengel.filter((m) => !mangelIds.has(m.id)),
       fotos: doc.fotos.filter((f) => !mangelIds.has(f.mangelId)),
       unterschriften: doc.unterschriften.filter((u) => !sigs.includes(u.id)),
     },
   };
+}
+
+/**
+ * Entfernt einen Raum samt aller seiner Positionen (auch ausgeblendeter), Prüfpunkte, Mängel, Fotos und Unterschriften
+ * (Raum- und Positions-Unterschriften). Gibt die IDs der zu löschenden lokalen Bilder zurück.
+ */
+export function entferneRaum(doc: ProtokollDoc, raumId: string): { doc: ProtokollDoc; entfernteBilder: string[]; positionen: number } {
+  if (!doc.raeume.some((r) => r.id === raumId)) throw new Error("Raum nicht gefunden.");
+  const posIds = new Set(doc.positionen.filter((p) => p.raumId === raumId).map((p) => p.id));
+  const mangelIds = new Set(doc.maengel.filter((m) => m.raumId === raumId || (m.positionId && posIds.has(m.positionId))).map((m) => m.id));
+  const fotos = doc.fotos.filter((f) => mangelIds.has(f.mangelId)).map((f) => f.id);
+  const sigIds = doc.unterschriften
+    .filter((u) => (u.bezug === "raum" && u.bezugId === raumId) || (u.bezug === "position" && u.bezugId && posIds.has(u.bezugId)))
+    .map((u) => u.id);
+  const objekt = (doc.objektFotos ?? []).filter((f) => posIds.has(f.positionId)).map((f) => f.id);
+  return {
+    entfernteBilder: [...fotos, ...sigIds, ...objekt],
+    positionen: posIds.size,
+    doc: {
+      ...doc,
+      objektFotos: (doc.objektFotos ?? []).filter((f) => !posIds.has(f.positionId)),
+      raeume: doc.raeume.filter((r) => r.id !== raumId).map((r, i) => ({ ...r, sort: i })),
+      positionen: doc.positionen.filter((p) => !posIds.has(p.id)),
+      maengel: doc.maengel.filter((m) => !mangelIds.has(m.id)),
+      fotos: doc.fotos.filter((f) => !mangelIds.has(f.mangelId)),
+      unterschriften: doc.unterschriften.filter((u) => !sigIds.includes(u.id)),
+    },
+  };
+}
+
+/** Objektfotos einer Position. */
+export const objektFotosVon = (doc: ProtokollDoc, positionId: string) => (doc.objektFotos ?? []).filter((f) => f.positionId === positionId);
+
+/** Fügt ein Objektfoto an einer Position hinzu (das Bild selbst liegt als Blob lokal). */
+export function fuegeObjektFotoHinzu(doc: ProtokollDoc, positionId: string, foto: { id: string; breite: number; hoehe: number }): ProtokollDoc {
+  if (!doc.positionen.some((p) => p.id === positionId)) throw new Error("Position nicht gefunden.");
+  return {
+    ...doc,
+    objektFotos: [...(doc.objektFotos ?? []), { id: foto.id, positionId, path: null, breite: foto.breite, hoehe: foto.hoehe, aufgenommenAt: new Date().toISOString() }],
+  };
+}
+
+export function entferneObjektFoto(doc: ProtokollDoc, fotoId: string): ProtokollDoc {
+  return { ...doc, objektFotos: (doc.objektFotos ?? []).filter((f) => f.id !== fotoId) };
 }

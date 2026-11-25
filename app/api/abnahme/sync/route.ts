@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   if (typeof body.baseRev === "number" && cur.data!.rev !== body.baseRev) {
     const serverDoc = await ladeProtokollDoc(doc.id);
     if (!serverDoc) return jsonFehler(500, "Server-Stand konnte nicht gelesen werden.");
-    const paths = [...serverDoc.fotos.map((f) => f.path), ...serverDoc.unterschriften.map((u) => u.bildPath)].filter((x): x is string => Boolean(x));
+    const paths = [...serverDoc.fotos.map((f) => f.path), ...(serverDoc.objektFotos ?? []).map((f) => f.path), ...serverDoc.unterschriften.map((u) => u.bildPath)].filter((x): x is string => Boolean(x));
     const signed: Record<string, string> = {};
     if (paths.length) {
       const res = await supabase.storage.from("abnahme").createSignedUrls(paths, 3600);
@@ -85,6 +85,7 @@ export async function POST(request: Request) {
     ["abnahme_pruefpunkte", rows.pruefpunkte],
     ["abnahme_maengel", rows.maengel],
     ["abnahme_fotos", rows.fotos],
+    ["abnahme_objektfotos", rows.objektfotos ?? []],
     ["abnahme_unterschriften", rows.unterschriften],
   ];
   // Reihenfolge der Abhängigkeiten beim Schreiben: Räume → Positionen → Prüfpunkte → Mängel → Fotos/Unterschriften.

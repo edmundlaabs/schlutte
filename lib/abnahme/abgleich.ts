@@ -1,5 +1,5 @@
 import { positionStatus } from "./logic.ts";
-import type { Foto, Mangel, Position, ProtokollDoc, PruefStatus, Pruefpunkt, Raum, Unterschrift } from "./types.ts";
+import type { Foto, Mangel, ObjektFoto, Position, ProtokollDoc, PruefStatus, Pruefpunkt, Raum, Unterschrift } from "./types.ts";
 
 /**
  * Abgleich zweier Stände desselben Protokolls (Tablet = „lokal“, Datenbank = „server“), wenn beide seit dem letzten
@@ -12,7 +12,7 @@ import type { Foto, Mangel, Position, ProtokollDoc, PruefStatus, Pruefpunkt, Rau
  */
 
 export type Seite = "lokal" | "server";
-export type Gruppe = "Kopf" | "Raum" | "Position" | "Prüfpunkt" | "Mangel" | "Foto" | "Unterschrift" | "Arbeitszeile";
+export type Gruppe = "Kopf" | "Raum" | "Position" | "Prüfpunkt" | "Mangel" | "Foto" | "Objektfoto" | "Unterschrift" | "Arbeitszeile";
 
 export type Aenderung = {
   /** Stabiler Schlüssel (z. B. „pos:<id>“, „kopf:ort“). */
@@ -109,6 +109,11 @@ function fotoEintrag(f: Foto, d: ProtokollDoc): Eintrag {
   return { gruppe: "Foto", titel: `Foto zu Mangel „${(m?.text ?? "").slice(0, 40)}“`, norm: j([f.mangelId]), anzeige: "vorhanden" };
 }
 
+function objektFotoEintrag(f: { positionId: string }, d: ProtokollDoc): Eintrag {
+  const p = d.positionen.find((x) => x.id === f.positionId);
+  return { gruppe: "Objektfoto", titel: `Foto vom Objekt${p ? ` (Position ${p.nr} ${p.titel})` : ""}`, norm: j([f.positionId]), anzeige: "vorhanden" };
+}
+
 function sigEintrag(u: Unterschrift): Eintrag {
   return {
     gruppe: "Unterschrift", titel: `Unterschrift ${u.name} (${u.bezug.replace("_", " ")})`,
@@ -129,6 +134,7 @@ function katalog(d: ProtokollDoc): Map<string, Eintrag> {
   }
   for (const x of d.maengel) m.set(`mangel:${x.id}`, mangelEintrag(x, d));
   for (const f of d.fotos) m.set(`foto:${f.id}`, fotoEintrag(f, d));
+  for (const f of d.objektFotos ?? []) m.set(`objfoto:${f.id}`, objektFotoEintrag(f, d));
   for (const u of d.unterschriften) m.set(`sig:${u.id}`, sigEintrag(u));
   return m;
 }
@@ -161,7 +167,7 @@ export function berechneAenderungen(basis: ProtokollDoc | null | undefined, loka
     const ref = l ?? s!;
     out.push({ key, gruppe: ref.gruppe, titel: ref.titel, von, lokal: l ? l.anzeige : null, server: s ? s.anzeige : null });
   }
-  const reihenfolge: Record<Gruppe, number> = { Kopf: 0, Raum: 1, Position: 2, "Prüfpunkt": 3, Mangel: 4, Foto: 5, Unterschrift: 6, Arbeitszeile: 7 };
+  const reihenfolge: Record<Gruppe, number> = { Kopf: 0, Raum: 1, Position: 2, "Prüfpunkt": 3, Mangel: 4, Foto: 5, Objektfoto: 5, Unterschrift: 6, Arbeitszeile: 7 };
   return out.sort((a, b) => reihenfolge[a.gruppe] - reihenfolge[b.gruppe]);
 }
 
@@ -257,6 +263,14 @@ export function fuehreZusammen(basis: ProtokollDoc | null | undefined, lokal: Pr
     const alt = (q === lokal ? server : lokal).fotos.find((x) => x.id === id);
     if (f && mangelVorhanden.has(f.mangelId)) fotos.push({ ...f, path: f.path ?? alt?.path ?? null });
   }
+  const objIds = new Set([...(lokal.objektFotos ?? []).map((f) => f.id), ...(server.objektFotos ?? []).map((f) => f.id)]);
+  const objektFotos: ObjektFoto[] = [];
+  for (const id of objIds) {
+    const q = quelle(`objfoto:${id}`);
+    const f = (q.objektFotos ?? []).find((x) => x.id === id);
+    const alt = ((q === lokal ? server : lokal).objektFotos ?? []).find((x) => x.id === id);
+    if (f && posVorhanden.has(f.positionId)) objektFotos.push({ ...f, path: f.path ?? alt?.path ?? null });
+  }
   const sigIds = new Set([...lokal.unterschriften.map((u) => u.id), ...server.unterschriften.map((u) => u.id)]);
   const unterschriften: Unterschrift[] = [];
   for (const id of sigIds) {
@@ -276,6 +290,7 @@ export function fuehreZusammen(basis: ProtokollDoc | null | undefined, lokal: Pr
     positionen: nummeriert(positionen.map((p) => ({ ...p, raumId: p.raumId && raumVorhanden.has(p.raumId) ? p.raumId : null }))),
     maengel: nummeriert(maengel),
     fotos,
+    objektFotos,
     unterschriften,
   };
 }

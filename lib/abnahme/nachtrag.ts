@@ -52,6 +52,7 @@ export function erzeugeNachtrag(alt: ProtokollDoc, erledigteMangelIds: string[],
       pruefpunktId: m.pruefpunktId ? pruefMap.get(m.pruefpunktId) ?? null : null,
       erledigtAt: erledigt.has(m.id) ? jetzt : m.erledigtAt,
     })),
+    objektFotos: (alt.objektFotos ?? []).map((f) => ({ ...f, id: crypto.randomUUID(), positionId: posMap.get(f.positionId)! })),
     fotos: alt.fotos.map((f) => ({ ...f, id: crypto.randomUUID(), mangelId: mangelMap.get(f.mangelId)! })),
     unterschriften: [],
   };

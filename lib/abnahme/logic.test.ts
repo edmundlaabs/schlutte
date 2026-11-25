@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   fortschritt, kannAbschliessen, offeneUnterschriften, positionStatus, raumAlleIo, relevantePositionen,
-  setzeMangel, setzeMehrere, setzeStatus, setzeUnterschrift,
+  setzeMangel, setzeMehrere, setzeStatus, setzeUnterschrift, entferneRaum, fuegeObjektFotoHinzu, objektFotosVon, entferneObjektFoto,
 } from "./logic.ts";
 import type { Position, ProtokollDoc } from "./types.ts";
 
@@ -137,4 +137,33 @@ test("Eigene Position und Prüfpunkte hinzufügen/entfernen", () => {
   assert.throws(() => entfernePosition(doc(), "a"));
   const ent = entfernePosition(d, neu.id);
   assert.equal(ent.doc.positionen.some((p) => p.id === neu.id), false);
+});
+
+test("Raum entfernen: Positionen, Mängel, Fotos und Unterschriften des Raums gehen mit", () => {
+  let d = doc();
+  d = setzeMangel(d, { positionId: "a", pruefpunktId: "ak0" }, { text: "Kratzer", frist: "" });
+  d = { ...d, fotos: [{ id: "f1", mangelId: d.maengel[0].id, path: null, breite: 1, hoehe: 1, aufgenommenAt: "" }] };
+  d = setzeUnterschrift(d, { id: "u1", bezug: "raum", bezugId: "r1", name: "Kunde", rolle: "Kunde" }).doc;
+  d = setzeUnterschrift(d, { id: "u2", bezug: "raum", bezugId: "r2", name: "Kunde", rolle: "Kunde" }).doc;
+  const r = entferneRaum(d, "r1");
+  assert.deepEqual(r.doc.raeume.map((x) => [x.id, x.sort]), [["r2", 0]]);
+  assert.deepEqual(r.doc.positionen.map((p) => p.id), ["c"]); // a, b, x (ausgeblendet) gehören zu r1
+  assert.equal(r.positionen, 3);
+  assert.equal(r.doc.maengel.length, 0);
+  assert.equal(r.doc.fotos.length, 0);
+  assert.deepEqual(r.doc.unterschriften.map((u) => u.id), ["u2"]);
+  assert.ok(r.entfernteBilder.includes("f1") && r.entfernteBilder.includes("u1") && !r.entfernteBilder.includes("u2"));
+  assert.throws(() => entferneRaum(d, "gibt-es-nicht"));
+});
+
+test("Objektfotos: hinzufügen, entfernen, mit Position/Raum entfernen", () => {
+  let d = doc();
+  d = fuegeObjektFotoHinzu(d, "a", { id: "o1", breite: 10, hoehe: 5 });
+  d = fuegeObjektFotoHinzu(d, "c", { id: "o2", breite: 10, hoehe: 5 });
+  assert.equal(objektFotosVon(d, "a").length, 1);
+  assert.throws(() => fuegeObjektFotoHinzu(d, "gibt-es-nicht", { id: "x", breite: 1, hoehe: 1 }));
+  const r = entferneRaum(d, "r1");
+  assert.deepEqual((r.doc.objektFotos ?? []).map((f) => f.id), ["o2"]);
+  assert.ok(r.entfernteBilder.includes("o1") && !r.entfernteBilder.includes("o2"));
+  assert.equal((entferneObjektFoto(d, "o2").objektFotos ?? []).length, 1);
 });

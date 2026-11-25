@@ -19,6 +19,16 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.5.0",
+    date: "26.11.2026",
+    changes: [
+      "Begehung: Statusknöpfe mit Symbolen (Haken = i. O., Hammer = Mangel, X = nicht prüfbar); „Prüfpunkt entfernen“ ist jetzt dezent",
+      "Begehung: Räume umbenennen, Etage ändern und löschen („Raum bearbeiten“ im Raum)",
+      "Auch bei i. O. wird das Objekt fotografiert: „Foto vom Objekt“ an jeder Position (mehrere möglich), im PDF unter den Prüfpunkten, im Abgleich und im Archiv enthalten",
+      "Behoben: die Auswahlkarten unter „Neues Protokoll“ überschrieben das Entfernen-Symbol der Prüfpunkte",
+    ],
+  },
+  {
     version: "1.4.0",
     date: "26.11.2026",
     changes: [

@@ -70,6 +70,17 @@ export type Foto = {
   aufgenommenAt: string;
 };
 
+/** Foto des Objekts (Position), auch bei „i. O.“ – nicht an einen Mangel gebunden. */
+export type ObjektFoto = {
+  id: string;
+  positionId: string;
+  /** Storage-Pfad, sobald hochgeladen. Der Blob liegt bis dahin in IndexedDB. */
+  path: string | null;
+  breite: number;
+  hoehe: number;
+  aufgenommenAt: string;
+};
+
 export type Unterschrift = {
   id: string;
   bezug: Bezug;
@@ -109,6 +120,8 @@ export type ProtokollDoc = {
   positionen: Position[];
   maengel: Mangel[];
   fotos: Foto[];
+  /** Objektfotos je Position; fehlt bei Dokumenten, die vor Version 1.5 angelegt wurden. */
+  objektFotos?: ObjektFoto[];
   unterschriften: Unterschrift[];
 };
 

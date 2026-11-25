@@ -83,3 +83,17 @@ test("Mapping: quelle und leere Kommission", () => {
   delete alt.quelle;
   assert.equal(docToRows(alt as ProtokollDoc).protokoll.quelle, "profacto");
 });
+
+test("Mapping: Objektfotos nur mit Pfad und vorhandener Position", () => {
+  const d = { ...mitPosition(), kunde: "Meier" };
+  d.objektFotos = [
+    { id: "o1", positionId: "x1", path: "protokoll/p1/fotos/o1.jpg", breite: 1, hoehe: 1, aufgenommenAt: "2026-11-26T10:00:00Z" },
+    { id: "o2", positionId: "x1", path: null, breite: 1, hoehe: 1, aufgenommenAt: "" },
+    { id: "o3", positionId: "weg", path: "p", breite: 1, hoehe: 1, aufgenommenAt: "" },
+  ];
+  const rows = docToRows(d);
+  assert.deepEqual((rows.objektfotos ?? []).map((r) => r.id), ["o1"]);
+  const zurueck = rowsToDoc({ protokoll: rows.protokoll, raeume: rows.raeume, positionen: rows.positionen, pruefpunkte: [], maengel: [], fotos: [], objektfotos: rows.objektfotos, unterschriften: [] });
+  assert.equal(zurueck.objektFotos?.length, 1);
+  assert.equal(zurueck.objektFotos?.[0].positionId, "x1");
+});

@@ -33,24 +33,25 @@ export async function POST(request: Request) {
   }
 
   const id = body.id;
-  const [p, ra, po, pr, ma, fo, un] = await Promise.all([
+  const [p, ra, po, pr, ma, fo, of, un] = await Promise.all([
     supabase.from("abnahme_protokolle").select("*").eq("id", id).single(),
     supabase.from("abnahme_raeume").select("*").eq("protokoll_id", id),
     supabase.from("abnahme_positionen").select("*").eq("protokoll_id", id),
     supabase.from("abnahme_pruefpunkte").select("*").eq("protokoll_id", id),
     supabase.from("abnahme_maengel").select("*").eq("protokoll_id", id),
     supabase.from("abnahme_fotos").select("*").eq("protokoll_id", id),
+    supabase.from("abnahme_objektfotos").select("*").eq("protokoll_id", id),
     supabase.from("abnahme_unterschriften").select("*").eq("protokoll_id", id),
   ]);
   if (p.error) return jsonFehler(404, p.error.message);
   const doc = rowsToDoc({
     protokoll: p.data, raeume: ra.data ?? [], positionen: po.data ?? [], pruefpunkte: pr.data ?? [],
-    maengel: ma.data ?? [], fotos: fo.data ?? [], unterschriften: un.data ?? [],
+    maengel: ma.data ?? [], fotos: fo.data ?? [], objektfotos: of.data ?? [], unterschriften: un.data ?? [],
   });
   if (doc.status === "abgeschlossen") return jsonFehler(409, "Das Protokoll ist bereits abgeschlossen.");
 
   // Bereits hochgeladene Bilder (z. B. bei Gerätewechsel) für die Offline-Nutzung bereitstellen.
-  const paths = [...doc.fotos.map((f) => f.path), ...doc.unterschriften.map((u) => u.bildPath)].filter((x): x is string => Boolean(x));
+  const paths = [...doc.fotos.map((f) => f.path), ...(doc.objektFotos ?? []).map((f) => f.path), ...doc.unterschriften.map((u) => u.bildPath)].filter((x): x is string => Boolean(x));
   const signed: Record<string, string> = {};
   if (paths.length) {
     const res = await supabase.storage.from("abnahme").createSignedUrls(paths, 3600);

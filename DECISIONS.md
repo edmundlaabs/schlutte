@@ -259,3 +259,10 @@ Die Tabellen wurden verifiziert und die Data-Schicht auf das reale Schema angepa
 - **Checkout-Reste entfernt:** Route `/api/abnahme/freigeben`, Aktion „Gerät freigeben“ und die Schreibzugriffe auf `checkout_*` im Sync. Die SQL-Funktionen `abnahme_checkout`/`abnahme_release` und die Spalten bleiben (additiv, keine Datenänderung), sind aber ungenutzt.
 - **Regiebericht löschen** über Server Action mit Service-Role-Client (der Trigger sperrt das Löschen abgeschlossener Berichte für normale Nutzer); Berechtigung wie beim Protokoll: nicht abgeschlossen = jeder mit Zugang, abgeschlossen = nur CEO/Admin. Sync legt einen serverseitig gelöschten Bericht nicht neu an (HTTP 410, bestand schon).
 
+## Abnahme: Objektfotos, Raum in der Begehung bearbeiten (Version 1.5.0, 2026-11-26)
+
+- **Objektfotos als eigene Tabelle** `abnahme_objektfotos` (Foto an der Position, nicht an einem Mangel; Migration `20261128_abnahme_objektfotos.sql`, gesperrt nach Abschluss über denselben Trigger wie die übrigen Kindtabellen). `ProtokollDoc.objektFotos` ist optional, damit lokale Dokumente aus früheren Versionen weiter gelesen werden. Bilder laufen über denselben Blob-/Upload-Weg wie Mangelfotos (Pfad `…/fotos/<id>.jpg`).
+- **Foto bei i. O. ist optional** (Hinweis an der Position, kein Hindernis beim Abschluss). Falls es Pflicht werden soll, wäre das eine zusätzliche Bedingung in `kannAbschliessen`.
+- **Raum löschen in der Begehung** nimmt Positionen (auch ausgeblendete), Mängel, Fotos, Objektfotos und Unterschriften mit; der Sync löscht die Zeilen serverseitig, im Abgleich erscheint es als „löschen“.
+- **Klassenname `abn-weg` doppelt belegt** (Auswahlkarten „Neues Protokoll“ und Entfernen-Symbol): Karten heißen jetzt `abn-weg-karte`.
+
