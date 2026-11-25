@@ -12,17 +12,11 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   const ctx = await abnahmeNutzer();
   if (!ctx) return jsonFehler(401, "Nicht angemeldet oder kein Zugriff.");
-  const body = (await request.json().catch(() => null)) as { typ?: string; id?: string; deviceId?: string; force?: boolean } | null;
+  const body = (await request.json().catch(() => null)) as { typ?: string; id?: string; deviceId?: string } | null;
   if (!body?.id || !body.deviceId || (body.typ !== "abnahme" && body.typ !== "regie")) return jsonFehler(400, "Ungültige Anfrage.");
 
   const supabase = await createClient();
-  // Abnahmeprotokolle werden nicht mehr ausgecheckt: mehrere Geräte dürfen laden und bearbeiten, der Sync gleicht ab.
-  // Nur der Regiebericht hält noch einen Checkout.
-  if (body.typ === "regie") {
-    const co = await supabase.rpc("abnahme_checkout", { p_typ: body.typ, p_id: body.id, p_device: body.deviceId, p_force: Boolean(body.force) });
-    if (co.error) return jsonFehler(403, co.error.message);
-    if (co.data === false) return jsonFehler(409, "Dieses Dokument ist auf einem anderen Gerät ausgecheckt.");
-  }
+  // Kein Auschecken: mehrere Geräte dürfen laden und bearbeiten, der Sync gleicht bei Abweichungen ab.
 
   const me = { id: ctx.employee?.id ?? null, name: ctx.employee?.name ?? ctx.email ?? "" };
   const employees = (await getActiveEmployees())

@@ -215,13 +215,13 @@ export async function listVersand(typ: "abnahme" | "regie", id: string): Promise
 
 export type StandEintrag = { id: string; art: "tablet" | "server"; rev: number; geraet: string | null; created_at: string; von: string | null };
 
-/** Archivierte Stände (vor einem Abgleich) eines Protokolls, neueste zuerst. */
-export async function listStaende(id: string): Promise<StandEintrag[]> {
+/** Archivierte Stände (vor einem Abgleich) eines Protokolls oder Regieberichts, neueste zuerst. */
+export async function listStaende(id: string, typ: "abnahme" | "regie" = "abnahme"): Promise<StandEintrag[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("abnahme_staende")
+    .from(typ === "regie" ? "abnahme_regie_staende" : "abnahme_staende")
     .select("id,art,rev,geraet,created_at,erstellt_von")
-    .eq("protokoll_id", id)
+    .eq(typ === "regie" ? "regiebericht_id" : "protokoll_id", id)
     .order("created_at", { ascending: false })
     .order("art");
   if (error) return []; // Tabelle fehlt vor der Migration 20261126

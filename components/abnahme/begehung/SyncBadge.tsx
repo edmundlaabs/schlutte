@@ -32,14 +32,14 @@ export function SyncBadge({ eintrag, online }: { eintrag: LokalesDokument | null
   const [busy, setBusy] = useState(false);
   const [abgleich, setAbgleich] = useState(false);
   if (!eintrag) return null;
-  const konflikt = eintrag.typ === "abnahme" && Boolean(eintrag.konflikt) && !eintrag.archiv;
+  const konflikt = Boolean(eintrag.konflikt) && !eintrag.archiv;
   const text = konflikt
     ? "Abgleich nötig"
     : eintrag.zustand === "fehler" ? "Sync-Fehler" : eintrag.dirty || eintrag.zustand === "lokal" ? "lokal gespeichert" : "synchronisiert";
   const klasse = konflikt || eintrag.zustand === "fehler" ? "is-error" : eintrag.dirty ? "is-local" : "is-ok";
   return (
     <span className="abn-sync">
-      {konflikt && eintrag.typ === "abnahme" && (
+      {konflikt && (
         <>
           <button type="button" className="aus-btn aus-btn-primary aus-btn-sm" onClick={() => setAbgleich(true)}>Abgleichen</button>
           {abgleich && <AbgleichDialog eintrag={eintrag} onClose={() => setAbgleich(false)} />}

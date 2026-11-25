@@ -19,6 +19,14 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.4.0",
+    date: "26.11.2026",
+    changes: [
+      "Abnahme: Kein Auschecken mehr – auch beim Regiebericht dürfen mehrere Geräte parallel arbeiten; beim Sync gleicht „Abgleichen“ abweichende Stände ab, beide Stände werden archiviert",
+      "Regieberichte löschen (auf der Regiebericht-Seite, inkl. Zeilen, Unterschrift, PDF und Versandprotokoll); abgeschlossene nur CEO/Admin",
+    ],
+  },
+  {
     version: "1.3.0",
     date: "26.11.2026",
     changes: [

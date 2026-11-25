@@ -11,6 +11,7 @@ export async function speichereRegieAusServer(res: unknown): Promise<void> {
     id: doc.id, typ: "regie", doc, dirty: false, zustand: "synchronisiert", fehler: "",
     geladenAt: new Date().toISOString(), syncedAt: new Date().toISOString(), versand: vorhanden?.versand ?? [],
     editSeq: (vorhanden?.editSeq ?? 0) + 1,
+    basis: JSON.parse(JSON.stringify(doc)) as RegieDoc, konflikt: null, archiv: null,
   });
 }
 

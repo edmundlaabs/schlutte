@@ -3,7 +3,7 @@
 import { kommissionAnzeige } from "@/lib/abnahme/kommission";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { alleDokumente, geraeteId, type LokalesDokument } from "@/lib/abnahme/offline/db";
+import { alleDokumente, type LokalesDokument } from "@/lib/abnahme/offline/db";
 import { SYNC_EVENT, entferneLokal, gibFrei, istOnline, ladeFuerBaustelle, syncAlle, verwerfeLokal } from "@/lib/abnahme/offline/sync";
 import { speicherStatus } from "@/lib/abnahme/offline/sw-register";
 import { SyncBadge, useAutoSync } from "./SyncBadge";
@@ -25,14 +25,12 @@ export function LokaleListe() {
   const online = useAutoSync();
   const [lokal, setLokal] = useState<LokalesDokument[]>([]);
   const [server, setServer] = useState<{ protokolle: ServerEintrag[]; regieberichte: ServerEintrag[] } | null>(null);
-  const [geraet, setGeraet] = useState("");
   const [meldung, setMeldung] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [speicher, setSpeicher] = useState<{ belegt: number; quota: number; persistent: boolean } | null>(null);
 
   const lade = useCallback(async () => {
     setLokal(await alleDokumente());
-    setGeraet(await geraeteId());
     setSpeicher(await speicherStatus());
     if (istOnline()) {
       try {
@@ -54,7 +52,7 @@ export function LokaleListe() {
     setBusy(id);
     setMeldung("");
     const r = await ladeFuerBaustelle(typ, id, force);
-    if (!r.ok) setMeldung(r.konflikt ? `${r.error} (Ein Admin kann es übernehmen.)` : r.error);
+    if (!r.ok) setMeldung(r.konflikt ? `${r.error} (Bitte erneut versuchen.)` : r.error);
     setBusy(null);
     await lade();
   }
@@ -74,15 +72,14 @@ export function LokaleListe() {
       const res = await fetch("/api/abnahme/liste");
       if (!res.ok || res.redirected) throw new Error("Die Liste konnte nicht geladen werden. Bitte erneut anmelden.");
       const liste = (await res.json()) as { protokolle: ServerEintrag[]; regieberichte: ServerEintrag[] };
-      const dev = await geraeteId();
       const vorhanden = new Set((await alleDokumente()).map((d) => d.id));
       const neue = [
         ...liste.protokolle.map((p) => ({ ...p, typ: "abnahme" as const })),
         ...liste.regieberichte.map((p) => ({ ...p, typ: "regie" as const })),
-      ].filter((p) => !vorhanden.has(p.id) && (p.typ === "abnahme" || !p.checkout_device || p.checkout_device === dev));
+      ].filter((p) => !vorhanden.has(p.id));
       let geladen = 0;
       const fehler: string[] = [];
-      if (neue.length > 0 && window.confirm(`${neue.length} Dokument(e) auf dieses Gerät laden? Protokolle lassen sich auch auf anderen Geräten bearbeiten (der Sync gleicht ab), Regieberichte nur auf diesem.`)) {
+      if (neue.length > 0 && window.confirm(`${neue.length} Dokument(e) auf dieses Gerät laden? Sie lassen sich auch auf anderen Geräten bearbeiten; der Sync gleicht Unterschiede ab.`)) {
         for (const p of neue) {
           const r = await ladeFuerBaustelle(p.typ, p.id);
           if (r.ok) geladen++;
@@ -207,16 +204,14 @@ export function LokaleListe() {
         {online && ladbar.length === 0 && <p className="aus-muted">Keine weiteren offenen Dokumente.</p>}
         <ul className="abn-dok-liste">
           {ladbar.map((p) => {
-            const fremd = p.typ === "regie" && Boolean(p.checkout_device) && p.checkout_device !== geraet;
             return (
               <li key={p.id} className="abn-dok">
                 <div className="abn-dok-main">
                   <strong>{p.typ === "abnahme" ? "Abnahme" : "Regiebericht"} · {kommissionAnzeige(p.kommission_nr, "de")}</strong> · {p.kunde}
                   {p.titel && <span className="aus-muted"> · {p.titel}</span>}
-                  {fremd && <div className="aus-field-error">Auf einem anderen Gerät ausgecheckt{p.mitarbeiter_name ? ` (${p.mitarbeiter_name})` : ""}.</div>}
                 </div>
                 <div className="abn-dok-side">
-                  <button type="button" className="aus-btn aus-btn-primary" disabled={busy === p.id || !online || fremd} onClick={() => laden(p.typ, p.id)}>
+                  <button type="button" className="aus-btn aus-btn-primary" disabled={busy === p.id || !online} onClick={() => laden(p.typ, p.id)}>
                     {busy === p.id ? "Lädt …" : "Für Baustelle laden"}
                   </button>
                 </div>
