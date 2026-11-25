@@ -1,0 +1,22 @@
+/* Abnahme: manuelles Anlegen, Kunden-/Kommissionsauswahl, Protokoll-Vorlagen. Tokens wie abnahme.css (tokens.css). */
+
+/* Kunden-/Kommissionsauswahl */
+.abn-kk { display: grid; gap: 16px; margin-bottom: 16px; }
+.abn-seg { display: flex; flex-wrap: wrap; border: 1px solid var(--fg, #1a1a17); width: fit-content; max-width: 100%; }
+.abn-seg-btn { min-height: var(--abn-touch, 44px); padding: 0 18px; border: 0; border-right: 1px solid var(--fg, #1a1a17); background: transparent; color: var(--fg); font: inherit; font-size: 16px; cursor: pointer; }
+.abn-seg-btn:last-child { border-right: 0; }
+.abn-seg-btn.is-on { background: var(--fg, #1a1a17); color: var(--bg, #fff); }
+.abn-kk .aus-input { min-height: var(--abn-touch, 44px); font-size: 16px; }
+.abn-kk-gewaehlt { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; min-height: var(--abn-touch, 44px); padding: 8px 12px; border: 1px solid var(--border, #d8d2c6); background: color-mix(in srgb, var(--gd-success) 12%, var(--bg-raised, #fff)); }
+.abn-kk-treffer { list-style: none; margin: 4px 0 0; padding: 0; border: 1px solid var(--border, #d8d2c6); background: var(--bg-raised, #fff); }
+.abn-kk-treffer li + li { border-top: 1px solid var(--border, #d8d2c6); }
+.abn-kk-treffer-btn { display: block; width: 100%; min-height: var(--abn-touch, 44px); padding: 8px 12px; text-align: left; border: 0; background: transparent; color: var(--fg); font: inherit; font-size: 16px; cursor: pointer; }
+.abn-kk-treffer-btn:hover, .abn-kk-treffer-btn:focus-visible { background: var(--bg-alt, #e9e6df); }
+
+/* Einstieg „Neues Protokoll“ */
+.abn-wege { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.abn-weg { display: grid; gap: 12px; align-content: start; padding: 20px; border: 1px solid var(--border, #d8d2c6); background: var(--bg-raised, #fff); color: var(--fg); text-decoration: none; min-height: 160px; }
+.abn-weg:hover, .abn-weg:focus-visible { border-color: var(--fg, #1a1a17); }
+.abn-weg-titel { font-size: 20px; font-weight: 500; }
+.abn-weg-text { color: var(--fg-muted, #6b665c); }
+.abn-weg-go { margin-top: auto; font-weight: 500; }

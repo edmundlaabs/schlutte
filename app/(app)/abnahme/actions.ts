@@ -3,12 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { requireAppAccess } from "@/lib/auth/app-access";
 import { createCommission } from "@/lib/data/commissions";
-import { findKommission, insertProtokoll, ladeProtokollDoc, type KommissionTreffer } from "@/lib/data/abnahme";
+import { findKommission, insertProtokoll, ladeProtokollDoc, searchKommissionen, type KommissionTreffer } from "@/lib/data/abnahme";
 import { createClient } from "@/lib/supabase/server";
 import { ermittleKette, loescheKette } from "@/lib/data/abnahme-loeschen";
 import { versendeDokument } from "@/lib/abnahme/versand-server";
 import { erzeugeNachtrag } from "@/lib/abnahme/nachtrag";
-import type { ProtokollDoc } from "@/lib/abnahme/types";
+import type { ProtokollDoc, Quelle } from "@/lib/abnahme/types";
+import type { KommissionModus, KundeKommission } from "@/lib/abnahme/kommission";
+import { validiereNeuesProtokoll } from "@/lib/abnahme/validate";
+import { zuQuelle } from "@/lib/abnahme/mapping";
 
 export type AbnahmeResult<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -17,31 +20,42 @@ export async function findeKommissionAction(nr: string): Promise<KommissionTreff
   return findKommission(nr);
 }
 
+export async function sucheKommissionenAction(q: string): Promise<KommissionTreffer[]> {
+  await requireAppAccess("abnahme");
+  try {
+    return await searchKommissionen(q);
+  } catch (e) {
+    console.error("Kommissionssuche:", e);
+    return [];
+  }
+}
+
 /**
- * Legt ein importiertes Protokoll an. Kommissionsnummer und Kunde sind Pflicht.
- * Existiert die Kommission nicht, wird sie nur auf ausdrücklichen Wunsch angelegt.
+ * Legt ein Protokoll an (Profacto-Import, manuell oder aus Vorlage).
+ * Kommission: „bestehend“ (wird serverseitig nachgeschlagen), „neu“ (wird hier angelegt, Nummer muss frei sein)
+ * oder „ohne“ (Kleinauftrag, keine Zeile in commissions). Kundenname ist immer Pflicht.
  */
 export async function legeProtokollAn(
   doc: ProtokollDoc,
-  optionen: { kommissionAnlegen: boolean }
+  optionen: { kommission: KommissionModus; quelle: Quelle }
 ): Promise<AbnahmeResult<{ id: string }>> {
   try {
     const ctx = await requireAppAccess("abnahme");
-    const nr = doc.kommissionNr.trim();
+    const modus = optionen.kommission;
+    const nr = modus === "ohne" ? "" : doc.kommissionNr.trim();
     const kunde = doc.kunde.trim();
-    if (!nr) return { ok: false, error: "Kommissionsnummer ist Pflicht." };
-    if (!kunde) return { ok: false, error: "Kundenname ist Pflicht." };
-    if (!doc.positionen.some((p) => p.relevant)) {
-      return { ok: false, error: "Es gibt keine abnahmerelevante Position." };
-    }
-    if (doc.positionen.some((p) => p.relevant && !p.raumId)) {
-      return { ok: false, error: "Jede abnahmerelevante Position braucht einen Raum." };
-    }
+    const kk: KundeKommission = { modus, commissionId: doc.commissionId, nr, kunde, projekt: doc.projekt };
+    const probleme = validiereNeuesProtokoll(doc, kk);
+    if (probleme.length) return { ok: false, error: probleme.join(" ") };
 
-    let treffer = await findKommission(nr);
-    if (!treffer) {
-      if (!optionen.kommissionAnlegen) {
-        return { ok: false, error: `Kommission ${nr} existiert nicht. Bitte verknüpfen oder zum Anlegen freigeben.` };
+    let commissionId: string | null = null;
+    if (modus === "bestehend") {
+      const treffer = await findKommission(nr);
+      if (!treffer) return { ok: false, error: `Kommission ${nr} existiert nicht (mehr). Bitte neu auswählen oder anlegen.` };
+      commissionId = treffer.id;
+    } else if (modus === "neu") {
+      if (await findKommission(nr)) {
+        return { ok: false, error: `Kommission ${nr} gibt es schon. Bitte aus der Suche auswählen.` };
       }
       const angelegt = await createCommission({
         no: nr,
@@ -49,14 +63,15 @@ export async function legeProtokollAn(
         project: doc.projekt,
         owner: ctx.employee?.initials ?? undefined,
       });
-      treffer = await findKommission(angelegt.no);
+      commissionId = (await findKommission(angelegt.no))?.id ?? null;
     }
 
     const sauber: ProtokollDoc = {
       ...doc,
-      commissionId: treffer?.id ?? null,
+      commissionId,
       kommissionNr: nr,
       kunde,
+      quelle: zuQuelle(optionen.quelle),
       status: "bereit",
       version: 1,
       parentId: null,

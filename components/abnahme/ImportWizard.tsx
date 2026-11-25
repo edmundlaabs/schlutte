@@ -12,8 +12,9 @@ import { registriereAbnahmeSw } from "@/lib/abnahme/offline/sw-register";
 import type { ParsedList } from "@/lib/abnahme/parser/types";
 import type { Position, ProtokollDoc, Raum, Vorlage } from "@/lib/abnahme/types";
 import { findeKommissionAction, legeProtokollAn } from "@/app/(app)/abnahme/actions";
-
-type Treffer = { id: string; nr: string; kunde: string; projekt: string } | null;
+import { KundeKommissionAuswahl } from "@/components/abnahme/KundeKommissionAuswahl";
+import { LEERE_AUSWAHL, wendeAuswahlAn, type KundeKommission } from "@/lib/abnahme/kommission";
+import { validiereNeuesProtokoll } from "@/lib/abnahme/validate";
 
 export function ImportWizard({
   vorlagen,
@@ -25,9 +26,7 @@ export function ImportWizard({
   const [doc, setDoc] = useState<ProtokollDoc | null>(null);
   const [parsed, setParsed] = useState<ParsedList | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [treffer, setTreffer] = useState<Treffer>(null);
-  const [geprueft, setGeprueft] = useState(false);
-  const [anlegen, setAnlegen] = useState(false);
+  const [kk, setKk] = useState<KundeKommission>(LEERE_AUSWAHL);
   const [zeigeAusgeblendet, setZeigeAusgeblendet] = useState(false);
   const [auswahl, setAuswahl] = useState<Set<string>>(new Set());
   const [zielRaum, setZielRaum] = useState("");
@@ -42,18 +41,13 @@ export function ImportWizard({
 
   const vorlageById = useMemo(() => new Map(vorlagen.map((v) => [v.id, v])), [vorlagen]);
 
-  async function pruefeKommission(nr: string) {
+  /** Sucht die Kommissionsnummer aus der PDF: gefunden → bestehend, sonst „neu anlegen“ mit den PDF-Daten vorbelegt. */
+  async function kommissionAusPdf(nr: string, kunde: string, projekt: string): Promise<KundeKommission> {
     const clean = nr.trim();
-    if (!clean) {
-      setTreffer(null);
-      setGeprueft(false);
-      return;
-    }
+    if (!clean) return { ...LEERE_AUSWAHL, kunde, projekt };
     const t = await findeKommissionAction(clean);
-    setTreffer(t);
-    setGeprueft(true);
-    // Kunde nur vorbelegen, wenn noch leer; Profacto schneidet ab, der Name bleibt editierbar.
-    if (t) setDoc((d) => (d && !d.kunde.trim() ? { ...d, kunde: t.kunde } : d));
+    if (t) return { modus: "bestehend", commissionId: t.id, nr: t.nr, kunde: t.kunde || kunde, projekt: projekt || t.projekt };
+    return { modus: /^\d{6}$/.test(clean) ? "neu" : "bestehend", commissionId: null, nr: /^\d{6}$/.test(clean) ? clean : "", kunde, projekt };
   }
 
   async function dateiGewaehlt(f: File | null) {
@@ -75,10 +69,7 @@ export function ImportWizard({
       setDoc(neu);
       setFile(f);
       setAuswahl(new Set());
-      setTreffer(null);
-      setGeprueft(false);
-      setAnlegen(false);
-      await pruefeKommission(neu.kommissionNr);
+      setKk(await kommissionAusPdf(neu.kommissionNr, neu.kunde, neu.projekt));
     } catch (e) {
       console.error(e);
       setFehler("Die PDF konnte nicht gelesen werden. Ist es die Profacto-Liste „Einfache Positionsliste“?");
@@ -148,17 +139,7 @@ export function ImportWizard({
     }
   }
 
-  const probleme: string[] = [];
-  if (doc) {
-    if (!doc.kommissionNr.trim()) probleme.push("Kommissionsnummer fehlt.");
-    if (!doc.kunde.trim()) probleme.push("Kundenname fehlt.");
-    if (geprueft && !treffer && !anlegen) probleme.push("Kommission existiert noch nicht – bitte „Kommission anlegen“ aktivieren.");
-    if (geprueft && !treffer && anlegen && !/^\d{6}$/.test(doc.kommissionNr.trim())) {
-      probleme.push("Zum Anlegen muss die Kommissionsnummer genau 6 Ziffern haben.");
-    }
-    if (!doc.positionen.some((p) => p.relevant)) probleme.push("Keine abnahmerelevante Position.");
-    if (doc.positionen.some((p) => p.relevant && !p.raumId)) probleme.push("Eine abnahmerelevante Position hat keinen Raum.");
-  }
+  const probleme = doc ? validiereNeuesProtokoll(doc, kk) : [];
 
   async function speichern() {
     if (!doc || !file || probleme.length) return;
@@ -169,7 +150,7 @@ export function ImportWizard({
     try {
       const up = await supabase.storage.from("abnahme").upload(pfad, file, { contentType: "application/pdf", upsert: true });
       if (up.error) throw new Error(`Original-PDF konnte nicht abgelegt werden: ${up.error.message}`);
-      const res = await legeProtokollAn({ ...doc, originalPath: pfad }, { kommissionAnlegen: anlegen });
+      const res = await legeProtokollAn({ ...wendeAuswahlAn(doc, kk), originalPath: pfad }, { kommission: kk.modus, quelle: "profacto" });
       if (!res.ok) {
         await supabase.storage.from("abnahme").remove([pfad]);
         throw new Error(res.error);
@@ -193,7 +174,7 @@ export function ImportWizard({
     return (
       <div className="aus-card abn-done">
         <h2 className="aus-h2">Protokoll angelegt</h2>
-        <p>Kommission {doc?.kommissionNr} · {doc?.kunde}.</p>
+        <p>{kk.modus === "ohne" ? "Ohne Kommission" : `Kommission ${kk.nr}`} · {kk.kunde}.</p>
         {offline === "laeuft" && <p className="aus-muted">Wird für die Baustelle auf diesem Gerät gespeichert …</p>}
         {offline === "ok" && <p className="aus-field-ok" role="status">Auf diesem Gerät offline gespeichert. Die Begehung funktioniert jetzt auch ohne Internet.</p>}
         {offline !== "" && offline !== "laeuft" && offline !== "ok" && (
@@ -230,7 +211,7 @@ export function ImportWizard({
               className="aus-btn aus-btn-quiet"
               onClick={() => {
                 if (!window.confirm("Import verwerfen? Es wurde noch nichts angelegt.")) return;
-                setDoc(null); setParsed(null); setFile(null); setTreffer(null); setGeprueft(false); setFehler("");
+                setDoc(null); setParsed(null); setFile(null); setKk(LEERE_AUSWAHL); setFehler("");
                 if (inputRef.current) inputRef.current.value = "";
               }}
             >
@@ -261,38 +242,13 @@ export function ImportWizard({
           )}
 
           <section className="aus-card">
-            <h2 className="aus-h2">2 · Kopf</h2>
+            <h2 className="aus-h2">2 · Kunde, Kommission und Kopf</h2>
+            <KundeKommissionAuswahl
+              value={kk}
+              onChange={setKk}
+              hinweisKunde="Profacto schneidet den Namen ab – bitte vollständig eintragen."
+            />
             <div className="aus-grid abn-kopf">
-              <label className="aus-field">
-                <span className="aus-label">Kommission <span className="aus-req">*</span></span>
-                <input
-                  className="aus-input"
-                  inputMode="numeric"
-                  value={doc.kommissionNr}
-                  onChange={(e) => update({ kommissionNr: e.target.value })}
-                  onBlur={(e) => pruefeKommission(e.target.value)}
-                />
-                {geprueft && treffer && (
-                  <span className="aus-field-ok">Verknüpft mit bestehender Kommission {treffer.nr} ({treffer.kunde})</span>
-                )}
-                {geprueft && !treffer && (
-                  <span className="aus-field-error">
-                    Diese Kommission gibt es noch nicht.{" "}
-                    <label className="abn-inline">
-                      <input type="checkbox" checked={anlegen} onChange={(e) => setAnlegen(e.target.checked)} /> Kommission anlegen
-                    </label>
-                  </span>
-                )}
-              </label>
-              <label className="aus-field">
-                <span className="aus-label">Kunde <span className="aus-req">*</span></span>
-                <input className="aus-input" value={doc.kunde} onChange={(e) => update({ kunde: e.target.value })} />
-                <span className="aus-help">Profacto schneidet den Namen ab – bitte vollständig eintragen.</span>
-              </label>
-              <label className="aus-field">
-                <span className="aus-label">Projekt</span>
-                <input className="aus-input" value={doc.projekt} onChange={(e) => update({ projekt: e.target.value })} />
-              </label>
               <label className="aus-field">
                 <span className="aus-label">Baustellenadresse / Ort</span>
                 <input className="aus-input" value={doc.ort} onChange={(e) => update({ ort: e.target.value })} />
