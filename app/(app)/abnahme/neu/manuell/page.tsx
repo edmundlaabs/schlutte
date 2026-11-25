@@ -1,18 +1,25 @@
 import { requireAppAccess } from "@/lib/auth/app-access";
-import { getVorlagen } from "@/lib/data/abnahme";
+import { getProtokollVorlagen, getVorlagen } from "@/lib/data/abnahme";
 import { ProtokollEditor } from "@/components/abnahme/ProtokollEditor";
-import type { Vorlage } from "@/lib/abnahme/types";
+import type { ProtokollVorlage, Vorlage } from "@/lib/abnahme/types";
 
 export const metadata = { title: "Protokoll erfassen" };
 
 export default async function ManuellPage() {
   const ctx = await requireAppAccess("abnahme");
   let vorlagen: Vorlage[] = [];
+  let protokollVorlagen: ProtokollVorlage[] = [];
   let fehler = "";
   try {
     vorlagen = await getVorlagen();
   } catch (e) {
     fehler = e instanceof Error ? e.message : "Vorlagen nicht verfügbar.";
+  }
+  try {
+    protokollVorlagen = await getProtokollVorlagen();
+  } catch (e) {
+    // Vor der Migration 20261125 gibt es die Tabelle noch nicht: Editor bleibt nutzbar, nur ohne Protokoll-Vorlagen.
+    console.warn("Protokoll-Vorlagen:", e instanceof Error ? e.message : e);
   }
   return (
     <>
@@ -33,6 +40,8 @@ export default async function ManuellPage() {
       )}
       <ProtokollEditor
         vorlagen={vorlagen}
+        protokollVorlagen={protokollVorlagen}
+        istAdmin={ctx.isFinance}
         mitarbeiter={{ id: ctx.employee?.id ?? null, name: ctx.employee?.name ?? ctx.email ?? "" }}
         nutzerKey={ctx.employee?.id ?? ctx.userId}
       />

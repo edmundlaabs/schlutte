@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { legeProtokollAn } from "@/app/(app)/abnahme/actions";
+import { speichereProtokollVorlage } from "@/app/(app)/abnahme/vorlagen/actions";
 import { KundeKommissionAuswahl } from "@/components/abnahme/KundeKommissionAuswahl";
 import { StrukturEditor } from "@/components/abnahme/StrukturEditor";
 import { leeresProtokoll } from "@/lib/abnahme/edit";
@@ -10,7 +12,8 @@ import { ladeEntwurf, loescheEntwurf, speichereEntwurf, type Entwurf } from "@/l
 import { LEERE_AUSWAHL, wendeAuswahlAn, type KundeKommission } from "@/lib/abnahme/kommission";
 import { ladeFuerBaustelle } from "@/lib/abnahme/offline/sync";
 import { registriereAbnahmeSw } from "@/lib/abnahme/offline/sw-register";
-import type { ProtokollDoc, Vorlage } from "@/lib/abnahme/types";
+import { fuegeVorlageEin, strukturAusDoc } from "@/lib/abnahme/protokoll-vorlagen";
+import type { ProtokollDoc, ProtokollVorlage, Vorlage } from "@/lib/abnahme/types";
 import { validiereNeuesProtokoll } from "@/lib/abnahme/validate";
 import { formatDatumZeit } from "@/lib/abnahme/i18n";
 
@@ -21,16 +24,26 @@ const frisch = (m: Mitarbeiter): ProtokollDoc => leeresProtokoll({ id: crypto.ra
 /** Abnahmeprotokoll von Hand anlegen: Kunde/Kommission, Räume, Positionen, Prüfpunkte. */
 export function ProtokollEditor({
   vorlagen,
+  protokollVorlagen,
   mitarbeiter,
   nutzerKey,
+  istAdmin,
 }: {
   vorlagen: Vorlage[];
+  protokollVorlagen: ProtokollVorlage[];
   mitarbeiter: Mitarbeiter;
   nutzerKey: string;
+  istAdmin: boolean;
 }) {
+  const router = useRouter();
   const [doc, setDoc] = useState<ProtokollDoc>(() => frisch(mitarbeiter));
   const [kk, setKk] = useState<KundeKommission>(LEERE_AUSWAHL);
-  const [ausVorlage] = useState(false);
+  const [ausVorlage, setAusVorlage] = useState(false);
+  const [gewaehlteVorlage, setGewaehlteVorlage] = useState("");
+  const [vorlagenHinweise, setVorlagenHinweise] = useState<string[]>([]);
+  const [vorlagenName, setVorlagenName] = useState("");
+  const [vorlageMeldung, setVorlageMeldung] = useState("");
+  const [vorlageBusy, setVorlageBusy] = useState(false);
   const [angebot, setAngebot] = useState<Entwurf | null>(null);
   const beruehrt = useRef(false);
   const [busy, setBusy] = useState(false);
@@ -68,6 +81,7 @@ export function ProtokollEditor({
     beruehrt.current = true;
     setDoc({ ...angebot.doc, mitarbeiterId: mitarbeiter.id, mitarbeiterName: mitarbeiter.name });
     setKk(angebot.kk);
+    setAusVorlage(angebot.ausVorlage);
     setAngebot(null);
   }
   function verwerfen(frage = true) {
@@ -77,9 +91,42 @@ export function ProtokollEditor({
     setAngebot(null);
     setDoc(frisch(mitarbeiter));
     setKk(LEERE_AUSWAHL);
+    setAusVorlage(false);
+    setVorlagenHinweise([]);
+    setVorlageMeldung("");
     setFehler("");
     setFertig(null);
     setOffline("");
+  }
+
+  const aktiveVorlagen = protokollVorlagen.filter((v) => v.aktiv);
+
+  function vorlageEinfuegen() {
+    const v = protokollVorlagen.find((x) => x.id === gewaehlteVorlage);
+    if (!v) return;
+    const r = fuegeVorlageEin(doc, v, vorlagen);
+    aendereDoc(() => r.doc);
+    setAusVorlage(true);
+    setVorlagenHinweise(r.hinweise);
+    setVorlageMeldung(`Vorlage „${v.titelDe}“ eingefügt. Alles lässt sich jetzt noch ändern.`);
+  }
+
+  async function alsVorlageSpeichern() {
+    const name = vorlagenName.trim();
+    if (!name) return;
+    setVorlageBusy(true);
+    setVorlageMeldung("");
+    const res = await speichereProtokollVorlage({
+      titelDe: name, titelEn: name, beschreibung: "", aktiv: true,
+      sort: (protokollVorlagen.at(-1)?.sort ?? 0) + 10,
+      raeume: strukturAusDoc(doc, vorlagen),
+    });
+    setVorlageBusy(false);
+    if (res.ok) {
+      setVorlagenName("");
+      setVorlageMeldung(`Als Vorlage „${name}“ gespeichert (nur Struktur, ohne Kunden- und Kommissionsdaten).`);
+      router.refresh();
+    } else setVorlageMeldung(res.error);
   }
 
   const probleme = validiereNeuesProtokoll(doc, kk);
@@ -174,10 +221,38 @@ export function ProtokollEditor({
         </div>
       </section>
 
+      <section className="aus-card">
+        <h2 className="aus-h2">2 · Aus Vorlage einfügen (optional)</h2>
+        <div className="abn-vorlage-zeile">
+          <select className="aus-select" aria-label="Protokoll-Vorlage" value={gewaehlteVorlage} onChange={(e) => setGewaehlteVorlage(e.target.value)}>
+            <option value="">{aktiveVorlagen.length ? "Vorlage wählen …" : "Keine Protokoll-Vorlagen vorhanden"}</option>
+            {aktiveVorlagen.map((v) => <option key={v.id} value={v.id}>{v.titelDe}</option>)}
+          </select>
+          <button type="button" className="aus-btn aus-btn-secondary" disabled={!gewaehlteVorlage} onClick={vorlageEinfuegen}>Einfügen</button>
+        </div>
+        <p className="aus-help">Räume gleichen Namens werden zusammengeführt. Mehrere Vorlagen lassen sich nacheinander einfügen.</p>
+        {vorlagenHinweise.length > 0 && (
+          <div className="aus-note" role="status"><div className="aus-note-body"><ul>{vorlagenHinweise.map((h) => <li key={h}>{h}</li>)}</ul></div></div>
+        )}
+        {istAdmin && (
+          <div className="abn-vorlage-box">
+            <strong>Als Vorlage speichern</strong>
+            <div className="abn-vorlage-zeile">
+              <input className="aus-input" placeholder="Name der Vorlage" value={vorlagenName} onChange={(e) => setVorlagenName(e.target.value)} />
+              <button type="button" className="aus-btn aus-btn-secondary" disabled={vorlageBusy || !vorlagenName.trim() || doc.positionen.length === 0} onClick={alsVorlageSpeichern}>
+                Speichern
+              </button>
+            </div>
+            <span className="aus-help">Übernimmt nur Räume, Positionen und Prüfpunkte, keine Kunden-, Kommissions- oder Mengenangaben.</span>
+          </div>
+        )}
+        {vorlageMeldung && <p role="status" className="aus-muted">{vorlageMeldung}</p>}
+      </section>
+
       <StrukturEditor doc={doc} setDoc={aendereDoc} vorlagen={vorlagen} modus="manuell" />
 
       <section className="aus-card">
-        <h2 className="aus-h2">3 · Anlegen</h2>
+        <h2 className="aus-h2">4 · Anlegen</h2>
         {probleme.length > 0 && <ul className="aus-field-error">{probleme.map((p) => <li key={p}>{p}</li>)}</ul>}
         {fehler && <p className="aus-field-error" role="alert">{fehler}</p>}
         <label className="abn-inline">
