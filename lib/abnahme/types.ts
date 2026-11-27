@@ -115,6 +115,10 @@ export type ProtokollDoc = {
   abgeschlossenAt: string | null;
   originalPath: string | null;
   pdfPath: string | null;
+  /** Öffentlicher Link (/p/<token>); entsteht beim Abschluss auf dem Gerät. Fehlt bei älteren Dokumenten. */
+  publicToken?: string | null;
+  publicAktiv?: boolean;
+  publicErstelltAt?: string | null;
   rev: number;
   raeume: Raum[];
   positionen: Position[];

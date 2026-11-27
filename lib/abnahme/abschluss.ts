@@ -1,5 +1,6 @@
 import type { LokalesDokument } from "./offline/db";
 import type { ProtokollDoc } from "./types";
+import { erzeugePublicToken } from "./public-token";
 
 type Abnahme = Extract<LokalesDokument, { typ: "abnahme" }>;
 
@@ -12,7 +13,16 @@ export async function schliesseProtokollAb(
   aendere: (fn: (d: ProtokollDoc) => ProtokollDoc) => void,
   aendereEintrag: (fn: (e: Abnahme) => Abnahme) => void
 ): Promise<void> {
-  const geschlossen: ProtokollDoc = { ...doc, status: "abgeschlossen", abgeschlossenAt: new Date().toISOString() };
+  const jetzt = new Date().toISOString();
+  // Der Token entsteht hier auf dem Gerät: das PDF (QR/Link) wird offline erzeugt und braucht ihn sofort.
+  const geschlossen: ProtokollDoc = {
+    ...doc,
+    status: "abgeschlossen",
+    abgeschlossenAt: jetzt,
+    publicToken: doc.publicToken ?? erzeugePublicToken(),
+    publicAktiv: true,
+    publicErstelltAt: doc.publicToken ? doc.publicErstelltAt ?? jetzt : jetzt,
+  };
   const { speicherePdfLokal } = await import("./pdf/lokal");
   await speicherePdfLokal(geschlossen);
   aendere(() => geschlossen);

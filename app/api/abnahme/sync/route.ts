@@ -5,6 +5,7 @@ import type { ProtokollDoc } from "@/lib/abnahme/types";
 import { syncRegie } from "@/lib/abnahme/regie-sync";
 import { ladeProtokollDoc } from "@/lib/data/abnahme";
 import type { RegieStandArchiv, StandArchiv } from "@/lib/abnahme/staende";
+import { istPublicToken } from "@/lib/abnahme/public-token";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,14 @@ export async function POST(request: Request) {
 
   // Die Kommissionsnummer darf leer sein (Protokoll ohne Kommission); der Kunde ist immer Pflicht.
   if (!doc.kunde?.trim()) return jsonFehler(422, "Der Kundenname ist Pflicht.");
+
+  // Öffentlicher Link: Format prüfen und Eindeutigkeit sichern (Token entsteht auf dem Gerät).
+  if (doc.publicToken != null) {
+    if (!istPublicToken(doc.publicToken)) return jsonFehler(422, "Ungültiges Token-Format.");
+    const dup = await supabase.from("abnahme_protokolle").select("id").eq("public_token", doc.publicToken).neq("id", doc.id).limit(1);
+    if (dup.error) return jsonFehler(500, dup.error.message);
+    if (dup.data?.length) return jsonFehler(409, "Der Online-Link ist bereits vergeben. Bitte im Büro „Neuen Link erzeugen“.");
+  }
 
   const cur = await supabase
     .from("abnahme_protokolle")

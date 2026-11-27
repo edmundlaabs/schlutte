@@ -45,6 +45,9 @@ export function docToRows(doc: ProtokollDoc): ProtokollRows {
       abgeschlossen_at: doc.abgeschlossenAt,
       original_path: doc.originalPath,
       pdf_path: doc.pdfPath,
+      // Der Token kommt vom Gerät (Abschluss). public_aktiv/-widerrufen_at setzt nur das Büro, nie der Sync.
+      public_token: doc.publicToken ?? null,
+      public_erstellt_at: doc.publicErstelltAt ?? null,
     },
     raeume: doc.raeume.map((r) => ({
       id: r.id, protokoll_id: pid, sort: r.sort, name: r.name, etage: nn(r.etage),
@@ -150,7 +153,9 @@ export function rowsToDoc(rows: ProtokollRows): ProtokollDoc {
     parentId: sn(p.parent_id), mitarbeiterId: sn(p.mitarbeiter_id), mitarbeiterName: s(p.mitarbeiter_name),
     teilnehmer, kundeEmail: s(p.kunde_email), kopieEmail: s(p.kopie_email), bemerkung: s(p.bemerkung),
     beginnAt: sn(p.beginn_at), abgeschlossenAt: sn(p.abgeschlossen_at), originalPath: sn(p.original_path),
-    pdfPath: sn(p.pdf_path), rev: Number(p.rev ?? 0), raeume, positionen, maengel, fotos, objektFotos, unterschriften,
+    pdfPath: sn(p.pdf_path),
+    publicToken: sn(p.public_token), publicAktiv: p.public_aktiv !== false, publicErstelltAt: sn(p.public_erstellt_at),
+    rev: Number(p.rev ?? 0), raeume, positionen, maengel, fotos, objektFotos, unterschriften,
   };
 }
 
