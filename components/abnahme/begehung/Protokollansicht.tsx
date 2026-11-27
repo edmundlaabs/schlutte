@@ -10,7 +10,7 @@ import { neuerRaum } from "@/lib/abnahme/edit";
 import {
   fortschritt, findeMangel, findeUnterschrift, maengelPositionen, offeneUnterschriften, positionStatus,
   raumAlleIo, relevantePositionen, setzeMangel, setzeMehrere, setzeStatus, setzeUnterschrift, type ItemRef,
-  entfernePosition, entfernePruefpunkt, entferneRaum, entferneObjektFoto, fuegeObjektFotoHinzu, fuegePositionHinzu, fuegePruefpunktHinzu, istManuell, objektFotosVon,
+  entfernePosition, entfernePruefpunkt, entferneRaum, entferneObjektFoto, fuegeObjektFotoHinzu, fuegePositionHinzu, fuegePruefpunktHinzu, aenderePositionDaten, verschiebePositionInRaum, objektFotosVon,
 } from "@/lib/abnahme/logic";
 import type { Position, ProtokollDoc, Raum } from "@/lib/abnahme/types";
 import { SignaturePad } from "../SignaturePad";
@@ -46,6 +46,7 @@ export function Protokollansicht({ id }: { id: string }) {
   const [mangelCtx, setMangelCtx] = useState<MangelCtx | null>(null);
   const [sigCtx, setSigCtx] = useState<SigCtx | null>(null);
   const [posRaum, setPosRaum] = useState<string | null>(null);
+  const [posBearbeiten, setPosBearbeiten] = useState<string | null>(null);
   const [hinweis, setHinweis] = useState("");
   const [auswahl, setAuswahl] = useState<Set<string>>(new Set());
   const gestartet = useRef(false);
@@ -208,6 +209,18 @@ export function Protokollansicht({ id }: { id: string }) {
       }}
     />
   );
+  const bearbeitetePos = posBearbeiten ? doc.positionen.find((p) => p.id === posBearbeiten) : undefined;
+  const posEditDialog = bearbeitetePos && (
+    <PositionDialog
+      raumName={doc.raeume.find((r) => r.id === bearbeitetePos.raumId)?.name ?? ""}
+      bestehend={bearbeitetePos}
+      onCancel={() => setPosBearbeiten(null)}
+      onSaveDaten={(daten) => {
+        sicher((d) => aenderePositionDaten(d, bearbeitetePos.id, daten));
+        setPosBearbeiten(null);
+      }}
+    />
+  );
   const sigDialog = sigCtx && (
     <SignaturePad
       titel={sigCtx.titel}
@@ -271,7 +284,7 @@ export function Protokollansicht({ id }: { id: string }) {
             aendere(() => r.doc);
           }}
           onPositionWeg={(pid) => {
-            if (!window.confirm("Diese selbst angelegte Position entfernen?")) return;
+            if (!window.confirm("Diese Position mit allen Prüfpunkten, Mängeln, Fotos und Unterschriften löschen?")) return;
             try {
               const r = entfernePosition(doc, pid);
               r.entfernteBilder.forEach((f) => void loescheBlob(f));
@@ -282,6 +295,8 @@ export function Protokollansicht({ id }: { id: string }) {
           }}
           onObjektFotos={objektFotosHinzu}
           onObjektFotoWeg={objektFotoWeg}
+          onPositionBearbeiten={(pid) => setPosBearbeiten(pid)}
+          onPositionVerschieben={(pid, richtung) => aendere((d) => verschiebePositionInRaum(d, pid, richtung))}
           onMangel={(ref, titel) => setMangelCtx({ ref, titel })}
           onAlleIo={() => aendere((d) => raumAlleIo(d, doc.raeume[view.index].id))}
           onMehrere={(status) => {
@@ -311,6 +326,7 @@ export function Protokollansicht({ id }: { id: string }) {
       {hinweis && <p className="aus-field-error" role="alert">{hinweis}</p>}
       {mangelDialog}
       {posDialog}
+      {posEditDialog}
       {sigDialog}
     </div>
   );
@@ -439,12 +455,14 @@ function StatusKnoepfe({
 
 function RaumSeite({
   doc, raum, index, gesperrt, auswahl, setAuswahl, onItem, onMangel, onAlleIo, onMehrere, onBemerkung, onSign, onNavigiere,
-  onObjektFotos, onObjektFotoWeg, onRaumAendern, onRaumLoeschen, onNeuePosition, onNeuerPunkt, onPunktWeg, onPositionWeg,
+  onObjektFotos, onObjektFotoWeg, onRaumAendern, onRaumLoeschen, onNeuePosition, onNeuerPunkt, onPunktWeg, onPositionWeg, onPositionBearbeiten, onPositionVerschieben,
 }: {
   onObjektFotos: (positionId: string, dateien: File[]) => void;
   onObjektFotoWeg: (fotoId: string) => void;
   onRaumAendern: (patch: Partial<Raum>) => void;
   onRaumLoeschen: () => void;
+  onPositionBearbeiten: (positionId: string) => void;
+  onPositionVerschieben: (positionId: string, richtung: -1 | 1) => void;
   onNeuePosition: () => void;
   onNeuerPunkt: (positionId: string, text: string) => void;
   onPunktWeg: (positionId: string, pruefpunktId: string) => void;
@@ -533,9 +551,13 @@ function RaumSeite({
 
       {positionen.length === 0 && <p className="aus-muted">Keine abnahmerelevanten Positionen in diesem Raum.</p>}
       <ul className="abn-pos-liste">
-        {positionen.map((p) => (
+        {positionen.map((p, idx) => (
           <PositionKarte
             key={p.id}
+            ersteImRaum={idx === 0}
+            letzteImRaum={idx === positionen.length - 1}
+            onBearbeiten={() => onPositionBearbeiten(p.id)}
+            onVerschieben={(r) => onPositionVerschieben(p.id, r)}
             doc={doc}
             pos={p}
             gesperrt={gesperrt}
@@ -588,10 +610,14 @@ function RaumSeite({
 }
 
 function PositionKarte({
-  doc, pos, gesperrt, gewaehlt, onToggle, onItem, onMangel, onSign, onNeuerPunkt, onPunktWeg, onPositionWeg, onObjektFotos, onObjektFotoWeg,
+  doc, pos, gesperrt, gewaehlt, onToggle, onItem, onMangel, onSign, onNeuerPunkt, onPunktWeg, onPositionWeg, onObjektFotos, onObjektFotoWeg, ersteImRaum, letzteImRaum, onBearbeiten, onVerschieben,
 }: {
   onObjektFotos: (dateien: File[]) => void;
   onObjektFotoWeg: (fotoId: string) => void;
+  ersteImRaum: boolean;
+  letzteImRaum: boolean;
+  onBearbeiten: () => void;
+  onVerschieben: (richtung: -1 | 1) => void;
   onNeuerPunkt: (text: string) => void;
   onPunktWeg: (pruefpunktId: string) => void;
   onPositionWeg: () => void;
@@ -710,7 +736,14 @@ function PositionKarte({
           <input className="aus-input" placeholder="Prüfpunkt hinzufügen …" value={neuerPunkt} onChange={(e) => setNeuerPunkt(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && neuerPunkt.trim()) { onNeuerPunkt(neuerPunkt); setNeuerPunkt(""); } }} />
           <button type="button" className="aus-btn aus-btn-secondary" disabled={!neuerPunkt.trim()} onClick={() => { onNeuerPunkt(neuerPunkt); setNeuerPunkt(""); }}>Hinzufügen</button>
-          {istManuell(pos) && <button type="button" className="aus-btn aus-btn-quiet" onClick={onPositionWeg}>Position entfernen</button>}
+        </div>
+      )}
+      {!gesperrt && (
+        <div className="abn-pos-werkzeug" role="group" aria-label={`Position ${pos.nr} verwalten`}>
+          <button type="button" className="aus-btn aus-btn-quiet" disabled={ersteImRaum} aria-label="Nach oben" onClick={() => onVerschieben(-1)}>↑ Hoch</button>
+          <button type="button" className="aus-btn aus-btn-quiet" disabled={letzteImRaum} aria-label="Nach unten" onClick={() => onVerschieben(1)}>↓ Runter</button>
+          <button type="button" className="aus-btn aus-btn-secondary" onClick={onBearbeiten}>Position bearbeiten</button>
+          <button type="button" className="aus-btn aus-btn-quiet abn-pos-loeschen" onClick={onPositionWeg}>Position löschen</button>
         </div>
       )}
 

@@ -222,10 +222,10 @@ export function entfernePruefpunkt(doc: ProtokollDoc, positionId: string, pruefp
   };
 }
 
-/** Entfernt eine selbst angelegte Position samt Mängeln, Fotos und Unterschriften. Profacto-Positionen bleiben (nur ausblenden). */
+/** Entfernt eine Position (auch aus dem Import) samt Mängeln, Fotos und Unterschriften. */
 export function entfernePosition(doc: ProtokollDoc, positionId: string): { doc: ProtokollDoc; entfernteBilder: string[] } {
   const pos = doc.positionen.find((p) => p.id === positionId);
-  if (!pos || !istManuell(pos)) throw new Error("Nur selbst angelegte Positionen lassen sich entfernen.");
+  if (!pos) throw new Error("Position nicht gefunden.");
   const mangelIds = new Set(doc.maengel.filter((m) => m.positionId === positionId).map((m) => m.id));
   const fotos = doc.fotos.filter((f) => mangelIds.has(f.mangelId)).map((f) => f.id);
   const sigs = doc.unterschriften.filter((u) => u.bezug === "position" && u.bezugId === positionId).map((u) => u.id);
@@ -235,7 +235,7 @@ export function entfernePosition(doc: ProtokollDoc, positionId: string): { doc: 
     doc: {
       ...doc,
       objektFotos: (doc.objektFotos ?? []).filter((f) => f.positionId !== positionId),
-      positionen: doc.positionen.filter((p) => p.id !== positionId),
+      positionen: doc.positionen.filter((p) => p.id !== positionId).map((p, i) => ({ ...p, sort: i })),
       maengel: doc.maengel.filter((m) => !mangelIds.has(m.id)),
       fotos: doc.fotos.filter((f) => !mangelIds.has(f.mangelId)),
       unterschriften: doc.unterschriften.filter((u) => !sigs.includes(u.id)),
@@ -285,4 +285,36 @@ export function fuegeObjektFotoHinzu(doc: ProtokollDoc, positionId: string, foto
 
 export function entferneObjektFoto(doc: ProtokollDoc, fotoId: string): ProtokollDoc {
   return { ...doc, objektFotos: (doc.objektFotos ?? []).filter((f) => f.id !== fotoId) };
+}
+
+/** Ändert Nr., Titel, Menge, Einheit und Beschreibung einer Position (Status, Prüfpunkte und Mängel bleiben). */
+export function aenderePositionDaten(
+  doc: ProtokollDoc,
+  positionId: string,
+  daten: { nr: string; titel: string; menge: string; einheit: string; langtext: string }
+): ProtokollDoc {
+  const titel = daten.titel.trim();
+  if (!titel) throw new Error("Bitte einen Titel eingeben.");
+  if (!doc.positionen.some((p) => p.id === positionId)) throw new Error("Position nicht gefunden.");
+  return {
+    ...doc,
+    positionen: doc.positionen.map((p) =>
+      p.id === positionId ? { ...p, nr: daten.nr.trim(), titel, menge: daten.menge.trim(), einheit: daten.einheit.trim(), langtext: daten.langtext.trim() } : p
+    ),
+  };
+}
+
+/** Verschiebt eine Position innerhalb ihres Raums um eine Stelle nach oben (-1) oder unten (1); nur sichtbare Positionen zählen. */
+export function verschiebePositionInRaum(doc: ProtokollDoc, positionId: string, richtung: -1 | 1): ProtokollDoc {
+  const pos = doc.positionen.find((p) => p.id === positionId);
+  if (!pos) return doc;
+  const nachbarn = doc.positionen.filter((p) => p.raumId === pos.raumId && p.relevant);
+  const i = nachbarn.findIndex((p) => p.id === positionId);
+  const ziel = nachbarn[i + richtung];
+  if (i < 0 || !ziel) return doc;
+  const liste = [...doc.positionen];
+  const a = liste.findIndex((p) => p.id === positionId);
+  const b = liste.findIndex((p) => p.id === ziel.id);
+  [liste[a], liste[b]] = [liste[b], liste[a]];
+  return { ...doc, positionen: liste.map((p, k) => ({ ...p, sort: k })) };
 }

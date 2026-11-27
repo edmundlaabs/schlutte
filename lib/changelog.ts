@@ -19,6 +19,13 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.6.2",
+    date: "27.11.2026",
+    changes: [
+      "Abnahme-Begehung: Positionen lassen sich bearbeiten (Nr., Titel, Menge, Einheit, Beschreibung), löschen (auch aus dem Import) und im Raum nach oben/unten sortieren",
+    ],
+  },
+  {
     version: "1.6.1",
     date: "26.11.2026",
     changes: [

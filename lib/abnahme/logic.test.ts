@@ -133,8 +133,9 @@ test("Eigene Position und Prüfpunkte hinzufügen/entfernen", () => {
   const r = entfernePruefpunkt(mk, "a", "ak0");
   assert.equal(r.doc.maengel.length, 0);
   assert.equal(r.doc.positionen[0].pruefpunkte.length, 1);
-  // Nur eigene Positionen entfernen
-  assert.throws(() => entfernePosition(doc(), "a"));
+  // Auch Import-Positionen lassen sich entfernen, unbekannte nicht
+  assert.throws(() => entfernePosition(doc(), "gibt-es-nicht"));
+  assert.equal(entfernePosition(doc(), "a").doc.positionen.some((p) => p.id === "a"), false);
   const ent = entfernePosition(d, neu.id);
   assert.equal(ent.doc.positionen.some((p) => p.id === neu.id), false);
 });
@@ -166,4 +167,23 @@ test("Objektfotos: hinzufügen, entfernen, mit Position/Raum entfernen", () => {
   assert.deepEqual((r.doc.objektFotos ?? []).map((f) => f.id), ["o2"]);
   assert.ok(r.entfernteBilder.includes("o1") && !r.entfernteBilder.includes("o2"));
   assert.equal((entferneObjektFoto(d, "o2").objektFotos ?? []).length, 1);
+});
+
+import { aenderePositionDaten, verschiebePositionInRaum } from "./logic.ts";
+test("Position ändern und in der Reihenfolge verschieben", () => {
+  const d = doc();
+  const ids = d.positionen.map((p) => p.id);
+  const e = aenderePositionDaten(d, ids[0], { nr: " 9 ", titel: " Neu ", menge: "2", einheit: "lfm", langtext: "x" });
+  assert.equal(e.positionen[0].titel, "Neu");
+  assert.equal(e.positionen[0].nr, "9");
+  assert.throws(() => aenderePositionDaten(d, ids[0], { nr: "1", titel: " ", menge: "", einheit: "", langtext: "" }));
+  const raum = d.positionen[0].raumId;
+  const imRaum = (x: typeof d) => x.positionen.filter((p) => p.raumId === raum && p.relevant).map((p) => p.id);
+  const vorher = imRaum(d);
+  if (vorher.length > 1) {
+    const v = verschiebePositionInRaum(d, vorher[0], 1);
+    assert.equal(imRaum(v)[1], vorher[0]);
+    assert.deepEqual(v.positionen.map((p) => p.sort), v.positionen.map((_, i) => i));
+  }
+  assert.equal(verschiebePositionInRaum(d, vorher[0], -1), d);
 });
