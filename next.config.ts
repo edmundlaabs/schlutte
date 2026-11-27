@@ -8,6 +8,16 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Öffentliche Protokollseite (/p/<token>): nicht indexieren, kein Referrer, nicht cachen.
+        source: "/p/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "Cache-Control", value: "private, no-store, max-age=0" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+        ],
+      },
+      {
         // Service Worker nur für das Modul /abnahme: Scope-Freigabe, nie aus dem HTTP-Cache.
         source: "/sw-abnahme.js",
         headers: [

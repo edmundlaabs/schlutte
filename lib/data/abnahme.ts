@@ -94,7 +94,11 @@ export async function insertProtokoll(doc: ProtokollDoc): Promise<void> {
 import { rowsToDoc } from "@/lib/abnahme/mapping";
 
 export async function ladeProtokollDoc(id: string): Promise<ProtokollDoc | null> {
-  const supabase = await createClient();
+  return ladeProtokollDocMit(await createClient(), id);
+}
+
+/** Wie `ladeProtokollDoc`, mit übergebenem Client (z. B. Service-Role für die öffentliche Seite). */
+export async function ladeProtokollDocMit(supabase: Awaited<ReturnType<typeof createClient>>, id: string): Promise<ProtokollDoc | null> {
   const [p, ra, po, pr, ma, fo, of, un] = await Promise.all([
     supabase.from("abnahme_protokolle").select("*").eq("id", id).maybeSingle(),
     supabase.from("abnahme_raeume").select("*").eq("protokoll_id", id),
