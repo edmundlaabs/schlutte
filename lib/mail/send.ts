@@ -15,6 +15,8 @@ export type MailInput = {
   bcc?: string[];
   subject: string;
   text: string;
+  /** Optional: HTML-Fassung (der Text bleibt als Fallback). */
+  html?: string;
   attachments?: MailAnhang[];
 };
 export type MailResult = { ok: true; id: string; umgeleitetAn?: string } | { ok: false; error: string; nichtKonfiguriert?: boolean };
@@ -70,6 +72,7 @@ export async function sendeMail(input: MailInput): Promise<MailResult> {
         bcc: ziel.bcc,
         subject: ziel.subject,
         text: input.text,
+        html: input.html,
         attachments: input.attachments?.map((a) => ({ filename: a.filename, content: base64(a.content) })),
       }),
     });

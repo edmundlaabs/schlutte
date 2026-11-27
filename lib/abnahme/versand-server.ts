@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { interneKopie, istEmail, mailKonfiguriert, sendeMail } from "@/lib/mail/send";
 import { abnahmeDateiname, regieDateiname } from "@/lib/abnahme/filename";
 import { formatDatum } from "@/lib/abnahme/i18n";
+import { baueMailHtml, hinweisKeineAntwort, mailKontakt } from "@/lib/mail/layout";
+import { publicUrl, istPublicToken, STANDARD_BASIS_URL } from "@/lib/abnahme/public-token";
 
 export type VersandErgebnis = { ok: true; schonGesendet?: boolean } | { ok: false; error: string; nichtKonfiguriert?: boolean; verworfen?: boolean };
 
@@ -83,12 +85,30 @@ export async function versendeDokument(args: {
     : `${art} – ${d.kunde}`;
   const bezug = (en: boolean) =>
     nr ? `${en ? " for commission " : " zur Kommission "}${nr}${d.projekt ? ` (${d.projekt})` : ""}` : d.projekt ? `${en ? " for " : " zum Projekt "}${d.projekt}` : "";
-  const text =
-    sprache === "en"
-      ? `Dear ${d.kunde},\n\nplease find attached the ${art.toLowerCase()}${bezug(true)} dated ${formatDatum(String(datum), "en")}.\n\nKind regards\nGrabner Design GmbH\nTüchlinger Weg 1, 79400 Kandern`
-      : `Guten Tag,\n\nanbei erhalten Sie das Dokument „${art}“${bezug(false)} vom ${formatDatum(String(datum), "de")}.\n\nMit freundlichen Grüßen\nGrabner Design GmbH\nTüchlinger Weg 1, 79400 Kandern`;
+  // Online-Link nur für Abnahmeprotokolle mit aktivem Link; der Regiebericht hat keine Fotos und keinen Link.
+  const link = args.typ === "abnahme" && d.public_aktiv !== false && istPublicToken(d.public_token) ? publicUrl(d.public_token) : null;
+  const en = sprache === "en";
+  const kontakt = mailKontakt(sprache);
+  const datumText = formatDatum(String(datum), sprache);
+  const absaetze = en
+    ? [`please find attached the ${art.toLowerCase()}${bezug(true)} dated ${datumText} as a PDF.`]
+    : [`anbei erhalten Sie das Dokument „${art}“${bezug(false)} vom ${datumText} als PDF im Anhang.`];
+  const anrede = en ? `Dear ${d.kunde},` : "Guten Tag,";
+  const text = [
+    anrede,
+    "",
+    ...absaetze,
+    ...(link ? ["", `${en ? "View record and photos online" : "Protokoll und Fotos online ansehen"}:`, link] : []),
+    "",
+    en ? "Kind regards" : "Mit freundlichen Grüßen",
+    "Grabner Design GmbH",
+    "Tüchlinger Weg 1, 79400 Kandern",
+    "",
+    hinweisKeineAntwort(sprache, kontakt),
+  ].join("\n");
+  const html = baueMailHtml({ sprache, anrede, absaetze, link, kontakt, basisUrl: process.env.NEXT_PUBLIC_PUBLIC_BASE_URL?.trim() || STANDARD_BASIS_URL });
 
-  const res = await sendeMail({ to: an, bcc, subject, text, attachments: [{ filename: dateiname, content: bytes }] });
+  const res = await sendeMail({ to: an, bcc, subject, text, html, attachments: [{ filename: dateiname, content: bytes }] });
   if (!res.ok) {
     await abschluss("fehler", res.error);
     return { ok: false, error: res.error };
