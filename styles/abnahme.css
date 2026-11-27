@@ -308,3 +308,7 @@
   :root:not([data-theme="light"]) .abn .abn-badge.is-error, :root:not([data-theme="light"]) .abn .abn-st.is-mangel.on,
   :root:not([data-theme="light"]) .abn .abn-st.is-nicht.on { color: var(--gd-ink); }
 }
+
+.abn-pos-werkzeug { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border, #d8d2c6); }
+.abn-pos-werkzeug .aus-btn { min-height: var(--abn-touch); }
+.abn-pos-loeschen { margin-left: auto; color: var(--abn-rot, #7a1f1f); }
