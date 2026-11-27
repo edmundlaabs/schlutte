@@ -75,6 +75,8 @@ PDF-Dateinamen: `Abnahme_<Kommission>_<Kunde-kurz>_<JJJJ-MM-TT>.pdf`, `Regieberi
 
 ## Resend einrichten (ab 1.7.0)
 
+> **Stand 27.11.2026: Resend ist noch nicht eingerichtet.** Mails werden noch **nicht automatisch an Kunden gesendet**. Beim Abschluss mit Kunden-E-Mail steht der Versand als „Fehler: nicht konfiguriert“ im Versandprotokoll; er wird später **nicht** automatisch nachgeholt (nur per „Erneut senden“). Das PDF und der Online-Link sind davon unabhängig und funktionieren (Link z. B. aus der Protokollseite kopieren und selbst weitergeben). Offen: Domain bei Resend verifizieren (noch keine DNS-Einträge für `grabner.design`) oder eine andere Domain/Subdomain verwenden; bis dahin nur der Resend-Testabsender `onboarding@resend.dev`, der ausschließlich an die Adresse des Resend-Kontos liefert.
+
 Stand: Resend-Account und API-Key vorhanden, Domain noch nicht verifiziert. **Solange getestet wird, `MAIL_REDIRECT_TO` setzen** – dann geht keine Mail an einen Kunden.
 
 1. **Domain bei Resend:** resend.com → *Domains* → *Add Domain* → `grabner.design`, Region **EU** (Irland). Resend zeigt DNS-Einträge: DKIM (TXT `resend._domainkey`), SPF/MX für die Send-Subdomain (`send`), optional DMARC (TXT `_dmarc`, z. B. `v=DMARC1; p=none;`). Alle beim DNS-Anbieter von `grabner.design` eintragen, in Resend *Verify DNS Records*, warten bis **Verified**.
