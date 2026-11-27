@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ladeProtokollDoc, listStaende, listVersand, listVersionen } from "@/lib/data/abnahme";
+import { ladeProtokollDoc, listPdfHistorie, listStaende, listVersand, listVersionen } from "@/lib/data/abnahme";
+import { OnlineLink } from "@/components/abnahme/OnlineLink";
 import { requireAppAccess } from "@/lib/auth/app-access";
 import { formatDatum, formatDatumZeit } from "@/lib/abnahme/i18n";
 import { fortschritt, relevantePositionen } from "@/lib/abnahme/logic";
@@ -19,7 +20,7 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
   const { id } = await params;
   const doc = await ladeProtokollDoc(id);
   if (!doc) notFound();
-  const [versand, versionen, staende] = await Promise.all([listVersand("abnahme", id), listVersionen(id), listStaende(id)]);
+  const [versand, versionen, staende, pdfHistorie] = await Promise.all([listVersand("abnahme", id), listVersionen(id), listStaende(id), listPdfHistorie(id)]);
   const f = fortschritt(relevantePositionen(doc));
   const offene = doc.maengel.filter((m) => !m.erledigtAt);
   const istAdmin = ctx.isFinance;
@@ -64,6 +65,18 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
           )}
         </div>
       </div>
+
+      <OnlineLink
+        id={id}
+        token={doc.publicToken ?? null}
+        aktiv={doc.publicAktiv !== false}
+        erstelltAt={doc.publicErstelltAt ?? null}
+        widerrufenAt={doc.publicWiderrufenAt ?? null}
+        istAdmin={istAdmin}
+        abgeschlossen={doc.status === "abgeschlossen"}
+        hatPdf={Boolean(doc.pdfPath)}
+        historie={pdfHistorie}
+      />
 
       {!hatKommission(doc) && doc.status !== "abgeschlossen" && (
         <KommissionZuordnen id={id} />
@@ -128,7 +141,7 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
                 </div>
                 <div className="aus-item-side">
                   <span className={v.status === "gesendet" ? "abn-chip is-ok" : v.status === "fehler" ? "abn-chip is-bad" : "abn-chip"}>{v.status}</span>
-                  {v.fehler && <span className="aus-field-error">{v.fehler}</span>}
+                  {v.fehler && <span className={v.status === "gesendet" ? "abn-chip" : "aus-field-error"}>{v.fehler}</span>}
                 </div>
               </li>
             ))}

@@ -82,7 +82,7 @@ export default async function RegieAnsicht({ params }: { params: Promise<{ id: s
             {versand.map((v) => (
               <li key={v.id} className="aus-item">
                 <div className="aus-item-main"><strong>{v.an}</strong><div className="aus-item-meta">{formatDatumZeit(v.ausgeloest_at, "de")}{v.ausgeloest_von_name && <> · {v.ausgeloest_von_name}</>}</div></div>
-                <div className="aus-item-side"><span className={v.status === "gesendet" ? "abn-chip is-ok" : v.status === "fehler" ? "abn-chip is-bad" : "abn-chip"}>{v.status}</span>{v.fehler && <span className="aus-field-error">{v.fehler}</span>}</div>
+                <div className="aus-item-side"><span className={v.status === "gesendet" ? "abn-chip is-ok" : v.status === "fehler" ? "abn-chip is-bad" : "abn-chip"}>{v.status}</span>{v.fehler && <span className={v.status === "gesendet" ? "abn-chip" : "aus-field-error"}>{v.fehler}</span>}</div>
               </li>
             ))}
           </ul>

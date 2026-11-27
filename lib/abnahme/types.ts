@@ -65,6 +65,9 @@ export type Foto = {
   mangelId: string;
   /** Storage-Pfad, sobald hochgeladen. Der Blob liegt bis dahin in IndexedDB. */
   path: string | null;
+  /** Neue Varianten (ab 1.7.0). Fehlen bei alten Fotos: dann gilt überall `path` als Fallback. */
+  pathOriginal?: string | null;
+  pathThumb?: string | null;
   breite: number;
   hoehe: number;
   aufgenommenAt: string;
@@ -76,6 +79,8 @@ export type ObjektFoto = {
   positionId: string;
   /** Storage-Pfad, sobald hochgeladen. Der Blob liegt bis dahin in IndexedDB. */
   path: string | null;
+  pathOriginal?: string | null;
+  pathThumb?: string | null;
   breite: number;
   hoehe: number;
   aufgenommenAt: string;
@@ -115,6 +120,11 @@ export type ProtokollDoc = {
   abgeschlossenAt: string | null;
   originalPath: string | null;
   pdfPath: string | null;
+  /** Öffentlicher Link (/p/<token>); entsteht beim Abschluss auf dem Gerät. Fehlt bei älteren Dokumenten. */
+  publicToken?: string | null;
+  publicAktiv?: boolean;
+  publicErstelltAt?: string | null;
+  publicWiderrufenAt?: string | null;
   rev: number;
   raeume: Raum[];
   positionen: Position[];

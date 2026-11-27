@@ -19,6 +19,17 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.7.0",
+    date: "27.11.2026",
+    changes: [
+      "Abnahme: Online-Protokoll für Kunden. Jedes abgeschlossene Protokoll hat einen eigenen Link (/p/…) mit allen Mängeln, Räumen, Fotos und Unterschriften, ohne Anmeldung; Fotos lassen sich im Vollbild zoomen und durchblättern",
+      "Abnahme-PDF: QR-Code und Link zum Online-Protokoll auf Seite 1, Hinweis „Fotos in voller Auflösung“ bei den Mängeln (entsteht auch offline)",
+      "Neue Fotos bleiben in Originalauflösung erhalten (Anzeige und PDF weiter 1600 px, Vorschau 600 px); die Originale laden nach dem Sync im Hintergrund hoch, mit Speicherwarnung auf dem Tablet",
+      "Protokollseite (CEO/Admin): Online-Link kopieren, QR anzeigen, deaktivieren, neuen Link erzeugen und „PDF mit Foto-Link neu erzeugen“ (altes PDF bleibt als früheres PDF erhalten)",
+      "Mail: HTML-Layout im Grabner-Design-Branding mit Button zum Online-Protokoll; Testschutz MAIL_REDIRECT_TO; fehlgeschlagene automatische Versände (nicht konfiguriert) werden nie automatisch nachgeholt. Hinweis: Mails werden noch nicht automatisch an Kunden gesendet (Resend noch nicht eingerichtet)",
+    ],
+  },
+  {
     version: "1.6.2",
     date: "27.11.2026",
     changes: [

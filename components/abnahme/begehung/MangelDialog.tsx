@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { BlobImg } from "./BlobImg";
 import type { Foto, Mangel } from "@/lib/abnahme/types";
 
-export type NeuesFoto = { id: string; blob: Blob; breite: number; hoehe: number; url: string };
+export type NeuesFoto = { id: string; blob: Blob; breite: number; hoehe: number; url: string; thumb?: Blob; original?: Blob };
 
 /** Mangel erfassen/bearbeiten: Bemerkung (Pflicht), Fotos (Kamera, lokal komprimiert), Frist (optional). */
 export function MangelDialog({
@@ -20,7 +20,7 @@ export function MangelDialog({
   fotos: Foto[];
   onSave: (r: { text: string; frist: string; neueFotos: NeuesFoto[]; entfernteFotoIds: string[] }) => void;
   onCancel: () => void;
-  komprimiere: (file: File) => Promise<{ blob: Blob; breite: number; hoehe: number }>;
+  komprimiere: (file: File) => Promise<{ blob: Blob; breite: number; hoehe: number; thumb?: Blob; original?: Blob }>;
 }) {
   const [text, setText] = useState(mangel?.text ?? "");
   const [frist, setFrist] = useState(mangel?.frist ?? "");
@@ -67,7 +67,7 @@ export function MangelDialog({
         <div className="abn-fotos-block">
           <div className="abn-fotos-kopf">
             <span className="abn-caps">Fotos</span>
-            <span className="abn-muted">{anzahl === 0 ? "noch keine" : `${anzahl} Foto${anzahl > 1 ? "s" : ""}`} · lokal komprimiert auf max. 1600 px</span>
+            <span className="abn-muted">{anzahl === 0 ? "noch keine" : `${anzahl} Foto${anzahl > 1 ? "s" : ""}`} · Original bleibt erhalten, Anzeige und PDF auf 1600 px</span>
           </div>
           <div className="abn-fotos-grid">
             {sichtbareAlte.map((f, i) => (

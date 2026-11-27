@@ -94,7 +94,11 @@ export async function insertProtokoll(doc: ProtokollDoc): Promise<void> {
 import { rowsToDoc } from "@/lib/abnahme/mapping";
 
 export async function ladeProtokollDoc(id: string): Promise<ProtokollDoc | null> {
-  const supabase = await createClient();
+  return ladeProtokollDocMit(await createClient(), id);
+}
+
+/** Wie `ladeProtokollDoc`, mit übergebenem Client (z. B. Service-Role für die öffentliche Seite). */
+export async function ladeProtokollDocMit(supabase: Awaited<ReturnType<typeof createClient>>, id: string): Promise<ProtokollDoc | null> {
   const [p, ra, po, pr, ma, fo, of, un] = await Promise.all([
     supabase.from("abnahme_protokolle").select("*").eq("id", id).maybeSingle(),
     supabase.from("abnahme_raeume").select("*").eq("protokoll_id", id),
@@ -264,4 +268,20 @@ export async function listVersionen(id: string): Promise<{ id: string; version: 
     for (const k of r.data ?? []) if (!alle.has(k.id)) { alle.set(k.id, k); front.push(k.id); }
   }
   return Array.from(alle.values()).sort((a, b) => b.version - a.version);
+}
+
+export type PdfHistorieEintrag = { id: string; grund: string; ersetzt_at: string; von: string | null };
+
+/** Frühere PDFs eines Protokolls (nach „PDF neu erzeugen“), neueste zuerst. Leer vor der Migration 20261129. */
+export async function listPdfHistorie(id: string): Promise<PdfHistorieEintrag[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("abnahme_pdf_historie").select("id,grund,ersetzt_at,ersetzt_von").eq("protokoll_id", id).order("ersetzt_at", { ascending: false });
+  if (error) return [];
+  const ids = Array.from(new Set((data ?? []).map((d) => d.ersetzt_von).filter(Boolean))) as string[];
+  const names = new Map<string, string>();
+  if (ids.length) {
+    const e = await supabase.from("employees").select("id,name").in("id", ids);
+    for (const r of e.data ?? []) names.set(r.id as string, (r.name as string) ?? "");
+  }
+  return (data ?? []).map((d) => ({ id: d.id, grund: d.grund, ersetzt_at: d.ersetzt_at, von: d.ersetzt_von ? names.get(d.ersetzt_von) ?? null : null }));
 }

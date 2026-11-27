@@ -5,6 +5,7 @@ import type { ProtokollDoc } from "@/lib/abnahme/types";
 import { syncRegie } from "@/lib/abnahme/regie-sync";
 import { ladeProtokollDoc } from "@/lib/data/abnahme";
 import type { RegieStandArchiv, StandArchiv } from "@/lib/abnahme/staende";
+import { istPublicToken } from "@/lib/abnahme/public-token";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,14 @@ export async function POST(request: Request) {
 
   // Die Kommissionsnummer darf leer sein (Protokoll ohne Kommission); der Kunde ist immer Pflicht.
   if (!doc.kunde?.trim()) return jsonFehler(422, "Der Kundenname ist Pflicht.");
+
+  // Öffentlicher Link: Format prüfen und Eindeutigkeit sichern (Token entsteht auf dem Gerät).
+  if (doc.publicToken != null) {
+    if (!istPublicToken(doc.publicToken)) return jsonFehler(422, "Ungültiges Token-Format.");
+    const dup = await supabase.from("abnahme_protokolle").select("id").eq("public_token", doc.publicToken).neq("id", doc.id).limit(1);
+    if (dup.error) return jsonFehler(500, dup.error.message);
+    if (dup.data?.length) return jsonFehler(409, "Der Online-Link ist bereits vergeben. Bitte im Büro „Neuen Link erzeugen“.");
+  }
 
   const cur = await supabase
     .from("abnahme_protokolle")
@@ -69,6 +78,21 @@ export async function POST(request: Request) {
   delete (rows.protokoll as Record<string, unknown>).quelle;
 
   const fail = (what: string, message: string) => jsonFehler(500, `${what}: ${message}`);
+
+  // Foto-Varianten nie durch einen älteren Gerätestand wegschreiben: ein auf dem Server vorhandener Pfad bleibt,
+  // wenn das Gerät (noch) keinen kennt (Originale laufen über /api/abnahme/original).
+  for (const [table, list] of [["abnahme_fotos", rows.fotos], ["abnahme_objektfotos", rows.objektfotos ?? []]] as const) {
+    if (!list.length) continue;
+    const ex = await supabase.from(table).select("id,path_original,path_thumb").eq("protokoll_id", doc.id);
+    if (ex.error) return fail(table, ex.error.message);
+    const alt = new Map((ex.data ?? []).map((r) => [r.id as string, r]));
+    for (const r of list) {
+      const a = alt.get(r.id as string);
+      if (!a) continue;
+      if (!r.path_original && a.path_original) r.path_original = a.path_original;
+      if (!r.path_thumb && a.path_thumb) r.path_thumb = a.path_thumb;
+    }
+  }
 
   const p = await supabase.from("abnahme_protokolle").upsert({
     ...rows.protokoll,

@@ -1,10 +1,11 @@
-import { PDFDocument, type PDFFont, type PDFImage, type PDFPage, type RGB } from "pdf-lib";
+import { PDFDocument, PDFString, type PDFFont, type PDFImage, type PDFPage, type RGB } from "pdf-lib";
 import { formatDatum, formatDatumZeit, t } from "../i18n.ts";
 import { hatKommission, kommissionAnzeige } from "../kommission.ts";
 import { fortschritt, findeUnterschrift, maengelPositionen, positionStatus, relevantePositionen } from "../logic.ts";
 import type { Mangel, Position, ProtokollDoc, PruefStatus, Raum, Unterschrift } from "../types.ts";
 import { A4, bettePng, betteJpg, brass, green, ink, kuerzen, ladeFonts, line, muted, red, Seiten, umbrechen, white, type FontLoader, type Fonts } from "./common.ts";
 import { zeichneLogo } from "./logo.ts";
+import { publicUrl } from "../public-token.ts";
 
 export type PdfBild = { bytes: Uint8Array; mime: string };
 export type PdfOptionen = {
@@ -13,6 +14,10 @@ export type PdfOptionen = {
   bilder: Map<string, PdfBild>;
   /** Nicht mehr verwendet (Logo wird als Vektor gezeichnet); bleibt für Aufrufer kompatibel. */
   logoPng?: Uint8Array | null;
+  /** QR-Code (PNG, ohne Rand) für den Online-Link; nur zusammen mit `doc.publicToken`. Erzeugt `lib/abnahme/pdf/qr.ts`. */
+  qrPng?: Uint8Array | null;
+  /** Basis-URL des Online-Links (Standard: NEXT_PUBLIC_PUBLIC_BASE_URL). */
+  basisUrl?: string;
 };
 
 /*
@@ -48,6 +53,19 @@ export async function erzeugeProtokollPdf(doc: ProtokollDoc, opt: PdfOptionen): 
     return img;
   }
   const datumDok = doc.abgeschlossenAt ?? doc.beginnAt;
+  const onlineLink = doc.publicToken ? publicUrl(doc.publicToken, opt.basisUrl) : null;
+  const qrBild = onlineLink && opt.qrPng ? await pdf.embedPng(opt.qrPng).catch(() => null) : null;
+  /** Klickbarer Link (Annotation) über dem Rechteck (x, y unten links, Breite, Höhe). */
+  function linkFlaeche(page: PDFPage, url: string, x: number, y: number, w: number, h: number) {
+    const annot = pdf.context.obj({
+      Type: "Annot",
+      Subtype: "Link",
+      Rect: [x, y, x + w, y + h],
+      Border: [0, 0, 0],
+      A: { Type: "Action", S: "URI", URI: PDFString.of(url) },
+    });
+    page.node.addAnnot(pdf.context.register(annot));
+  }
   const maengelSortiert = [...doc.maengel].sort((a, b) => a.sort - b.sort);
   const mangelNr = (m: Mangel) => `M${maengelSortiert.indexOf(m) + 1}`;
 
@@ -63,11 +81,38 @@ export async function erzeugeProtokollPdf(doc: ProtokollDoc, opt: PdfOptionen): 
       page.drawLine({ start: { x, y: top - 26 }, end: { x: x + w, y: top - 26 }, thickness: 0.75, color: ink });
     }
   }
+  /**
+   * QR-Code (28 mm) rechts unter dem Meta-Paar, Beschriftung und Link im Klartext (umbrechbar, klickbar) links davon.
+   * Mindestens 8 pt Ruhezone um den QR; liefert die y-Position, ab der der Inhalt beginnt.
+   */
+  function zeichneOnlineBlock(page: PDFPage, top: number): number {
+    const link = onlineLink!;
+    const qs = 79.4; // 28 mm
+    const qx = R - qs;
+    const qy = top - 40 - qs;
+    if (qrBild) {
+      page.drawImage(qrBild, { x: qx, y: qy, width: qs, height: qs });
+      linkFlaeche(page, link, qx, qy, qs, qs);
+    }
+    const tw = qrBild ? qx - 12 - (M + 232) : R - (M + 232); // Textspalte zwischen Titel und QR
+    const tx = qrBild ? qx - 12 - tw : M + 232;
+    let ty = top - 52;
+    page.drawText(L.onlineTitel.toUpperCase(), { x: tx, y: ty, font: f.medium, size: 7.2, color: ink });
+    ty -= 12;
+    const zl = umbrechen(link, f.mono, 6.8, tw);
+    for (const z of zl) {
+      page.drawText(z, { x: tx, y: ty, font: f.mono, size: 6.8, color: muted });
+      ty -= 9;
+    }
+    linkFlaeche(page, link, tx, ty + 9, tw, 12 + 9 * zl.length);
+    return Math.min(top - 118, qy - 14);
+  }
   const kopfErste = (page: PDFPage): number => {
     const top = A4.h - M;
     zeichneLogo(page, M, top, 112, ink, brass);
     metaPaar(page, top, [formatDatum(datumDok, doc.sprache), formatDatumZeit(datumDok, doc.sprache).split(", ")[1] ?? ""], [L.kommission, kommissionText]);
     page.drawText(L.protokoll, { x: M, y: top - 102, font: f.light, size: 21, color: ink });
+    if (onlineLink) return zeichneOnlineBlock(page, top);
     return top - 118;
   };
   const kopfFolge = (page: PDFPage): number => {
@@ -403,6 +448,16 @@ export async function erzeugeProtokollPdf(doc: ProtokollDoc, opt: PdfOptionen): 
   hairline(M, R, ink, 0.75);
   s.nachUnten(18);
   if (!maengelSortiert.length) zeilen(L.keineMaengel, f.regular, 9.5, muted, M, A4.w - 2 * M);
+  if (onlineLink && maengelSortiert.length) {
+    // Hinweis auf die Fotos in voller Auflösung (klickbar).
+    s.platz(22);
+    const label = `${L.fotosVoll} `;
+    text(M, label, f.regular, 8.5, muted);
+    const lx = M + breite(label, f.regular, 8.5);
+    text(lx, onlineLink, f.mono, 7.5, ink);
+    linkFlaeche(s.page, onlineLink, lx, s.y - 10, breite(onlineLink, f.mono, 7.5), 11);
+    s.nachUnten(22);
+  }
   for (const m of maengelSortiert) {
     const p = doc.positionen.find((x) => x.id === m.positionId);
     const raum = doc.raeume.find((x) => x.id === m.raumId);

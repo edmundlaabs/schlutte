@@ -45,6 +45,9 @@ export function docToRows(doc: ProtokollDoc): ProtokollRows {
       abgeschlossen_at: doc.abgeschlossenAt,
       original_path: doc.originalPath,
       pdf_path: doc.pdfPath,
+      // Der Token kommt vom Gerät (Abschluss). public_aktiv/-widerrufen_at setzt nur das Büro, nie der Sync.
+      public_token: doc.publicToken ?? null,
+      public_erstellt_at: doc.publicErstelltAt ?? null,
     },
     raeume: doc.raeume.map((r) => ({
       id: r.id, protokoll_id: pid, sort: r.sort, name: r.name, etage: nn(r.etage),
@@ -68,13 +71,13 @@ export function docToRows(doc: ProtokollDoc): ProtokollRows {
     fotos: doc.fotos
       .filter((f) => f.path)
       .map((f) => ({
-        id: f.id, protokoll_id: pid, mangel_id: f.mangelId, path: f.path, breite: f.breite,
+        id: f.id, protokoll_id: pid, mangel_id: f.mangelId, path: f.path, path_original: f.pathOriginal ?? null, path_thumb: f.pathThumb ?? null, breite: f.breite,
         hoehe: f.hoehe, aufgenommen_at: f.aufgenommenAt,
       })),
     objektfotos: (doc.objektFotos ?? [])
       .filter((f) => f.path && doc.positionen.some((p) => p.id === f.positionId))
       .map((f) => ({
-        id: f.id, protokoll_id: pid, position_id: f.positionId, path: f.path, breite: f.breite,
+        id: f.id, protokoll_id: pid, position_id: f.positionId, path: f.path, path_original: f.pathOriginal ?? null, path_thumb: f.pathThumb ?? null, breite: f.breite,
         hoehe: f.hoehe, aufgenommen_at: f.aufgenommenAt,
       })),
     unterschriften: doc.unterschriften
@@ -127,11 +130,11 @@ export function rowsToDoc(rows: ProtokollRows): ProtokollDoc {
     }))
     .sort((a, b) => a.sort - b.sort);
   const fotos: Foto[] = rows.fotos.map((r) => ({
-    id: s(r.id), mangelId: s(r.mangel_id), path: sn(r.path), breite: Number(r.breite ?? 0),
+    id: s(r.id), mangelId: s(r.mangel_id), path: sn(r.path), pathOriginal: sn(r.path_original), pathThumb: sn(r.path_thumb), breite: Number(r.breite ?? 0),
     hoehe: Number(r.hoehe ?? 0), aufgenommenAt: s(r.aufgenommen_at),
   }));
   const objektFotos: ObjektFoto[] = (rows.objektfotos ?? []).map((r) => ({
-    id: s(r.id), positionId: s(r.position_id), path: sn(r.path), breite: Number(r.breite ?? 0),
+    id: s(r.id), positionId: s(r.position_id), path: sn(r.path), pathOriginal: sn(r.path_original), pathThumb: sn(r.path_thumb), breite: Number(r.breite ?? 0),
     hoehe: Number(r.hoehe ?? 0), aufgenommenAt: s(r.aufgenommen_at),
   }));
   const unterschriften: Unterschrift[] = rows.unterschriften.map((r) => ({
@@ -150,7 +153,9 @@ export function rowsToDoc(rows: ProtokollRows): ProtokollDoc {
     parentId: sn(p.parent_id), mitarbeiterId: sn(p.mitarbeiter_id), mitarbeiterName: s(p.mitarbeiter_name),
     teilnehmer, kundeEmail: s(p.kunde_email), kopieEmail: s(p.kopie_email), bemerkung: s(p.bemerkung),
     beginnAt: sn(p.beginn_at), abgeschlossenAt: sn(p.abgeschlossen_at), originalPath: sn(p.original_path),
-    pdfPath: sn(p.pdf_path), rev: Number(p.rev ?? 0), raeume, positionen, maengel, fotos, objektFotos, unterschriften,
+    pdfPath: sn(p.pdf_path),
+    publicToken: sn(p.public_token), publicAktiv: p.public_aktiv !== false, publicErstelltAt: sn(p.public_erstellt_at), publicWiderrufenAt: sn(p.public_widerrufen_at),
+    rev: Number(p.rev ?? 0), raeume, positionen, maengel, fotos, objektFotos, unterschriften,
   };
 }
 

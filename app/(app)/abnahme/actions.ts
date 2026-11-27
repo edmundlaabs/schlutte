@@ -310,3 +310,126 @@ export async function aendereRegieKopf(id: string, k: RegieKopf): Promise<Abnahm
     return { ok: false, error: e instanceof Error ? e.message : "Ändern fehlgeschlagen." };
   }
 }
+
+// ─── Online-Link (öffentlicher Foto-Link) und PDF neu erzeugen – nur CEO/Admin ───────────────────────────────────
+
+import { createClient as createServerSupabase } from "@/lib/supabase/server";
+import { erzeugePublicToken } from "@/lib/abnahme/public-token";
+
+async function nurFinance(): Promise<{ ctx: Awaited<ReturnType<typeof requireAppAccess>> } | { fehler: string }> {
+  const ctx = await requireAppAccess("abnahme");
+  if (!ctx.isFinance) return { fehler: "Nur CEO und Administratoren dürfen den Online-Link verwalten." };
+  return { ctx };
+}
+
+async function abgeschlossenesProtokoll(id: string) {
+  const supabase = await createServerSupabase();
+  const r = await supabase.from("abnahme_protokolle").select("id,status,public_token,public_aktiv,pdf_path").eq("id", id).maybeSingle();
+  if (r.error || !r.data) return { supabase, p: null as null };
+  return { supabase, p: r.data };
+}
+
+/** Link ein- oder ausschalten (Token bleibt, die Seite zeigt bei „aus“ eine neutrale 404). */
+export async function linkAktivSetzenAction(id: string, aktiv: boolean): Promise<AbnahmeResult> {
+  try {
+    const g = await nurFinance();
+    if ("fehler" in g) return { ok: false, error: g.fehler };
+    const { supabase, p } = await abgeschlossenesProtokoll(id);
+    if (!p) return { ok: false, error: "Protokoll nicht gefunden." };
+    if (p.status !== "abgeschlossen") return { ok: false, error: "Der Online-Link gilt nur für abgeschlossene Protokolle." };
+    if (!p.public_token) return { ok: false, error: "Es gibt noch keinen Link. Bitte „PDF mit Foto-Link neu erzeugen“ verwenden." };
+    const up = await supabase.from("abnahme_protokolle").update({ public_aktiv: aktiv, public_widerrufen_at: aktiv ? null : new Date().toISOString() }).eq("id", id);
+    if (up.error) return { ok: false, error: up.error.message };
+    revalidatePath(`/abnahme/protokoll/${id}`);
+    return { ok: true, data: undefined };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Ändern fehlgeschlagen." };
+  }
+}
+
+/** Neuer Token: der alte Link (und der QR im alten PDF) wird ungültig. Danach „PDF neu erzeugen“. */
+export async function neuerLinkAction(id: string): Promise<AbnahmeResult<{ token: string }>> {
+  try {
+    const g = await nurFinance();
+    if ("fehler" in g) return { ok: false, error: g.fehler };
+    const { supabase, p } = await abgeschlossenesProtokoll(id);
+    if (!p) return { ok: false, error: "Protokoll nicht gefunden." };
+    if (p.status !== "abgeschlossen") return { ok: false, error: "Der Online-Link gilt nur für abgeschlossene Protokolle." };
+    for (let versuch = 0; versuch < 3; versuch++) {
+      const token = erzeugePublicToken();
+      const up = await supabase
+        .from("abnahme_protokolle")
+        .update({ public_token: token, public_aktiv: true, public_erstellt_at: new Date().toISOString(), public_widerrufen_at: null })
+        .eq("id", id);
+      if (!up.error) {
+        revalidatePath(`/abnahme/protokoll/${id}`);
+        return { ok: true, data: { token } };
+      }
+      if (!/duplicate|unique/i.test(up.error.message)) return { ok: false, error: up.error.message };
+    }
+    return { ok: false, error: "Kein eindeutiger Token gefunden. Bitte erneut versuchen." };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Neuer Link fehlgeschlagen." };
+  }
+}
+
+/** Schritt 1 von „PDF neu erzeugen“: Token sicherstellen, Serverstand und signierte Bild-URLs liefern. */
+export async function bereitePdfNeuAction(id: string): Promise<AbnahmeResult<{ doc: ProtokollDoc; signed: Record<string, string> }>> {
+  try {
+    const g = await nurFinance();
+    if ("fehler" in g) return { ok: false, error: g.fehler };
+    const { supabase, p } = await abgeschlossenesProtokoll(id);
+    if (!p) return { ok: false, error: "Protokoll nicht gefunden." };
+    if (p.status !== "abgeschlossen") return { ok: false, error: "Nur für abgeschlossene Protokolle." };
+    if (!p.public_token) {
+      for (let versuch = 0; versuch < 3; versuch++) {
+        const up = await supabase
+          .from("abnahme_protokolle")
+          .update({ public_token: erzeugePublicToken(), public_aktiv: true, public_erstellt_at: new Date().toISOString(), public_widerrufen_at: null })
+          .eq("id", id);
+        if (!up.error) break;
+        if (!/duplicate|unique/i.test(up.error.message) || versuch === 2) return { ok: false, error: up.error.message };
+      }
+    }
+    const doc = await ladeProtokollDoc(id);
+    if (!doc) return { ok: false, error: "Protokoll konnte nicht gelesen werden." };
+    const paths = [
+      ...doc.fotos.map((f) => f.path), ...(doc.objektFotos ?? []).map((f) => f.path), ...doc.unterschriften.map((u) => u.bildPath),
+    ].filter((x): x is string => Boolean(x));
+    const signed: Record<string, string> = {};
+    if (paths.length) {
+      const res = await supabase.storage.from("abnahme").createSignedUrls(paths, 900);
+      for (const e of res.data ?? []) if (e.path && e.signedUrl) signed[e.path] = e.signedUrl;
+    }
+    return { ok: true, data: { doc, signed } };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Vorbereitung fehlgeschlagen." };
+  }
+}
+
+/**
+ * Schritt 2: Das neue PDF liegt im Storage; `pdf_path` wird ersetzt, das alte PDF bleibt liegen und wird in
+ * `abnahme_pdf_historie` vermerkt (Zeitpunkt, Grund, wer).
+ */
+export async function pdfErsetztAction(id: string, neuerPfad: string, grund: string): Promise<AbnahmeResult> {
+  try {
+    const g = await nurFinance();
+    if ("fehler" in g) return { ok: false, error: g.fehler };
+    if (!new RegExp(`^protokoll/${id}/abnahme-[0-9TZ-]+\\.pdf$`).test(neuerPfad)) return { ok: false, error: "Ungültiger Pfad." };
+    const { supabase, p } = await abgeschlossenesProtokoll(id);
+    if (!p) return { ok: false, error: "Protokoll nicht gefunden." };
+    if (p.status !== "abgeschlossen") return { ok: false, error: "Nur für abgeschlossene Protokolle." };
+    const dl = await supabase.storage.from("abnahme").list(`protokoll/${id}`, { search: neuerPfad.split("/").pop() });
+    if (dl.error || !dl.data?.some((f) => neuerPfad.endsWith(f.name))) return { ok: false, error: "Das neue PDF liegt nicht im Speicher." };
+    if (p.pdf_path) {
+      const h = await supabase.from("abnahme_pdf_historie").insert({ protokoll_id: id, pdf_path: p.pdf_path, grund: grund.slice(0, 200) || "PDF neu erzeugt", ersetzt_von: g.ctx.employee?.id ?? null });
+      if (h.error) return { ok: false, error: `Verlauf: ${h.error.message}` };
+    }
+    const up = await supabase.from("abnahme_protokolle").update({ pdf_path: neuerPfad }).eq("id", id);
+    if (up.error) return { ok: false, error: up.error.message };
+    revalidatePath(`/abnahme/protokoll/${id}`);
+    return { ok: true, data: undefined };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Ersetzen fehlgeschlagen." };
+  }
+}

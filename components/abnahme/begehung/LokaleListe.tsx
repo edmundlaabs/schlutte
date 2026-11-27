@@ -7,6 +7,7 @@ import { alleDokumente, type LokalesDokument } from "@/lib/abnahme/offline/db";
 import { SYNC_EVENT, entferneLokal, gibFrei, istOnline, ladeFuerBaustelle, syncAlle, verwerfeLokal } from "@/lib/abnahme/offline/sync";
 import { speicherStatus } from "@/lib/abnahme/offline/sw-register";
 import { SyncBadge, useAutoSync } from "./SyncBadge";
+import { SpeicherHinweis } from "./SpeicherHinweis";
 import { legeRegieLokalAn } from "@/lib/abnahme/offline/regie-neu";
 
 type ServerEintrag = {
@@ -173,6 +174,7 @@ export function LokaleListe() {
             </li>
           ))}
         </ul>
+        <SpeicherHinweis />
         {speicher && (
           <p className="aus-help">
             Speicher: {mb(speicher.belegt)} MB von {mb(speicher.quota)} MB{speicher.persistent ? " · dauerhaft" : " · nicht als dauerhaft bestätigt (Schlutte am besten auf den Home-Bildschirm legen)"}

@@ -32,6 +32,12 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
+  // Öffentliche Protokollseite /p/<token> (Online-Link aus PDF/QR): ohne Anmeldung, Zugriff nur über den Token.
+  // Kein Session-Zugriff (keine Cookies lesen/setzen); die Schutz-Header setzt next.config.ts.
+  if (path.startsWith("/p/")) {
+    return NextResponse.next();
+  }
+
   // Skip static assets, brand images, fonts, and files with extensions
   if (
     path.startsWith("/_next") ||

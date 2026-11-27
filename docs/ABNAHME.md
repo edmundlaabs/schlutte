@@ -4,14 +4,17 @@ Abnahmeprotokoll und Regiebericht für die Baustelle: Tablet-Begehung auch ohne 
 
 ## Einrichtung (einmalig)
 
-1. **Migration** `supabase/migrations/20261120_abnahme.sql` im Supabase SQL-Editor ausführen (vorher Backup nach `../Backup/…`). Sie legt die Tabellen `abnahme_*`, RLS, Sperr-Trigger, die Checkout-Funktionen, den privaten Storage-Bucket `abnahme` und die Startvorlagen an. Danach (ab 1.3.0) `20261126_abnahme_abgleich.sql` (Archiv der Protokoll-Stände für den Abgleich) und (ab 1.4.0) `20261127_abnahme_regie_abgleich.sql` (dasselbe für Regieberichte), (ab 1.5.0) `20261128_abnahme_objektfotos.sql` (Fotos vom Objekt auch bei i. O.). Zuvor (ab 1.2.0) `20261125_abnahme_manuell.sql`: Protokolle ohne Kommission, Herkunft `quelle`, Protokoll-Vorlagen (zwei Startvorlagen).
+1. **Migration** `supabase/migrations/20261120_abnahme.sql` im Supabase SQL-Editor ausführen (vorher Backup nach `../Backup/…`). Sie legt die Tabellen `abnahme_*`, RLS, Sperr-Trigger, die Checkout-Funktionen, den privaten Storage-Bucket `abnahme` und die Startvorlagen an. Danach (ab 1.3.0) `20261126_abnahme_abgleich.sql` (Archiv der Protokoll-Stände für den Abgleich) und (ab 1.4.0) `20261127_abnahme_regie_abgleich.sql` (dasselbe für Regieberichte), (ab 1.5.0) `20261128_abnahme_objektfotos.sql` (Fotos vom Objekt auch bei i. O.), (ab 1.7.0) `20261129_abnahme_fotolink.sql` (Online-Link, Foto-Varianten, PDF-Historie). Zuvor (ab 1.2.0) `20261125_abnahme_manuell.sql`: Protokolle ohne Kommission, Herkunft `quelle`, Protokoll-Vorlagen (zwei Startvorlagen).
 2. **Zugang**: unter *Admin → Zugänge* den Haken „Abnahme“ pro Mitarbeiter setzen (CEO/Admin haben immer Zugriff). Bestehende Mitarbeiter bekommen ihn nicht automatisch.
-3. **Mailversand (Resend)**, nur als Umgebungsvariablen (nie im Code):
+3. **Mailversand (Resend)**: Schritt-für-Schritt-Anleitung im Abschnitt „Resend einrichten (ab 1.7.0)“ weiter unten. Nur als Umgebungsvariablen (nie im Code):
    | Variable | Bedeutung |
    |---|---|
    | `RESEND_API_KEY` | API-Key von resend.com |
    | `MAIL_FROM` | Absender, z. B. `Grabner Design <abnahme@deine-domain.de>` (Domain bei Resend verifiziert) |
-   | `MAIL_COPY_TO` | optional: interne Kopie (BCC), mehrere durch Komma |
+   | `MAIL_COPY_TO` | optional: interne Kopie (BCC), mehrere durch Komma (derzeit nicht gewünscht: leer lassen) |
+   | `MAIL_REDIRECT_TO` | Testschutz: gesetzt = alle Mails gehen nur an diese Adresse (kein BCC), Betreff `[TEST → Empfänger]` |
+   | `MAIL_CONTACT` | Kontaktzeile der Mail („Diese Adresse empfängt keine Antworten – Kontakt: …“) |
+   | `NEXT_PUBLIC_PUBLIC_BASE_URL` | Basis des Online-Links, z. B. `https://schlutte.vercel.app` |
    Ohne Konfiguration wird nichts verschickt; der Versand steht dann als „Fehler: nicht konfiguriert“ im Versandprotokoll und bleibt bei Offline-Vormerkungen erhalten.
 4. Tablets: Schlutte auf den **Home-Bildschirm** legen (iPad Safari → Teilen → „Zum Home-Bildschirm“; Android Chrome → App installieren). Nur so behält iOS die lokalen Daten länger als 7 Tage.
 
@@ -68,4 +71,31 @@ PDF-Dateinamen: `Abnahme_<Kommission>_<Kunde-kurz>_<JJJJ-MM-TT>.pdf`, `Regieberi
 
 ## Tests
 
-`npm test` (Parser, Fachlogik, Dateinamen, PDF-Vollständigkeit, Nachtrag, Regiebericht). Die Parser- und PDF-Tests gegen die echte Profacto-Datei laufen nur, wenn `lib/abnahme/parser/__fixtures__/Ang0--1731724496.pdf` vorhanden ist.
+`npm test` (Parser, Fachlogik, Dateinamen, PDF-Vollständigkeit, Nachtrag, Regiebericht, Token, Foto-Fallback, Mail-Umleitung und -HTML, Trigger-Ausnahme, QR im PDF, Online-Seite). Die Parser- und PDF-Tests gegen die echte Profacto-Datei laufen nur, wenn `lib/abnahme/parser/__fixtures__/Ang0--1731724496.pdf` vorhanden ist.
+
+## Resend einrichten (ab 1.7.0)
+
+> **Stand 27.11.2026: Resend ist noch nicht eingerichtet.** Mails werden noch **nicht automatisch an Kunden gesendet**. Beim Abschluss mit Kunden-E-Mail steht der Versand als „Fehler: nicht konfiguriert“ im Versandprotokoll; er wird später **nicht** automatisch nachgeholt (nur per „Erneut senden“). Das PDF und der Online-Link sind davon unabhängig und funktionieren (Link z. B. aus der Protokollseite kopieren und selbst weitergeben). Offen: Domain bei Resend verifizieren (noch keine DNS-Einträge für `grabner.design`) oder eine andere Domain/Subdomain verwenden; bis dahin nur der Resend-Testabsender `onboarding@resend.dev`, der ausschließlich an die Adresse des Resend-Kontos liefert.
+
+Stand: Resend-Account und API-Key vorhanden, Domain noch nicht verifiziert. **Solange getestet wird, `MAIL_REDIRECT_TO` setzen** – dann geht keine Mail an einen Kunden.
+
+1. **Domain bei Resend:** resend.com → *Domains* → *Add Domain* → `grabner.design`, Region **EU** (Irland). Resend zeigt DNS-Einträge: DKIM (TXT `resend._domainkey`), SPF/MX für die Send-Subdomain (`send`), optional DMARC (TXT `_dmarc`, z. B. `v=DMARC1; p=none;`). Alle beim DNS-Anbieter von `grabner.design` eintragen, in Resend *Verify DNS Records*, warten bis **Verified**.
+2. **Vercel:** Project → Settings → Environment Variables, jeweils **Production und Preview**:
+   - `RESEND_API_KEY` = API-Key
+   - `MAIL_FROM` = `Grabner Design <noreply@grabner.design>`
+   - `MAIL_REDIRECT_TO` = eigene Testadresse (**solange getestet wird**)
+   - `MAIL_CONTACT` = Kontaktzeile (z. B. „Name, Telefon, E-Mail“)
+   - `NEXT_PUBLIC_PUBLIC_BASE_URL` = `https://schlutte.vercel.app`
+   - **Kein** `MAIL_COPY_TO` (keine interne Kopie).
+   Danach **Redeploy** (Variablen gelten erst für neue Deployments; `NEXT_PUBLIC_…` wird beim Build eingebettet).
+3. **Livegang:** nur `MAIL_REDIRECT_TO` löschen und neu deployen.
+4. **Sicherheit:** Fehlgeschlagene automatische Versände („nicht konfiguriert“) werden nie automatisch nachgeholt – weder vom Server noch von einem Tablet. Nur „Senden / Erneut senden“ verschickt dann noch. Das Versandprotokoll zeigt Umleitungen („umgeleitet an …“).
+5. Empfohlen: Vercel → Firewall → Rate-Limit-Regel auf `/p/*` (die App begrenzt Fehlversuche nur je Serverinstanz).
+
+## Online-Protokoll (ab 1.7.0)
+
+- **Link:** `${NEXT_PUBLIC_PUBLIC_BASE_URL}/p/<token>`; der Token (192 Bit) entsteht beim Abschluss auf dem Gerät, jede Version hat einen eigenen. Die Seite braucht keine Anmeldung, zeigt das komplette Protokoll (Mängel zuerst), Fotos mit Lightbox (Zoom, Wischen, Zähler) und den PDF-Download. Unbekannte, deaktivierte oder nicht abgeschlossene Links zeigen dieselbe 404 „Link ungültig oder deaktiviert“.
+- **PDF:** Seite 1 enthält QR-Code (28 mm) und Link; die Mängelliste verweist auf „Fotos in voller Auflösung“. Das PDF entsteht offline mit QR.
+- **Büro** (Protokollseite, Karte „Online-Link“): kopieren, öffnen, QR anzeigen, Status. CEO/Admin: *Link deaktivieren/aktivieren*, *Neuen Link erzeugen* (der alte Link und der QR im alten PDF werden ungültig; danach direkt *PDF neu erzeugen*), *PDF mit Foto-Link neu erzeugen* (auch für Protokolle von vor 1.7: Token wird angelegt; Inhalt und Unterschriften unverändert; das alte PDF bleibt unter „Frühere PDFs“).
+- **Fotos (neue):** Original (volle Auflösung), 1600 px (PDF/Begehung), 600 px (Vorschau). Originale laden nach dem Sync einzeln im Hintergrund hoch („Originale: 12 / 18“, App offen lassen); „Vom Gerät entfernen“ ist bis dahin gesperrt. Warnung bei knappem Speicher (< 400 MB frei oder > 85 % belegt). Alte Fotos haben nur die 1600-px-Datei und werden überall als Fallback genutzt.
+- **Lokal prüfen:** `npm run dev`, dann `/p/DEMO_FIXTURE_DEMO_FIXTURE_DEMO__` (nur im Entwicklungsmodus, Demo-Daten ohne Datenbank).

@@ -23,6 +23,9 @@ export async function fuehreVersandAus(docId: string): Promise<{ gesendet: numbe
         gesendet++;
         continue;
       }
+      // Server hat den automatischen Versand endgültig verworfen (war nicht konfiguriert): Vormerkung entfernen,
+      // nicht erneut versuchen. Nachholen nur manuell über „Erneut senden“.
+      if (json.verworfen) continue;
       fehler = json.error ?? `Fehler ${res.status}`;
     } catch {
       fehler = "Keine Verbindung.";
