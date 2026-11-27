@@ -1,6 +1,8 @@
 import { blobsDesDokuments, holeBlob, speichereBlob } from "../offline/db";
 import type { ProtokollDoc } from "../types";
 import { erzeugeProtokollPdf, type PdfBild } from "./protokoll";
+import { erzeugeQrPng } from "./qr";
+import { publicUrl } from "../public-token";
 
 /** Rendert das Logo (SVG, aus dem Service-Worker-Cache auch offline) einmal als PNG für pdf-lib. */
 export async function ladeLogoPng(): Promise<Uint8Array | null> {
@@ -40,12 +42,10 @@ export async function erzeugeProtokollPdfLokal(doc: ProtokollDoc): Promise<Uint8
     if (b.art !== "foto" && b.art !== "unterschrift") continue; // nur Bilder in PDF-Größe, nie Originale
     bilder.set(b.id, { bytes: new Uint8Array(await b.blob.arrayBuffer()), mime: b.mime });
   }
-  // QR-Code für den Online-Link (qrcode läuft ohne Netz; Chunk wird mit der Begehungs-Shell vorgehalten).
+  // QR-Code für den Online-Link (qrcode läuft ohne Netz und liegt im Chunk des PDF-Generators).
   let qrPng: Uint8Array | null = null;
   if (doc.publicToken) {
     try {
-      const { erzeugeQrPng } = await import("./qr");
-      const { publicUrl } = await import("../public-token");
       qrPng = await erzeugeQrPng(publicUrl(doc.publicToken));
     } catch {
       qrPng = null; // PDF entsteht trotzdem, der Link steht im Klartext

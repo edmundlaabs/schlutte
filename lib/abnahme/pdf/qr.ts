@@ -1,6 +1,8 @@
+import QRCode from "qrcode";
+
+/** Statisch importiert, damit `qrcode` im selben Chunk wie der PDF-Generator liegt und mit der Begehungs-Shell offline verfügbar ist. */
 /** QR-Code als PNG (ohne eigenen Rand; die Ruhezone legt das PDF-Layout fest). Läuft offline im Browser und in Node. */
 export async function erzeugeQrPng(url: string): Promise<Uint8Array> {
-  const QRCode = (await import("qrcode")).default;
   const dataUrl = await QRCode.toDataURL(url, { margin: 0, width: 600, errorCorrectionLevel: "M", color: { dark: "#0E0E0D", light: "#FFFFFF" } });
   const b64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
   const bin = atob(b64);

@@ -2,20 +2,21 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { PDFArray, PDFDict, PDFDocument, PDFName, PDFString } from "pdf-lib";
+import { PDFDict, PDFDocument, PDFName, PDFString } from "pdf-lib";
 import { erzeugeProtokollPdf } from "./protokoll.ts";
 import { erzeugeQrPng } from "./qr.ts";
 import { leeresProtokoll, neuePosition, neuerRaum } from "../edit.ts";
 import { setzeMangel } from "../logic.ts";
 import { publicUrl } from "../public-token.ts";
+import type { ProtokollDoc } from "../types.ts";
 
 const fontDir = fileURLToPath(new URL("../../../public/fonts/", import.meta.url));
 const loader = async (n: string) => new Uint8Array(readFileSync(fontDir + n));
 const TOKEN = "Zx9_-AbCdEfGhIjKlMnOpQrStUvWxYz0".slice(0, 32);
 const BASIS = "https://schlutte.vercel.app";
 
-function testDoc(mitToken: boolean) {
-  let d = { ...leeresProtokoll({ id: "p1", mitarbeiterId: null, mitarbeiterName: "Test" }), kunde: "Wagener", kommissionNr: "250148", status: "abgeschlossen" as const, abgeschlossenAt: "2026-11-27T10:00:00Z" };
+function testDoc(mitToken: boolean): ProtokollDoc {
+  let d: ProtokollDoc = { ...leeresProtokoll({ id: "p1", mitarbeiterId: null, mitarbeiterName: "Test" }), kunde: "Wagener", kommissionNr: "250148", status: "abgeschlossen", abgeschlossenAt: "2026-11-27T10:00:00Z" };
   const r = neuerRaum(d, "Küche");
   d = r.doc;
   const p = neuePosition(d, r.raum.id, { titel: "Schrank" });
