@@ -128,7 +128,7 @@ export default async function ProtokollDetail({ params }: { params: Promise<{ id
                 </div>
                 <div className="aus-item-side">
                   <span className={v.status === "gesendet" ? "abn-chip is-ok" : v.status === "fehler" ? "abn-chip is-bad" : "abn-chip"}>{v.status}</span>
-                  {v.fehler && <span className="aus-field-error">{v.fehler}</span>}
+                  {v.fehler && <span className={v.status === "gesendet" ? "abn-chip" : "aus-field-error"}>{v.fehler}</span>}
                 </div>
               </li>
             ))}

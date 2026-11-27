@@ -3,7 +3,7 @@ import { interneKopie, istEmail, mailKonfiguriert, sendeMail } from "@/lib/mail/
 import { abnahmeDateiname, regieDateiname } from "@/lib/abnahme/filename";
 import { formatDatum } from "@/lib/abnahme/i18n";
 
-export type VersandErgebnis = { ok: true; schonGesendet?: boolean } | { ok: false; error: string; nichtKonfiguriert?: boolean };
+export type VersandErgebnis = { ok: true; schonGesendet?: boolean } | { ok: false; error: string; nichtKonfiguriert?: boolean; verworfen?: boolean };
 
 /**
  * Verschickt das abgelegte PDF eines Dokuments per Mail und protokolliert den Versand
@@ -29,8 +29,13 @@ export async function versendeDokument(args: {
   if (!d.pdf_path) return { ok: false, error: "Das PDF ist noch nicht synchronisiert." };
 
   if (args.schluessel) {
-    const vorhanden = await supabase.from("abnahme_versand").select("id,status").eq("schluessel", args.schluessel).maybeSingle();
+    const vorhanden = await supabase.from("abnahme_versand").select("id,status,fehler").eq("schluessel", args.schluessel).maybeSingle();
     if (vorhanden.data?.status === "gesendet") return { ok: true, schonGesendet: true };
+    // Automatischer Versand (Schlüssel „abschluss:…“), der schon einmal an fehlender Konfiguration scheiterte, wird NIE
+    // automatisch nachgeholt (sonst ginge die Mail beim Einrichten von Resend ungewollt an den Kunden). Nur „Erneut senden“.
+    if (args.schluessel.startsWith("abschluss:") && vorhanden.data?.status === "fehler" && /nicht konfiguriert/i.test(vorhanden.data.fehler ?? "")) {
+      return { ok: false, error: "Automatischer Versand wurde nicht nachgeholt (war nicht konfiguriert). Bitte „Erneut senden“ verwenden.", verworfen: true };
+    }
   }
 
   const bcc = Array.from(new Set([...(kopie ? [kopie] : []), ...interneKopie()]));
@@ -88,6 +93,6 @@ export async function versendeDokument(args: {
     await abschluss("fehler", res.error);
     return { ok: false, error: res.error };
   }
-  await abschluss("gesendet");
+  await abschluss("gesendet", res.umgeleitetAn ? `umgeleitet an ${res.umgeleitetAn}` : undefined);
   return { ok: true };
 }
