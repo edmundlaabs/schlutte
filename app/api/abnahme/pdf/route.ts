@@ -15,12 +15,21 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: d } = await supabase.from(typ === "abnahme" ? "abnahme_protokolle" : "abnahme_regieberichte").select("*").eq("id", id).maybeSingle();
   const original = typ === "abnahme" && u.searchParams.get("art") === "original";
-  const pfad: string | null | undefined = original ? d?.original_path : d?.pdf_path;
+  // Früheres PDF (nach „PDF neu erzeugen“): ?art=historie&hid=<id> – nur Einträge dieses Protokolls.
+  let historiePfad: string | null = null;
+  if (typ === "abnahme" && u.searchParams.get("art") === "historie") {
+    const h = await supabase.from("abnahme_pdf_historie").select("pdf_path").eq("id", u.searchParams.get("hid") ?? "").eq("protokoll_id", id).maybeSingle();
+    historiePfad = h.data?.pdf_path ?? null;
+    if (!historiePfad) return jsonFehler(404, "Kein PDF vorhanden.");
+  }
+  const pfad: string | null | undefined = historiePfad ?? (original ? d?.original_path : d?.pdf_path);
   if (!d || !pfad) return jsonFehler(404, "Kein PDF vorhanden.");
   const dl = await supabase.storage.from("abnahme").download(pfad);
   if (dl.error || !dl.data) return jsonFehler(404, "PDF konnte nicht gelesen werden.");
   const datum = String(typ === "abnahme" ? (d.abgeschlossen_at ?? d.created_at) : d.datum).slice(0, 10);
-  const name = original
+  const name = historiePfad
+    ? `${abnahmeDateiname(d.kommission_nr, d.kunde, datum).replace(/\.pdf$/, "")}_frueher.pdf`
+    : original
     ? `Positionsliste_${String(d.kommission_nr ?? "").trim() || "ohne-Kommission"}.pdf`
     : typ === "abnahme" ? abnahmeDateiname(d.kommission_nr, d.kunde, datum) : regieDateiname(d.kommission_nr, d.kunde, datum);
   return new Response(dl.data, {

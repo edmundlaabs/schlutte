@@ -35,13 +35,8 @@ export async function fontLoaderBrowser(name: string): Promise<ArrayBuffer> {
   return r.arrayBuffer();
 }
 
-/** Erzeugt das Protokoll-PDF aus den lokalen Daten (ohne Netz) und gibt die Bytes zurück. */
-export async function erzeugeProtokollPdfLokal(doc: ProtokollDoc): Promise<Uint8Array> {
-  const bilder = new Map<string, PdfBild>();
-  for (const b of await blobsDesDokuments(doc.id)) {
-    if (b.art !== "foto" && b.art !== "unterschrift") continue; // nur Bilder in PDF-Größe, nie Originale
-    bilder.set(b.id, { bytes: new Uint8Array(await b.blob.arrayBuffer()), mime: b.mime });
-  }
+/** Baut QR-Code (offline) und PDF aus Dokument und Bildern. */
+async function baueProtokollPdf(doc: ProtokollDoc, bilder: Map<string, PdfBild>): Promise<Uint8Array> {
   // QR-Code für den Online-Link (qrcode läuft ohne Netz und liegt im Chunk des PDF-Generators).
   let qrPng: Uint8Array | null = null;
   if (doc.publicToken) {
@@ -52,6 +47,38 @@ export async function erzeugeProtokollPdfLokal(doc: ProtokollDoc): Promise<Uint8
     }
   }
   return erzeugeProtokollPdf(doc, { fonts: fontLoaderBrowser, bilder, logoPng: await ladeLogoPng(), qrPng });
+}
+
+/** Erzeugt das Protokoll-PDF aus den lokalen Daten (ohne Netz) und gibt die Bytes zurück. */
+export async function erzeugeProtokollPdfLokal(doc: ProtokollDoc): Promise<Uint8Array> {
+  const bilder = new Map<string, PdfBild>();
+  for (const b of await blobsDesDokuments(doc.id)) {
+    if (b.art !== "foto" && b.art !== "unterschrift") continue; // nur Bilder in PDF-Größe, nie Originale
+    bilder.set(b.id, { bytes: new Uint8Array(await b.blob.arrayBuffer()), mime: b.mime });
+  }
+  return baueProtokollPdf(doc, bilder);
+}
+
+/**
+ * PDF aus dem Serverstand neu erzeugen (Büro, z. B. um den Foto-Link nachzurüsten): Bilder (1600 px) und Unterschriften
+ * kommen über signierte URLs. Inhalt und Unterschriften bleiben unverändert, nur QR/Link sind neu.
+ */
+export async function erzeugeProtokollPdfAusServer(doc: ProtokollDoc, signed: Record<string, string>): Promise<Uint8Array> {
+  const bilder = new Map<string, PdfBild>();
+  const holen: { id: string; path: string }[] = [
+    ...doc.fotos.filter((f) => f.path).map((f) => ({ id: f.id, path: f.path! })),
+    ...(doc.objektFotos ?? []).filter((f) => f.path).map((f) => ({ id: f.id, path: f.path! })),
+    ...doc.unterschriften.filter((u) => u.bildPath).map((u) => ({ id: u.id, path: u.bildPath! })),
+  ];
+  for (const h of holen) {
+    const url = signed[h.path];
+    if (!url) throw new Error("Ein Bild konnte nicht geladen werden (keine signierte URL).");
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Ein Bild konnte nicht geladen werden.");
+    const blob = await res.blob();
+    bilder.set(h.id, { bytes: new Uint8Array(await blob.arrayBuffer()), mime: blob.type || (h.path.endsWith(".png") ? "image/png" : "image/jpeg") });
+  }
+  return baueProtokollPdf(doc, bilder);
 }
 
 /** Beim Abschluss: PDF erzeugen und als Blob `pdf:<id>` ablegen; der Sync lädt es hoch. */

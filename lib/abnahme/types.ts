@@ -124,6 +124,7 @@ export type ProtokollDoc = {
   publicToken?: string | null;
   publicAktiv?: boolean;
   publicErstelltAt?: string | null;
+  publicWiderrufenAt?: string | null;
   rev: number;
   raeume: Raum[];
   positionen: Position[];

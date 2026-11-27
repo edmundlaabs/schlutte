@@ -154,7 +154,7 @@ export function rowsToDoc(rows: ProtokollRows): ProtokollDoc {
     teilnehmer, kundeEmail: s(p.kunde_email), kopieEmail: s(p.kopie_email), bemerkung: s(p.bemerkung),
     beginnAt: sn(p.beginn_at), abgeschlossenAt: sn(p.abgeschlossen_at), originalPath: sn(p.original_path),
     pdfPath: sn(p.pdf_path),
-    publicToken: sn(p.public_token), publicAktiv: p.public_aktiv !== false, publicErstelltAt: sn(p.public_erstellt_at),
+    publicToken: sn(p.public_token), publicAktiv: p.public_aktiv !== false, publicErstelltAt: sn(p.public_erstellt_at), publicWiderrufenAt: sn(p.public_widerrufen_at),
     rev: Number(p.rev ?? 0), raeume, positionen, maengel, fotos, objektFotos, unterschriften,
   };
 }
