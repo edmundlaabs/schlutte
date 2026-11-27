@@ -40,7 +40,18 @@ export async function erzeugeProtokollPdfLokal(doc: ProtokollDoc): Promise<Uint8
     if (b.art !== "foto" && b.art !== "unterschrift") continue; // nur Bilder in PDF-Größe, nie Originale
     bilder.set(b.id, { bytes: new Uint8Array(await b.blob.arrayBuffer()), mime: b.mime });
   }
-  return erzeugeProtokollPdf(doc, { fonts: fontLoaderBrowser, bilder, logoPng: await ladeLogoPng() });
+  // QR-Code für den Online-Link (qrcode läuft ohne Netz; Chunk wird mit der Begehungs-Shell vorgehalten).
+  let qrPng: Uint8Array | null = null;
+  if (doc.publicToken) {
+    try {
+      const { erzeugeQrPng } = await import("./qr");
+      const { publicUrl } = await import("../public-token");
+      qrPng = await erzeugeQrPng(publicUrl(doc.publicToken));
+    } catch {
+      qrPng = null; // PDF entsteht trotzdem, der Link steht im Klartext
+    }
+  }
+  return erzeugeProtokollPdf(doc, { fonts: fontLoaderBrowser, bilder, logoPng: await ladeLogoPng(), qrPng });
 }
 
 /** Beim Abschluss: PDF erzeugen und als Blob `pdf:<id>` ablegen; der Sync lädt es hoch. */
