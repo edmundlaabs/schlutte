@@ -37,7 +37,7 @@ export async function fontLoaderBrowser(name: string): Promise<ArrayBuffer> {
 export async function erzeugeProtokollPdfLokal(doc: ProtokollDoc): Promise<Uint8Array> {
   const bilder = new Map<string, PdfBild>();
   for (const b of await blobsDesDokuments(doc.id)) {
-    if (b.art === "pdf") continue;
+    if (b.art !== "foto" && b.art !== "unterschrift") continue; // nur Bilder in PDF-Größe, nie Originale
     bilder.set(b.id, { bytes: new Uint8Array(await b.blob.arrayBuffer()), mime: b.mime });
   }
   return erzeugeProtokollPdf(doc, { fonts: fontLoaderBrowser, bilder, logoPng: await ladeLogoPng() });
@@ -61,7 +61,7 @@ import { erzeugeRegiePdf } from "./regie";
 export async function erzeugeRegiePdfLokal(doc: RegieDoc): Promise<Uint8Array> {
   const bilder = new Map<string, PdfBild>();
   for (const b of await blobsDesDokuments(doc.id)) {
-    if (b.art === "pdf") continue;
+    if (b.art !== "foto" && b.art !== "unterschrift") continue; // nur Bilder in PDF-Größe, nie Originale
     bilder.set(b.id, { bytes: new Uint8Array(await b.blob.arrayBuffer()), mime: b.mime });
   }
   return erzeugeRegiePdf(doc, { fonts: fontLoaderBrowser, bilder, logoPng: await ladeLogoPng() });

@@ -71,13 +71,13 @@ export function docToRows(doc: ProtokollDoc): ProtokollRows {
     fotos: doc.fotos
       .filter((f) => f.path)
       .map((f) => ({
-        id: f.id, protokoll_id: pid, mangel_id: f.mangelId, path: f.path, breite: f.breite,
+        id: f.id, protokoll_id: pid, mangel_id: f.mangelId, path: f.path, path_original: f.pathOriginal ?? null, path_thumb: f.pathThumb ?? null, breite: f.breite,
         hoehe: f.hoehe, aufgenommen_at: f.aufgenommenAt,
       })),
     objektfotos: (doc.objektFotos ?? [])
       .filter((f) => f.path && doc.positionen.some((p) => p.id === f.positionId))
       .map((f) => ({
-        id: f.id, protokoll_id: pid, position_id: f.positionId, path: f.path, breite: f.breite,
+        id: f.id, protokoll_id: pid, position_id: f.positionId, path: f.path, path_original: f.pathOriginal ?? null, path_thumb: f.pathThumb ?? null, breite: f.breite,
         hoehe: f.hoehe, aufgenommen_at: f.aufgenommenAt,
       })),
     unterschriften: doc.unterschriften
@@ -130,11 +130,11 @@ export function rowsToDoc(rows: ProtokollRows): ProtokollDoc {
     }))
     .sort((a, b) => a.sort - b.sort);
   const fotos: Foto[] = rows.fotos.map((r) => ({
-    id: s(r.id), mangelId: s(r.mangel_id), path: sn(r.path), breite: Number(r.breite ?? 0),
+    id: s(r.id), mangelId: s(r.mangel_id), path: sn(r.path), pathOriginal: sn(r.path_original), pathThumb: sn(r.path_thumb), breite: Number(r.breite ?? 0),
     hoehe: Number(r.hoehe ?? 0), aufgenommenAt: s(r.aufgenommen_at),
   }));
   const objektFotos: ObjektFoto[] = (rows.objektfotos ?? []).map((r) => ({
-    id: s(r.id), positionId: s(r.position_id), path: sn(r.path), breite: Number(r.breite ?? 0),
+    id: s(r.id), positionId: s(r.position_id), path: sn(r.path), pathOriginal: sn(r.path_original), pathThumb: sn(r.path_thumb), breite: Number(r.breite ?? 0),
     hoehe: Number(r.hoehe ?? 0), aufgenommenAt: s(r.aufgenommen_at),
   }));
   const unterschriften: Unterschrift[] = rows.unterschriften.map((r) => ({

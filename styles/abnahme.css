@@ -312,3 +312,7 @@
 .abn-pos-werkzeug { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border, #d8d2c6); }
 .abn-pos-werkzeug .aus-btn { min-height: var(--abn-touch); }
 .abn-pos-loeschen { margin-left: auto; color: var(--abn-rot, #7a1f1f); }
+
+/* Speicher- und Original-Upload-Hinweis (Begehung) */
+.abn-speicher { margin: 8px 0; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+.abn-speicher.is-warn { border-color: var(--gd-danger); color: var(--gd-danger); }

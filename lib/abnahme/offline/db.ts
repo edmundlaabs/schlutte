@@ -50,7 +50,14 @@ export type LokalesDokument =
       archiv?: RegieStandArchiv | null;
     };
 
-export type LokalerBlob = { id: string; docId: string; art: "foto" | "unterschrift" | "pdf"; mime: string; blob: Blob; hochgeladen: boolean };
+/**
+ * art: „foto“ = 1600-px-Variante (PDF/Anzeige, Blob-ID = Foto-ID); „thumb“ = Vorschau (ID `<foto>:thumb`);
+ * „original“ = volle Auflösung (ID `<foto>:orig`), wird erst nach den Daten im Hintergrund hochgeladen.
+ */
+export type LokalerBlob = { id: string; docId: string; art: "foto" | "unterschrift" | "pdf" | "thumb" | "original"; mime: string; blob: Blob; hochgeladen: boolean };
+
+export const thumbId = (fotoId: string) => `${fotoId}:thumb`;
+export const originalId = (fotoId: string) => `${fotoId}:orig`;
 
 export type Meta = {
   me: { id: string | null; name: string } | null;
@@ -105,7 +112,11 @@ export async function holeBlob(id: string): Promise<LokalerBlob | undefined> {
   return (await db()).get("blobs", id);
 }
 export async function loescheBlob(id: string): Promise<void> {
-  await (await db()).delete("blobs", id);
+  const d = await db();
+  await d.delete("blobs", id);
+  // Varianten desselben Fotos mit entfernen (existieren sie nicht, ist das ein No-op).
+  await d.delete("blobs", thumbId(id));
+  await d.delete("blobs", originalId(id));
 }
 export async function blobsDesDokuments(docId: string): Promise<LokalerBlob[]> {
   return (await db()).getAllFromIndex("blobs", "docId", docId);

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLokalesProtokoll } from "@/lib/abnahme/offline/store";
 import { loescheBlob, speichereBlob } from "@/lib/abnahme/offline/db";
-import { komprimiereFoto } from "@/lib/abnahme/offline/images";
+import { verarbeiteFoto, speichereFotoBlobs } from "@/lib/abnahme/offline/fotos";
 import { neuerRaum } from "@/lib/abnahme/edit";
 import {
   fortschritt, findeMangel, findeUnterschrift, maengelPositionen, offeneUnterschriften, positionStatus,
@@ -16,6 +16,7 @@ import type { Position, ProtokollDoc, Raum } from "@/lib/abnahme/types";
 import { SignaturePad } from "../SignaturePad";
 import { BlobImg } from "./BlobImg";
 import { MangelDialog, type NeuesFoto } from "./MangelDialog";
+import { SpeicherHinweis } from "./SpeicherHinweis";
 import { SyncBadge, useAutoSync } from "./SyncBadge";
 import { AbschlussView } from "./AbschlussView";
 import { PositionDialog } from "./PositionDialog";
@@ -87,7 +88,7 @@ export function Protokollansicht({ id }: { id: string }) {
   async function mangelSpeichern(ctx: MangelCtx, r: { text: string; frist: string; neueFotos: NeuesFoto[]; entfernteFotoIds: string[] }) {
     if (!doc) return;
     for (const f of r.neueFotos) {
-      await speichereBlob({ id: f.id, docId: doc.id, art: "foto", mime: "image/jpeg", blob: f.blob, hochgeladen: false });
+      await speichereFotoBlobs(doc.id, f.id, f);
     }
     r.entfernteFotoIds.forEach((f) => void loescheBlob(f));
     aendere((d) => {
@@ -136,9 +137,9 @@ export function Protokollansicht({ id }: { id: string }) {
     setHinweis("");
     try {
       for (const datei of dateien) {
-        const k = await komprimiereFoto(datei);
+        const k = await verarbeiteFoto(datei);
         const fid = crypto.randomUUID();
-        await speichereBlob({ id: fid, docId: doc.id, art: "foto", mime: "image/jpeg", blob: k.blob, hochgeladen: false });
+        await speichereFotoBlobs(doc.id, fid, k);
         aendere((d) => fuegeObjektFotoHinzu(d, positionId, { id: fid, breite: k.breite, hoehe: k.hoehe }));
       }
     } catch (e) {
@@ -194,7 +195,7 @@ export function Protokollansicht({ id }: { id: string }) {
       titel={mangelCtx.titel}
       mangel={findeMangel(doc, mangelCtx.ref) ?? null}
       fotos={doc.fotos.filter((f) => f.mangelId === findeMangel(doc, mangelCtx.ref)?.id)}
-      komprimiere={(f) => komprimiereFoto(f)}
+      komprimiere={(f) => verarbeiteFoto(f)}
       onCancel={() => setMangelCtx(null)}
       onSave={(r) => mangelSpeichern(mangelCtx, r)}
     />
@@ -265,6 +266,7 @@ export function Protokollansicht({ id }: { id: string }) {
       )}
       {navigation}
 
+      <SpeicherHinweis docId={doc.id} />
       {view.art === "uebersicht" && <Uebersicht doc={doc} gesperrt={gesperrt} onRaum={(i) => setView({ art: "raum", index: i })} onAbschluss={() => setView({ art: "abschluss" })} onRaumAendern={raumAendern} onRaumLoeschen={(id) => raumLoeschen(id)} onRaumNeu={raumNeu} />}
 
       {view.art === "raum" && doc.raeume[view.index] && (

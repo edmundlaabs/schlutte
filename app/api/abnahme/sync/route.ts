@@ -79,6 +79,21 @@ export async function POST(request: Request) {
 
   const fail = (what: string, message: string) => jsonFehler(500, `${what}: ${message}`);
 
+  // Foto-Varianten nie durch einen älteren Gerätestand wegschreiben: ein auf dem Server vorhandener Pfad bleibt,
+  // wenn das Gerät (noch) keinen kennt (Originale laufen über /api/abnahme/original).
+  for (const [table, list] of [["abnahme_fotos", rows.fotos], ["abnahme_objektfotos", rows.objektfotos ?? []]] as const) {
+    if (!list.length) continue;
+    const ex = await supabase.from(table).select("id,path_original,path_thumb").eq("protokoll_id", doc.id);
+    if (ex.error) return fail(table, ex.error.message);
+    const alt = new Map((ex.data ?? []).map((r) => [r.id as string, r]));
+    for (const r of list) {
+      const a = alt.get(r.id as string);
+      if (!a) continue;
+      if (!r.path_original && a.path_original) r.path_original = a.path_original;
+      if (!r.path_thumb && a.path_thumb) r.path_thumb = a.path_thumb;
+    }
+  }
+
   const p = await supabase.from("abnahme_protokolle").upsert({
     ...rows.protokoll,
     status: abschluss ? "in_arbeit" : doc.status,

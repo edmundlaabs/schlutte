@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { hatOffeneOriginale, ladeOriginaleHoch, thumbPfad } from "./fotos";
 import {
   alleDokumente, blobsDesDokuments, geraeteId, holeDokument, loescheDokument, setMeta,
   speichereBlob, speichereDokument, type LokalesDokument,
@@ -28,6 +29,21 @@ async function post<T>(url: string, body: unknown): Promise<(T & { ok: true }) |
 export const istOnline = () => typeof navigator === "undefined" || navigator.onLine;
 
 const klon = <T,>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
+
+/** Trägt die soeben hochgeladenen Pfade ein (Foto/Objektfoto: 1600 px und Vorschau, Unterschrift, PDF). */
+function setzePfade(doc: ProtokollDoc, id: string, gesetzt: Map<string, string>): ProtokollDoc {
+  const foto = <T extends { id: string; path: string | null; pathThumb?: string | null }>(f: T): T =>
+    gesetzt.has(f.id) || gesetzt.has(`${f.id}:thumb`)
+      ? { ...f, path: gesetzt.get(f.id) ?? f.path, pathThumb: gesetzt.get(`${f.id}:thumb`) ?? f.pathThumb ?? null }
+      : f;
+  return {
+    ...doc,
+    fotos: doc.fotos.map(foto),
+    objektFotos: (doc.objektFotos ?? []).map(foto),
+    unterschriften: doc.unterschriften.map((u) => (gesetzt.has(u.id) ? { ...u, bildPath: gesetzt.get(u.id)! } : u)),
+    pdfPath: gesetzt.get(`pdf:${id}`) ?? doc.pdfPath,
+  };
+}
 
 /** Bilder und Unterschriften eines Stands, die lokal noch fehlen, über signierte URLs holen (Offline-Nutzung, PDF). */
 async function holeBilder(doc: ProtokollDoc, signed: Record<string, string>): Promise<void> {
@@ -79,8 +95,9 @@ export async function ladeFuerBaustelle(typ: "abnahme" | "regie", id: string, fo
   return { ok: true };
 }
 
-function pfadFuer(docId: string, art: "foto" | "unterschrift" | "pdf", id: string, typ: "abnahme" | "regie"): string {
+function pfadFuer(docId: string, art: "foto" | "unterschrift" | "pdf" | "thumb" | "original", id: string, typ: "abnahme" | "regie"): string {
   const basis = typ === "abnahme" ? `protokoll/${docId}` : `regie/${docId}`;
+  if (art === "thumb") return thumbPfad(docId, id.replace(/:thumb$/, ""));
   if (art === "foto") return `${basis}/fotos/${id}.jpg`;
   if (art === "unterschrift") return typ === "regie" ? `${basis}/unterschrift.png` : `${basis}/unterschriften/${id}.png`;
   return typ === "abnahme" ? `${basis}/abnahme.pdf` : `${basis}/regiebericht.pdf`;
@@ -92,7 +109,11 @@ let laeuft = false;
 export async function syncDokument(id: string): Promise<{ ok: boolean; error?: string; konflikt?: boolean }> {
   const start = await holeDokument(id);
   if (!start) return { ok: false, error: "Nicht lokal vorhanden." };
-  if (!start.dirty && start.zustand === "synchronisiert") return { ok: true };
+  if (!start.dirty && start.zustand === "synchronisiert") {
+    // Unterbrochener Original-Upload: weitermachen (online).
+    if (start.typ === "abnahme" && istOnline() && (await hatOffeneOriginale(id))) void ladeOriginaleHoch(createClient(), id);
+    return { ok: true };
+  }
   if (!istOnline()) return { ok: false, error: "Keine Verbindung." };
   // Steht ein Abgleich aus, wird erst nach der Auswahl des Nutzers weiter synchronisiert.
   if (start.konflikt && !start.archiv) return { ok: false, error: "Abgleich nötig.", konflikt: true };
@@ -107,7 +128,8 @@ export async function syncDokument(id: string): Promise<{ ok: boolean; error?: s
   };
 
   // 1. Bilder und PDF hochladen
-  const blobs = (await blobsDesDokuments(id)).filter((b) => !b.hochgeladen);
+  // Originale (volle Auflösung) folgen erst nach den Daten, einzeln im Hintergrund (ladeOriginaleHoch).
+  const blobs = (await blobsDesDokuments(id)).filter((b) => !b.hochgeladen && b.art !== "original");
   const gesetzt = new Map<string, string>();
   for (const b of blobs) {
     const path = pfadFuer(id, b.art, b.id, start.typ);
@@ -123,14 +145,7 @@ export async function syncDokument(id: string): Promise<{ ok: boolean; error?: s
   const snapshotSeq = cur.editSeq;
   let payloadDoc = cur.doc;
   if (cur.typ === "abnahme") {
-    const doc = cur.doc;
-    payloadDoc = {
-      ...doc,
-      fotos: doc.fotos.map((f) => (gesetzt.has(f.id) ? { ...f, path: gesetzt.get(f.id)! } : f)),
-      objektFotos: (doc.objektFotos ?? []).map((f) => (gesetzt.has(f.id) ? { ...f, path: gesetzt.get(f.id)! } : f)),
-      unterschriften: doc.unterschriften.map((u) => (gesetzt.has(u.id) ? { ...u, bildPath: gesetzt.get(u.id)! } : u)),
-      pdfPath: gesetzt.get(`pdf:${id}`) ?? doc.pdfPath,
-    };
+    payloadDoc = setzePfade(cur.doc, id, gesetzt);
   } else {
     const { regiePfadeSetzen } = await import("./regie-laden");
     payloadDoc = regiePfadeSetzen(cur.doc, gesetzt);
@@ -156,13 +171,7 @@ export async function syncDokument(id: string): Promise<{ ok: boolean; error?: s
   const unveraendert = neu.editSeq === snapshotSeq;
   const merged = { ...neu, doc: { ...neu.doc, rev: res.rev } } as LokalesDokument;
   if (neu.typ === "abnahme" && merged.typ === "abnahme") {
-    merged.doc = {
-      ...merged.doc,
-      fotos: merged.doc.fotos.map((f) => (gesetzt.has(f.id) ? { ...f, path: gesetzt.get(f.id)! } : f)),
-      objektFotos: (merged.doc.objektFotos ?? []).map((f) => (gesetzt.has(f.id) ? { ...f, path: gesetzt.get(f.id)! } : f)),
-      unterschriften: merged.doc.unterschriften.map((u) => (gesetzt.has(u.id) ? { ...u, bildPath: gesetzt.get(u.id)! } : u)),
-      pdfPath: gesetzt.get(`pdf:${id}`) ?? merged.doc.pdfPath,
-    };
+    merged.doc = setzePfade(merged.doc, id, gesetzt);
   }
   if (neu.typ === "regie" && merged.typ === "regie") {
     const { regiePfadeSetzen } = await import("./regie-laden");
@@ -182,6 +191,9 @@ export async function syncDokument(id: string): Promise<{ ok: boolean; error?: s
   // 4. Vorgemerkte Mails (nur nach erfolgreichem Sync)
   const { fuehreVersandAus } = await import("./versand");
   await fuehreVersandAus(id);
+
+  // 5. Originale (volle Auflösung) einzeln im Hintergrund; Fehler hier machen den Sync nicht ungültig.
+  if (cur.typ === "abnahme") void ladeOriginaleHoch(supabase, id);
   return { ok: true };
 }
 
@@ -202,6 +214,7 @@ export async function syncAlle(): Promise<void> {
 export async function entferneLokal(id: string): Promise<{ ok: boolean; error?: string }> {
   const d = await holeDokument(id);
   if (d && (d.dirty || d.zustand !== "synchronisiert")) return { ok: false, error: "Noch nicht synchronisiert." };
+  if (await hatOffeneOriginale(id)) return { ok: false, error: "Originale der Fotos sind noch nicht hochgeladen." };
   await loescheDokument(id);
   notify();
   return { ok: true };
